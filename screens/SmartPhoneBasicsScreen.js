@@ -178,7 +178,7 @@ const PhoneAnatomySimulator = ({ onSuccess }) => {
         </View>
       </View>
       <View style={styles.progressIndicator}>
-        <Text style={styles.progressText}>
+        <Text style={styles.simProgressText}>
           {identifiedParts.size}/5 parts identified
         </Text>
       </View>
@@ -376,7 +376,7 @@ const UnlockSimulator = ({ onSuccess }) => {
                       {
                         translateX: slideAnim.interpolate({
                           inputRange: [0, 1],
-                          outputRange: [width, 0],
+                          outputRange: [SIM_PHONE_WIDTH, 0],
                         }),
                       },
                     ],
@@ -557,7 +557,7 @@ const TouchSimulator = ({ onSuccess }) => {
         </View>
       </View>
       <View style={styles.progressIndicator}>
-        <Text style={styles.progressText}>
+        <Text style={styles.simProgressText}>
           {Object.values(gestures).filter(Boolean).length}/3 gestures completed
         </Text>
       </View>
@@ -651,8 +651,11 @@ const VolumeSimulator = ({ onSuccess }) => {
               <Text style={styles.settingsTitle}>Settings</Text>
               {/* Volume Setting */}
               <View style={styles.settingItem}>
-                <Icon name="volume-up" size={20} color="#38BDF8" />
-                <Text style={styles.settingLabel}>Volume: {volume}%</Text>
+                <View style={styles.settingRow}>
+                  <Icon name="volume-up" size={18} color="#38BDF8" />
+                  <Text style={styles.settingLabel}>Volume</Text>
+                  <Text style={styles.settingValue}>{volume}%</Text>
+                </View>
                 <Slider
                   style={styles.settingSlider}
                   value={volume}
@@ -663,23 +666,24 @@ const VolumeSimulator = ({ onSuccess }) => {
                   minimumTrackTintColor="#38BDF8"
                   maximumTrackTintColor="#CBD5E1"
                 />
-                <Text style={styles.settingValue}>{volume}%</Text>
               </View>
               {/* Brightness Setting */}
               <View style={styles.settingItem}>
-                <Icon name="sun" size={20} color="#38BDF8" />
-                <Text style={styles.settingLabel}>Brightness</Text>
-              <Slider
+                <View style={styles.settingRow}>
+                  <Icon name="sun" size={18} color="#38BDF8" />
+                  <Text style={styles.settingLabel}>Brightness</Text>
+                  <Text style={styles.settingValue}>{brightness}%</Text>
+                </View>
+                <Slider
                   style={styles.settingSlider}
                   value={brightness}
                   onValueChange={handleBrightnessChange}
-                minimumValue={0}
+                  minimumValue={0}
                   maximumValue={100}
                   step={10}
                   minimumTrackTintColor="#38BDF8"
                   maximumTrackTintColor="#CBD5E1"
                 />
-                <Text style={styles.settingValue}>{brightness}%</Text>
               </View>
             </View>
           </View>
@@ -1023,7 +1027,7 @@ const WiFiSimulator = ({ onSuccess }) => {
           <View style={styles.phoneScreen}>
             <View style={styles.wifiSettings}>
               <View style={styles.settingsHeader}>
-                <Text style={styles.settingsTitle}>WiFi Settings</Text>
+              <Text style={styles.wifiSettingsTitle}>WiFi Settings</Text>
               </View>
               {wifiState === "scanning" && (
                 <View style={styles.scanningView}>
@@ -1032,37 +1036,39 @@ const WiFiSimulator = ({ onSuccess }) => {
                 </View>
               )}
               {wifiState === "networks" && (
-                <ScrollView style={styles.networksList} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                  {networks.map((network, idx) => (
-                    <TouchableOpacity
-                      key={idx}
-                      style={[
-                        styles.networkItem,
-                        selectedNetwork?.name === network.name && styles.networkItemSelected
-                      ]}
-                      onPress={() => handleNetworkSelect(network)}
-                      accessibilityLabel={network.name}
-                    >
-                      <Icon name="wifi" size={14} color="#38BDF8" />
-                      <Text style={styles.networkName}>{network.name}</Text>
-                      <View style={styles.networkInfo}>
-                        {network.secured && (
-                          <Icon name="lock" size={10} color="#64748B" />
-                        )}
-                        <View style={styles.signalStrength}>
-                          {[1, 2, 3].map((bar) => (
-                            <View
-                              key={bar}
-                              style={[
-                                styles.signalBar,
-                                bar <= network.strength && styles.signalBarActive,
-                              ]}
-                            />
-                          ))}
+                <>
+                  <ScrollView style={styles.networksList} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                    {networks.map((network, idx) => (
+                      <TouchableOpacity
+                        key={idx}
+                        style={[
+                          styles.networkItem,
+                          selectedNetwork?.name === network.name && styles.networkItemSelected
+                        ]}
+                        onPress={() => handleNetworkSelect(network)}
+                        accessibilityLabel={network.name}
+                      >
+                        <Icon name="wifi" size={14} color="#38BDF8" />
+                        <Text style={styles.networkName}>{network.name}</Text>
+                        <View style={styles.networkInfo}>
+                          {network.secured && (
+                            <Icon name="lock" size={10} color="#64748B" />
+                          )}
+                          <View style={styles.signalStrength}>
+                            {[1, 2, 3].map((bar) => (
+                              <View
+                                key={bar}
+                                style={[
+                                  styles.signalBar,
+                                  bar <= network.strength && styles.signalBarActive,
+                                ]}
+                              />
+                            ))}
+                          </View>
                         </View>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                   {selectedNetwork && (
                     <View style={styles.passwordDialog}>
                       <Text style={styles.passwordLabel}>
@@ -1093,7 +1099,7 @@ const WiFiSimulator = ({ onSuccess }) => {
                       </TouchableOpacity>
                     </View>
                   )}
-                </ScrollView>
+                </>
               )}
               {wifiState === "connected" && (
                 <View style={styles.connectedView}>
@@ -2130,6 +2136,12 @@ ipAddress: {
     color: '#10B981',
     fontWeight: '500',
   },
+  simProgressText: {
+    fontSize: 12,
+    color: '#10B981',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
   arrowIcon: {
     marginLeft: 12,
   },
@@ -2435,17 +2447,17 @@ modalScrollView: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   time: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
   },
   statusIcons: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
   },
   welcomeText: {
     color: '#fff',
@@ -2461,12 +2473,6 @@ modalScrollView: {
   paddingVertical: 8,
   marginTop: 15,
   alignSelf: 'center',
-},
-  progressText: {
-  color: '#38BDF8',
-  fontSize: 14,
-  fontWeight: '600',
-  textAlign: 'center',
 },
   pressIndicator: {
     marginTop: 16,
@@ -2491,57 +2497,58 @@ modalScrollView: {
   },
   clockDisplay: {
     alignItems: 'center',
-    marginTop: 40,
+    marginTop: 24,
   },
   clockTime: {
     color: '#fff',
-    fontSize: 48,
+    fontSize: 36,
     fontWeight: '200',
   },
   clockDate: {
     color: '#9CA3AF',
-    fontSize: 16,
-    marginTop: 4,
+    fontSize: 12,
+    marginTop: 2,
   },
   swipeArea: {
     alignSelf: 'center',
-    marginBottom: 40,
+    marginBottom: 20,
+    maxWidth: '90%',
   },
   swipeIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#374151',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
   },
   swipeText: {
     color: '#fff',
-    marginLeft: 8,
-    fontSize: 14,
+    marginLeft: 6,
+    fontSize: 12,
   },
   appGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    paddingTop: 40,
-    gap: 20,
+    paddingTop: 24,
+    gap: 12,
   },
   appIcon: {
     alignItems: 'center',
-    width: 60,
+    width: 48,
   },
   appIconBg: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   appName: {
     color: '#fff',
-    fontSize: 10,
+    fontSize: 9,
     textAlign: 'center',
   },
   gestureArea: {
@@ -2551,8 +2558,8 @@ modalScrollView: {
     paddingHorizontal: 20,
   },
   gestureButton: {
-    width: 100,
-    height: 80,
+    width: 90,
+    height: 68,
     backgroundColor: '#374151',
     borderRadius: 12,
     justifyContent: 'center',
@@ -2567,64 +2574,74 @@ modalScrollView: {
   },
   gestureLabel: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 4,
     fontWeight: '500',
   },
   settingsScreen: {
     flex: 1,
     backgroundColor: '#1F2937',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   settingsTitle: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
-    marginVertical: 20,
+    marginVertical: 12,
+  },
+  wifiSettingsTitle: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#374151',
   },
+  settingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   settingLabel: {
     color: '#fff',
-    fontSize: 14,
-    marginLeft: 12,
+    fontSize: 12,
+    marginLeft: 10,
     flex: 1,
   },
   settingSlider: {
-    width: 100,
-    height: 20,
-    marginHorizontal: 12,
+    width: '100%',
+    height: 24,
+    marginTop: 8,
   },
   settingValue: {
     color: '#9CA3AF',
-    fontSize: 12,
-    width: 30,
+    fontSize: 10,
+    width: 28,
     textAlign: 'right',
   },
   volumeOverlay: {
     position: 'absolute',
-    top: 60,
-    left: 20,
-    right: 20,
+    top: 46,
+    left: 16,
+    right: 16,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     borderRadius: 8,
-    padding: 12,
+    padding: 10,
     flexDirection: 'row',
     alignItems: 'center',
     zIndex: 10,
   },
   volumeBar: {
     flex: 1,
-    height: 4,
+    height: 3,
     backgroundColor: '#374151',
     borderRadius: 2,
-    marginHorizontal: 12,
+    marginHorizontal: 10,
   },
   volumeFill: {
     height: '100%',
@@ -2633,46 +2650,46 @@ modalScrollView: {
   },
   volumeText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
   },
   incomingCall: {
     flex: 1,
     backgroundColor: '#1F2937',
     justifyContent: 'space-between',
-    paddingVertical: 40,
+    paddingVertical: 28,
     alignItems: 'center',
   },
   callerInfo: {
     alignItems: 'center',
   },
   callerAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: '#374151',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   callerName: {
     color: '#fff',
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   callerNumber: {
     color: '#9CA3AF',
-    fontSize: 16,
-    marginBottom: 8,
+    fontSize: 12,
+    marginBottom: 6,
   },
   callStatus: {
     color: '#38BDF8',
-    fontSize: 14,
+    fontSize: 12,
   },
   callDuration: {
     color: '#38BDF8',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '600',
   },
   callControls: {
@@ -2681,9 +2698,9 @@ modalScrollView: {
     width: '70%',
   },
   callButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -2723,18 +2740,18 @@ modalScrollView: {
   },
   batteryDisplay: {
     alignItems: 'center',
-    marginTop: 60,
+    marginTop: 28,
   },
   batteryIcon: {
     position: 'relative',
     alignItems: 'center',
   },
   batteryBody: {
-    width: 80,
-    height: 40,
-    borderWidth: 3,
+    width: 64,
+    height: 32,
+    borderWidth: 2,
     borderColor: '#6B7280',
-    borderRadius: 8,
+    borderRadius: 6,
     backgroundColor: '#374151',
     position: 'relative',
   },
@@ -2747,28 +2764,28 @@ modalScrollView: {
   },
   batteryTip: {
     position: 'absolute',
-    right: -8,
-    top: 12,
-    width: 6,
-    height: 16,
+    right: -6,
+    top: 9,
+    width: 5,
+    height: 12,
     backgroundColor: '#6B7280',
     borderRadius: 2,
   },
   chargingBolt: {
     position: 'absolute',
-    top: 8,
-    left: 28,
+    top: 6,
+    left: 22,
   },
   batteryPercentage: {
     color: '#fff',
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: '600',
-    marginTop: 20,
+    marginTop: 12,
   },
   batteryStatus: {
     color: '#9CA3AF',
-    fontSize: 16,
-    marginTop: 8,
+    fontSize: 12,
+    marginTop: 4,
   },
   chargerButton: {
     flexDirection: 'row',
