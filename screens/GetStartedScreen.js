@@ -65,12 +65,7 @@ export default function GetStartedScreen({ navigation }) {
       description: "Exercise your brain and have fun with simple games.",
       animation: require("../assets/lotties/games.json"),
     },
-    {
-      key: "4",
-      title: "Live News",
-      description: "Stay updated with the latest headlines anytime, anywhere.",
-      animation: require("../assets/lotties/news.json"),
-    },
+    
   ];
 
   useEffect(() => {

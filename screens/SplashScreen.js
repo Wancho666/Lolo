@@ -272,7 +272,7 @@ export default function SplashScreen({ navigation }) {
         {/* Loading indicator */}
         <Animated.View style={[styles.loaderContainer, { transform: [{ rotate: spin }] }]}>
           <View style={styles.loaderGlow} />
-          <Icon name="glasses" size={50} color="#0F172A" />
+          <Icon name="glasses" size={30} color="#0F172A" />
         </Animated.View>
 
         {/* Welcome text */}
@@ -286,7 +286,7 @@ export default function SplashScreen({ navigation }) {
           ]}
         >
           <Text style={styles.welcome}>
-            Welcome po, <Text style={styles.lolo}>Lolo</Text> & <Text style={styles.lola}>Lola</Text>
+            Welcome po
           </Text>
           
         </Animated.View>
@@ -367,8 +367,8 @@ const styles = StyleSheet.create({
   },
   logoShadow: {
     position: 'absolute',
-    width: 220,
-    height: 220,
+    width: 180,
+    height: 180,
     borderRadius: 110,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     shadowColor: '#ffffff',

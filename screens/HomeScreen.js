@@ -99,31 +99,8 @@ export default function HomeScreen({ navigation }) {
       icon: "gamepad",
       gradientColors: ['rgba(251, 191, 36, 0.15)', 'rgba(34, 197, 94, 0.15)'],
     },
-    {
-      id: 5,
-      title: "Digital Safety",
-      description: "Protect yourself from scams & threats.",
-      animation: require("../assets/lotties/sec.json"),
-      icon: "shield-alt",
-      gradientColors: ['rgba(239, 68, 68, 0.15)', 'rgba(245, 101, 101, 0.15)'],
-    },
-    {
-      id: 6,
-      title: "Government E-Services",
-      description: "Access PhilHealth, SSS, and more.",
-      animation: require("../assets/lotties/government.json"),
-      icon: "landmark",
-      gradientColors: ['rgba(99, 102, 241, 0.15)', 'rgba(139, 92, 246, 0.15)'],
-    },
-    {
-      id: 7,
-      title: "📰 Live News",
-      description: "Daily news updates with audio support in English & Filipino.",
-      animation: require("../assets/lotties/news.json"),
-      icon: "newspaper",
-      gradientColors: ['rgba(251, 146, 60, 0.15)', 'rgba(234, 88, 12, 0.15)'],
-      isNew: true,
-    },
+    
+    
   ];
 
   const initializeAnimations = () => {
@@ -279,14 +256,7 @@ export default function HomeScreen({ navigation }) {
       case 5:
         navigation.navigate("DigitalSafety");
         break;
-      case 6:
-        navigation.navigate("GovernmentServices");
-        break;
-      case 7:
-        navigation.navigate("LiveNews");
-        break;
-      default:
-        break;
+      
     }
   };
 
@@ -564,8 +534,8 @@ const styles = StyleSheet.create({
   },
   logoShadow: {
     position: 'absolute',
-    width: 220,
-    height: 110,
+    width: 90,
+    height: 90,
     borderRadius: 55,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     shadowColor: '#ffffff',
