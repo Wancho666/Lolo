@@ -11,6 +11,7 @@ import SmartPhoneBasicsScreen from "./screens/SmartPhoneBasicsScreen";
 import LiveNewsScreen from "./screens/LiveNewsScreen";
 import InternetBrowsingScreen from "./screens/InternetBrowsingScreen";
 import MiniGamesScreen from "./screens/MiniGamesScreen";
+import EGovScreen from "./screens/E-Gov";
 
 const Stack = createNativeStackNavigator();
 
@@ -35,7 +36,9 @@ export default function App() {
           component={InternetBrowsingScreen}
         />
         <Stack.Screen name="MiniGames" component={MiniGamesScreen} />
+        <Stack.Screen name="E-Gov" component={EGovScreen} />
       </Stack.Navigator>
+      
     </NavigationContainer>
   );
 }

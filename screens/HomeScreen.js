@@ -85,9 +85,9 @@ export default function HomeScreen({ navigation }) {
     },
     {
       id: 3,
-      title: "Social Media",
-      description: "Connect with family & friends online.",
-      animation: require("../assets/lotties/social.json"),
+      title: "E-Government Services",
+      description: "Government services made simple for you.",
+      animation: require("../assets/lotties/government.json"),
       icon: "users",
       gradientColors: ['rgba(236, 72, 153, 0.15)', 'rgba(251, 146, 60, 0.15)'],
     },
@@ -248,13 +248,10 @@ export default function HomeScreen({ navigation }) {
         navigation.navigate("InternetBrowsing");
         break;
       case 3:
-        navigation.navigate("SocialMedia");
+        navigation.navigate("E-Gov");
         break;
       case 4:
         navigation.navigate("MiniGames");
-        break;
-      case 5:
-        navigation.navigate("DigitalSafety");
         break;
       
     }
@@ -645,7 +642,7 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   cardTitle: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: "bold",
     color: "#0F172A",
     marginBottom: 8,
