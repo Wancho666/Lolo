@@ -61,6 +61,12 @@ export default function GetStartedScreen({ navigation }) {
     },
     {
       key: "3",
+      title: "E-Government Services",
+      description: "Government services made simple for you.",
+      animation: require("../assets/lotties/government.json"),  
+    },
+    {
+      key: "4",
       title: "Mini Games",
       description: "Exercise your brain and have fun with simple games.",
       animation: require("../assets/lotties/games.json"),
