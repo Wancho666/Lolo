@@ -17,7 +17,7 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native";
 
-// ✅ Platform-safe Lottie import
+
 let LottieWrapper;
 if (Platform.OS === "web") {
   const { default: Lottie } = require("lottie-react");
@@ -319,7 +319,14 @@ export default function HomeScreen({ navigation }) {
         {/* Profile Icon (top right, absolute) */}
         <View style={styles.profileIconContainer}>
           <TouchableOpacity onPress={() => setProfileModalVisible(true)} style={styles.profileIconButton}>
-            <Icon name="user-circle" size={36} color="#0F172A" />
+            <LinearGradient
+              colors={['#74bfe2', '#6abfe9']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.profileIconGradient}
+            >
+              <Icon name="user-tie" size={24} color="#fff" />
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
@@ -669,10 +676,20 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   profileIconButton: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    borderRadius: 20,
-    padding: 4,
-    elevation: 8,
+    borderRadius: 18,
+    padding: 2,
+    elevation: 10,
+    shadowColor: '#aed4e7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  profileIconGradient: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalOverlay: {
     flex: 1,
