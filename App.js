@@ -5,7 +5,6 @@ import { NavigationContainer } from "@react-navigation/native";
 // Screens
 import SplashScreen from "./screens/SplashScreen";
 import GetStartedScreen from "./screens/GetStartedScreen";
-import NameInputScreen from "./screens/NameInputScreen";
 import HomeScreen from "./screens/HomeScreen";
 import SmartPhoneBasicsScreen from "./screens/SmartPhoneBasicsScreen";
 import LiveNewsScreen from "./screens/LiveNewsScreen";
@@ -22,7 +21,6 @@ export default function App() {
         {/* Onboarding flow */}
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="GetStarted" component={GetStartedScreen} />
-        <Stack.Screen name="NameInput" component={NameInputScreen} />
 
         {/* Main app */}
         <Stack.Screen name="Home" component={HomeScreen} />

@@ -37,7 +37,7 @@ const EGOV_MODULES = [
     id: "health",
     title: "Serbisyong Pangkalusugan",
     icon: "medical",
-    description: "PhilHealth, DOH, at libreng medikal na serbisyo",
+    description: "PhilHealth, Dr. PJG Hospital, at libreng medikal na serbisyo",
   },
   {
     id: "pension",
@@ -61,13 +61,13 @@ const EGOV_MODULES = [
     id: "lgu",
     title: "LGU / Barangay Serbisyo",
     icon: "business",
-    description: "Lokal na pamahalaan at OSCA na serbisyo",
+    description: "Cabanatuan City Hall, OSCA, at barangay na serbisyo",
   },
   {
     id: "hotlines",
     title: "Mga Hotline at Emergency",
     icon: "call",
-    description: "NCSC, DSWD, PhilHealth, SSS, at 911",
+    description: "NCSC, DSWD Nueva Ecija, PhilHealth, SSS, at 911",
   },
 ];
 
@@ -76,17 +76,17 @@ const EGOV_MODULES = [
 // ─────────────────────────────────────────────
 const IDS_CONTENT = [
   {
-    title: "OSCA ID (Office of Senior Citizens Affairs)",
+    title: "OSCA ID – Cabanatuan City",
     description:
-      "Ang OSCA ID ay ang pangunahing ID ng mga senior citizen sa Pilipinas. Ito ay ibinibigay ng inyong lokal na pamahalaan.",
+      "Ang OSCA ID ay ang pangunahing ID ng mga senior citizen. Sa Cabanatuan City, ito ay ibinibigay ng Office of the City Mayor – OSCA Office sa Cabanatuan City Hall, M. de Leon Avenue.",
     steps: [
-      "Pumunta sa inyong OSCA office sa munisipyo o lungsod",
-      "Magdala ng dalawang valid ID at birth certificate",
-      "Magbigay ng dalawang 1x1 na larawan",
-      "Punan ang application form",
-      "Maghintay ng 1-2 linggo para sa inyong ID",
+      "Pumunta sa OSCA Office sa Cabanatuan City Hall, M. de Leon Avenue",
+      "Magdala ng PSA Birth Certificate at dalawang valid ID",
+      "Magdala ng dalawang 1x1 na larawan at barangay certificate of residency",
+      "Punan ang application form – libre ang pagproseso",
+      "Ang ID ay maaaring makuha sa loob ng ilang araw ng trabaho",
     ],
-    requirement: "60 taong gulang pataas",
+    requirement: "60 taong gulang pataas, residente ng Cabanatuan City",
     simulatorType: "osca_id",
     icon: "card-outline",
     color: "#0EA5E9",
@@ -94,14 +94,14 @@ const IDS_CONTENT = [
   {
     title: "PhilSys / National ID",
     description:
-      "Ang Philippine Identification System (PhilSys) ay ang pambansang ID ng lahat ng Pilipino. Libre ito para sa lahat.",
+      "Ang Philippine Identification System (PhilSys) ay ang pambansang ID ng lahat ng Pilipino. Ang PSA office para sa Nueva Ecija ay matatagpuan sa Cabanatuan City. Libre ito para sa lahat.",
     steps: [
-      "Mag-register sa philsys.gov.ph o sa PSA office",
-      "Magdala ng birth certificate o passport",
-      "Kumuha ng biometrics (fingerprint at litrato)",
-      "Hintayin ang PhilSys card sa inyong tirahan",
+      "Mag-register sa philsys.gov.ph o pumunta sa PSA-Nueva Ecija office",
+      "Magdala ng PSA Birth Certificate o passport",
+      "Kumuha ng biometrics (fingerprint at litrato) sa designated registration center",
+      "Hintayin ang PhilSys card na ipapadala sa inyong tirahan",
     ],
-    requirement: "Lahat ng Pilipino",
+    requirement: "Lahat ng Pilipinong residente ng Cabanatuan City",
     simulatorType: "philsys",
     icon: "id-card-outline",
     color: "#059669",
@@ -109,14 +109,14 @@ const IDS_CONTENT = [
   {
     title: "Digital NSCID (National Senior Citizen ID)",
     description:
-      "Ang Digital NSCID ay available na sa eGovPH Super App. Maaari na ninyong gamitin ang inyong senior citizen ID sa inyong telepono.",
+      "Ang Digital NSCID ay available na sa eGovPH Super App. Maaari na ninyong gamitin ang inyong senior citizen ID sa inyong telepono kahit saan sa Cabanatuan City at buong Pilipinas.",
     steps: [
-      "I-download ang eGovPH Super App sa inyong telepono",
-      "Gumawa ng account gamit ang inyong numero",
-      "I-link ang inyong OSCA ID",
-      "I-access ang inyong Digital NSCID sa app",
+      "I-download ang eGovPH Super App sa inyong Android o iPhone",
+      "Gumawa ng account gamit ang inyong numero ng telepono",
+      "I-link ang inyong OSCA ID mula sa Cabanatuan City",
+      "I-access ang inyong Digital NSCID sa app – tinatanggap sa lahat ng establisyimento",
     ],
-    requirement: "May OSCA ID na",
+    requirement: "May OSCA ID na mula sa Cabanatuan City",
     simulatorType: "digital_id",
     icon: "phone-portrait-outline",
     color: "#7C3AED",
@@ -127,43 +127,44 @@ const BENEFITS_CONTENT = [
   {
     title: "20% Diskwento + VAT Exemption",
     description:
-      "Ang lahat ng senior citizen ay may karapatang makatanggap ng 20% diskwento at VAT exemption sa maraming pagbili.",
+      "Ang lahat ng senior citizen ng Cabanatuan City ay may karapatang makatanggap ng 20% diskwento at VAT exemption sa maraming pagbili sa lahat ng establisyimento sa lungsod.",
     items: [
-      "Pagkain at inumin sa mga restaurant",
-      "Gamot at medical supplies",
-      "Medical at dental services",
-      "Transportation (bus, jeep, taxi, tren)",
-      "Entertainment at leisure facilities",
+      "Pagkain at inumin sa mga restaurant (Jollibee, McDonald's, SM Food Court, at iba pa)",
+      "Gamot at medical supplies sa lahat ng botika sa Cabanatuan",
+      "Medical at dental services sa mga clinic at ospital",
+      "Transportasyon (jeep, bus, tricycle, at iba pa)",
+      "SM City Cabanatuan, Robinson's, at iba pang entertainment",
     ],
     simulatorType: "discount",
     icon: "pricetag-outline",
     color: "#D97706",
   },
   {
-    title: "Libreng Serbisyo sa Ospital ng Pamahalaan",
+    title: "Libreng Serbisyo sa Dr. PJG Memorial Hospital",
     description:
-      "Ang mga senior citizen ay may karapatang sa libreng medical at dental services sa lahat ng government hospitals.",
+      "Ang Dr. Paulino J. Garcia Memorial Research and Medical Center (Dr. PJG) sa Mabini Street, Cabanatuan City ang pangunahing government hospital. PhilHealth-accredited at may libreng serbisyo para sa mga senior.",
     items: [
-      "Libreng konsultasyon sa doktor",
-      "Libreng dental check-up",
-      "Diskwento sa laboratory tests",
-      "Libreng flu at pneumonia vaccines",
-      "Priority lane sa lahat ng government offices",
+      "Libreng konsultasyon sa OPD (Out-Patient Department)",
+      "Libreng dental check-up sa dental clinic ng ospital",
+      "Diskwento sa laboratory tests at diagnostic procedures",
+      "Libreng flu at pneumonia vaccines (tuwing may vaccination drive)",
+      "Priority lane para sa mga senior citizen sa lahat ng departamento",
     ],
-    simulatorType: "hospital",
+    simulatorType: null,
     icon: "medkit-outline",
     color: "#DC2626",
   },
   {
     title: "5% Diskwento sa Kuryente at Tubig",
     description:
-      "Kung ang meter ay nasa pangalan ng senior citizen, may 5% diskwento sa monthly bills.",
+      "Kung ang meter ng kuryente o tubig ay nasa pangalan ng senior citizen, may 5% diskwento sa monthly bills.",
     items: [
-      "5% diskwento sa electric bill (hanggang 100 kWh)",
-      "5% diskwento sa water bill (hanggang 30 m³)",
-      "Ang meter ay dapat nasa pangalan ng senior",
+      "5% diskwento sa electric bill (hanggang 100 kWh bawat buwan)",
+      "5% diskwento sa water bill (hanggang 30 m³ bawat buwan)",
+      "Ang meter ng kuryente o tubig ay dapat nasa pangalan ng senior citizen",
+      "Ipakita ang OSCA ID sa inyong electric/water provider para ma-avail",
     ],
-    simulatorType: "utilities",
+    simulatorType: null,
     icon: "flash-outline",
     color: "#7C3AED",
   },
@@ -171,51 +172,68 @@ const BENEFITS_CONTENT = [
 
 const HEALTH_CONTENT = [
   {
-    title: "PhilHealth para sa Mga Senior",
+    title: "PhilHealth – NE Pacific Mall Branch, Cabanatuan",
     description:
-      "Ang lahat ng senior citizen na 60 taong gulang pataas ay awtomatikong miyembro ng PhilHealth.",
+      "Ang PhilHealth office sa Cabanatuan City ay nasa 2/F NE Pacific Mall, Km 111, Maharlika Highway, Brgy. H. Concepcion. Ang lahat ng senior citizen na 60 taong gulang pataas ay awtomatikong lifetime member.",
     steps: [
-      "Mag-apply sa pinakamalapit na PhilHealth office",
-      "Magdala ng OSCA ID at birth certificate",
-      "Kumuha ng MDR (Member Data Record)",
-      "Gamitin ang PhilHealth card sa ospital",
+      "Pumunta sa PhilHealth office sa 2/F NE Pacific Mall, Maharlika Highway",
+      "Magdala ng OSCA ID at PSA Birth Certificate",
+      "Kumuha ng MDR (Member Data Record) para sa records",
+      "Gamitin ang PhilHealth card sa Dr. PJG Hospital at iba pang accredited hospitals",
+      "Contact: (044) 940-3723",
     ],
     simulatorType: "philhealth",
     icon: "heart-outline",
     color: "#DC2626",
   },
   {
-    title: "DOH Programs para sa Seniors",
+    title: "Dr. PJG Memorial Hospital – DOH Programs",
     description:
-      "Ang Department of Health ay may espesyal na programa para sa mga matatandang Pilipino.",
+      "Ang Dr. Paulino J. Garcia Memorial Research and Medical Center sa Mabini Street, Cabanatuan City ay ang pangunahing DOH-retained hospital sa Nueva Ecija. Ito ay Level 3 hospital na may 600 beds. Hotline: (044) 463-8888.",
     steps: [
-      "Libreng medicines sa RHU (Rural Health Unit)",
-      "Senior-friendly health centers",
-      "Home care services para sa may sakit",
-      "Mental health support programs",
+      "Libreng medicines sa OPD para sa indigent na senior citizens",
+      "Malasakit Center sa loob ng ospital para sa pinansiyal na tulong",
+      "YAKAP Mental Health Program para sa senior citizens",
+      "TB-DOTS at Cancer Screening programs para sa matatanda",
+      "Address: Mabini Street, Brgy. Quezon District, Cabanatuan City | Tel: (044) 463-8888",
     ],
-    simulatorType: "doh",
+    simulatorType: null,
     icon: "fitness-outline",
     color: "#059669",
+  },
+  {
+    title: "M.V. Gallego Cabanatuan City General Hospital",
+    description:
+      "Ang M.V. Gallego Cabanatuan City General Hospital ay isa pang government hospital sa Cabanatuan City na nagbibigay ng serbisyo sa mga senior citizen.",
+    steps: [
+      "Libreng konsultasyon para sa mga senior citizen",
+      "Priority lane sa outpatient department",
+      "Koordinasyon sa CSWD para sa indigent na pasyente",
+      "Referral system para sa mas kumplikadong kaso sa Dr. PJG",
+    ],
+    simulatorType: null,
+    icon: "fitness-outline",
+    color: "#0EA5E9",
   },
 ];
 
 const PENSION_CONTENT = [
   {
-    title: "DSWD Social Pension",
+    title: "DSWD Social Pension – Cabanatuan City",
     description:
-      "Ang Social Pension para sa Indigent Senior Citizens ay nagbibigay ng ₱1,000 bawat buwan sa mga kuwalipikadong senior.",
+      "Ang DSWD SWAD Nueva Ecija ay nasa Mabini Extension Street, Cabanatuan City. Nagbibigay ng ₱1,000 bawat buwan sa mga kuwalipikadong indigent na senior citizen.",
     requirements: [
-      "60 taong gulang pataas",
+      "60 taong gulang pataas, residente ng Cabanatuan City",
       "Walang regular na pensiyon (SSS/GSIS)",
-      "Mahirap o indigent ang estado",
-      "Hindi nakatanggap ng iba pang government pension",
+      "Mahirap o indigent ang estado – walang sapat na suporta",
+      "Hindi nakatanggap ng iba pang government cash pension",
     ],
     howToApply: [
-      "Pumunta sa DSWD office o barangay hall",
-      "Magdala ng OSCA ID at barangay certificate",
-      "Punan ang application form",
-      "Hintayin ang assessment ng DSWD",
+      "Pumunta sa inyong barangay hall para sa referral at barangay certificate",
+      "Makipag-ugnayan sa City Social Welfare and Development Office (CSWDO) ng Cabanatuan",
+      "Punan ang DSWD application form at isumite ang mga dokumento",
+      "Hintayin ang assessment at validation ng DSWD SWAD Nueva Ecija",
+      "DSWD SWAD Nueva Ecija: Mabini Extension Street, Cabanatuan City",
     ],
     amount: "₱1,000 / buwan",
     simulatorType: "dswd",
@@ -223,19 +241,20 @@ const PENSION_CONTENT = [
     color: "#059669",
   },
   {
-    title: "SSS Pension",
+    title: "SSS Pension – Cabanatuan Branch",
     description:
-      "Ang Social Security System ay nagbibigay ng retirement pension sa mga dating empleyado sa private sector.",
+      "Ang SSS Cabanatuan Branch ay nasa NE Pacific Shopping Center, KM 111, Maharlika Highway, Brgy. H. Concepcion. Para ito sa mga dating empleyado sa private sector.",
     requirements: [
       "60 taong gulang para sa optional retirement",
       "65 taong gulang para sa mandatory retirement",
-      "Hindi bababa sa 120 monthly contributions",
+      "Hindi bababa sa 120 monthly contributions sa SSS",
     ],
     howToApply: [
-      "I-download ang My.SSS app o pumunta sa SSS branch",
-      "Mag-file ng retirement claim online o personal",
-      "Magdala ng SSS ID at birth certificate",
-      "Piliin ang paraan ng pagbabayad",
+      "Pumunta sa SSS Cabanatuan Branch sa NE Pacific Mall, Maharlika Highway",
+      "O mag-file online sa My.SSS app o website (my.sss.gov.ph)",
+      "Magdala ng SSS ID/UMID at PSA Birth Certificate",
+      "Piliin ang paraan ng pagbabayad (bank o GCash)",
+      "Tel: (044) 463-0691 | Email: cabanatuan@sss.gov.ph",
     ],
     amount: "Depende sa contributions",
     simulatorType: "sss",
@@ -243,19 +262,20 @@ const PENSION_CONTENT = [
     color: "#0EA5E9",
   },
   {
-    title: "GSIS Pension",
+    title: "GSIS Pension – Cabanatuan Branch",
     description:
-      "Ang Government Service Insurance System ay para sa mga dating empleyado ng pamahalaan.",
+      "Ang GSIS Cabanatuan Branch ay nasa NFA Compound, Maharlika Highway, Cabanatuan City. Para ito sa mga dating empleyado ng pamahalaan sa Nueva Ecija at Aurora.",
     requirements: [
-      "Naglingkod sa gobyerno",
-      "15 taon o higit na serbisyo",
+      "Naglingkod sa gobyerno ng Nueva Ecija o iba pang LGU/national agency",
+      "15 taon o higit na serbisyo sa gobyerno",
       "60 taong gulang pataas",
     ],
     howToApply: [
-      "Pumunta sa GSIS branch o gamitin ang GSIS Touch app",
-      "Mag-file ng retirement application",
-      "Magdala ng service record at GSIS UMID",
-      "Maghintay ng processing ng benepisyo",
+      "Pumunta sa GSIS Cabanatuan Branch sa NFA Compound, Maharlika Highway",
+      "O gamitin ang GSIS Touch app para sa online transactions",
+      "Magdala ng Service Record at GSIS UMID card",
+      "Mag-file ng retirement application form",
+      "Tel: (044) 463-0572 | Coverage: Nueva Ecija at Aurora",
     ],
     amount: "Depende sa years of service",
     simulatorType: "gsis",
@@ -268,13 +288,13 @@ const APPS_CONTENT = [
   {
     title: "eGovPH Super App",
     description:
-      "Ang opisyal na super app ng pamahalaan ng Pilipinas. Dito maaari mong ma-access ang maraming government services.",
+      "Ang opisyal na super app ng pamahalaan ng Pilipinas. Dito maaari mong ma-access ang Digital Senior Citizens ID, PhilSys, at iba pang serbisyo ng gobyerno kahit nasa Cabanatuan City ka.",
     features: [
-      "Digital Senior Citizens ID (NSCID)",
-      "National ID (PhilSys)",
-      "Listahan ng government services",
-      "Online appointment booking",
-      "Emergency notifications",
+      "Digital Senior Citizens ID (NSCID) – tinatanggap sa buong Cabanatuan City",
+      "National ID (PhilSys) digital copy",
+      "Listahan ng government services at offices sa Nueva Ecija",
+      "Online appointment booking sa iba't ibang government agencies",
+      "Emergency notifications para sa Cabanatuan City at Nueva Ecija",
     ],
     downloadLink: "https://play.google.com/store/apps/details?id=ph.gov.egov",
     simulatorType: "egovph_app",
@@ -284,45 +304,45 @@ const APPS_CONTENT = [
   {
     title: "My.SSS App",
     description:
-      "Ang opisyal na app ng SSS para sa mga miyembro. Maaari mong tingnan ang iyong contributions at mag-apply ng loans.",
+      "Ang opisyal na app ng SSS para sa mga miyembro. Para sa mga senior ng Cabanatuan City, maaari mong gamitin ito bilang alternatibo sa personal na pagpunta sa SSS Cabanatuan Branch sa NE Pacific Mall.",
     features: [
-      "Tingnan ang SSS contributions",
-      "Mag-apply ng loans online",
-      "I-check ang pension status",
-      "I-update ang personal information",
+      "Tingnan ang SSS contributions at pension status",
+      "Mag-apply ng loans online – hindi na kailangang pumunta sa branch",
+      "I-update ang personal information at paraan ng pagbabayad",
+      "I-download ang SSS records at contribution history",
     ],
     downloadLink: "https://play.google.com/store/apps/details?id=com.sss.mysss",
-    simulatorType: "sss_app",
+    simulatorType: null,
     icon: "phone-portrait-outline",
     color: "#059669",
   },
   {
     title: "PhilHealth App",
     description:
-      "Ang opisyal na app ng PhilHealth para sa pag-manage ng health insurance benefits.",
+      "Ang opisyal na app ng PhilHealth. Para sa mga senior ng Cabanatuan City, kapaki-pakinabang ito bilang dagdag sa pagbisita sa PhilHealth office sa NE Pacific Mall, Maharlika Highway.",
     features: [
-      "I-check ang PhilHealth contributions",
-      "Tingnan ang mga benefit claims",
-      "Hanapin ang accredited hospitals",
-      "E-konsultasyon sa doktor",
+      "I-check ang PhilHealth contributions at lifetime member status",
+      "Tingnan ang mga benefit claims mula sa Dr. PJG Hospital",
+      "Hanapin ang mga accredited hospitals at clinics sa Cabanatuan City",
+      "E-konsultasyon para sa mga basic na katanungan sa kalusugan",
     ],
     downloadLink: "https://play.google.com/store/apps/details?id=ph.philhealth",
-    simulatorType: "philhealth_app",
+    simulatorType: null,
     icon: "phone-portrait-outline",
     color: "#DC2626",
   },
   {
-    title: "Pag-IBIG Fund App",
+    title: "Virtual Pag-IBIG App",
     description:
-      "Ang Virtual Pag-IBIG app para sa housing loan applications at savings management.",
+      "Ang Virtual Pag-IBIG app para sa housing loan applications at savings management. Ang Pag-IBIG Cabanatuan Branch ay nasa Duran Building, Quezon District, Maharlika Highway. Tel: (044) 600-1225.",
     features: [
-      "Tingnan ang Pag-IBIG savings",
-      "Mag-apply ng housing loan",
-      "I-check ang loan balance",
+      "Tingnan ang Pag-IBIG savings at contributions",
+      "Mag-apply ng housing loan para sa Cabanatuan City area",
+      "I-check ang loan balance at payment schedule",
       "Mag-request ng provident fund withdrawal",
     ],
     downloadLink: "https://play.google.com/store/apps/details?id=ph.gov.pagibig",
-    simulatorType: "pagibig_app",
+    simulatorType: null,
     icon: "phone-portrait-outline",
     color: "#D97706",
   },
@@ -332,44 +352,44 @@ const LEGAL_CONTENT = [
   {
     title: "RA 9994 – Expanded Senior Citizens Act",
     description:
-      "Ang Republic Act 9994 ang batas na nagpoprotekta sa karapatan ng lahat ng senior citizen sa Pilipinas.",
+      "Ang Republic Act 9994 ang batas na nagpoprotekta sa karapatan ng lahat ng senior citizen sa Pilipinas, kasama na ang mga nakatira sa Cabanatuan City, Nueva Ecija.",
     rights: [
-      "20% diskwento at VAT exemption",
-      "Priority lane sa lahat ng establisyimento",
-      "Libreng government medical services",
-      "Proteksyon laban sa diskriminasyon",
-      "Karapatang sa dignidad at respeto",
+      "20% diskwento at VAT exemption sa lahat ng establisyimento sa Cabanatuan City",
+      "Priority lane sa City Hall, SSS, PhilHealth, GSIS, at lahat ng opisina",
+      "Libreng medical services sa Dr. PJG Hospital at M.V. Gallego Hospital",
+      "Proteksyon laban sa diskriminasyon at pang-aabuso",
+      "Karapatang sa dignidad, respeto, at priority service",
     ],
     simulatorType: "ra9994",
     icon: "document-text-outline",
     color: "#0EA5E9",
   },
   {
-    title: "Pag-uulat ng Elder Abuse",
+    title: "Pag-uulat ng Elder Abuse sa Cabanatuan City",
     description:
-      "Kung kayo o inyong kilala ay nag-eexperience ng pang-aabuso, may mga lugar na maaari kayong humingi ng tulong.",
+      "Kung kayo o ang inyong kakilala ay nag-eexperience ng pang-aabuso sa Cabanatuan City o Nueva Ecija, may mga lugar na maaari kayong humingi ng tulong.",
     reportTo: [
-      "DSWD – ReSPPEC Program: (02) 8931-8101",
-      "NCSC Hotline: 1-800-10-737-0011",
-      "Barangay Violence Against Women Desk",
-      "PNP Women and Children Protection Center",
-      "City/Municipal Social Welfare Office",
+      "NCSC Hotline: 1-800-10-737-0011 (libre ang tawag, bukas 24/7)",
+      "Cabanatuan City Police Station: (044) 600-4506 / 0933-622-0720",
+      "Cabanatuan City Social Welfare and Development Office (CSWDO) – City Hall",
+      "DSWD SWAD Nueva Ecija: Mabini Extension Street, Cabanatuan City",
+      "Inyong barangay – VAWC (Violence Against Women and Children) Desk",
     ],
     simulatorType: "elder_abuse",
     icon: "alert-circle-outline",
     color: "#DC2626",
   },
   {
-    title: "DTI – Hindi Nirerespeto ang Diskwento",
+    title: "DTI – Hindi Nirerespeto ang Diskwento sa Cabanatuan",
     description:
-      "Kung may establisyimento na hindi nagbibigay ng inyong senior citizen discount, maaari kayong mag-reklamo sa DTI.",
+      "Kung may establisyimento sa Cabanatuan City na hindi nagbibigay ng inyong senior citizen discount, maaari kayong mag-reklamo sa DTI Region III o sa lokal na OSCA office.",
     steps: [
-      "Kumuha ng resibo bilang ebidensya",
-      "Mag-file ng complaint sa DTI: 1-800-10-384-0349",
-      "Pumunta sa pinakamalapit na DTI office",
-      "I-report din sa inyong OSCA office",
+      "Kumuha ng resibo bilang ebidensya ng pagtanggi sa diskwento",
+      "Mag-file ng complaint sa DTI Region III: 1-800-10-384-0349",
+      "Mag-report sa Cabanatuan City OSCA Office sa City Hall",
+      "Maaari ding mag-report sa Cabanatuan City PNP: (044) 600-4506",
     ],
-    simulatorType: "dti",
+    simulatorType: null,
     icon: "megaphone-outline",
     color: "#D97706",
   },
@@ -377,62 +397,127 @@ const LEGAL_CONTENT = [
 
 const LGU_CONTENT = [
   {
-    title: "Mga Serbisyo ng Barangay",
+    title: "Mga Serbisyo ng Barangay sa Cabanatuan City",
     description:
-      "Ang inyong barangay ay nagbibigay ng iba't ibang serbisyo para sa mga senior citizen.",
+      "Ang Cabanatuan City ay may 89 barangay. Ang bawat barangay ay nagbibigay ng mga serbisyo para sa mga senior citizen. Pumunta sa inyong barangay hall (Lunes–Biyernes, 8AM–5PM) para sa tulong.",
     services: [
-      "Barangay clearance at certificate",
-      "Listahan ng locally-funded senior programs",
-      "Referral sa city/municipal OSCA",
-      "Community pantry at relief operations",
-      "Local cash assistance programs",
+      "Barangay clearance at certificate of residency para sa OSCA application",
+      "Referral sa Cabanatuan City OSCA at CSWDO",
+      "Community pantry at lokal na relief operations",
+      "Barangay VAWC desk para sa pag-uulat ng elder abuse",
+      "Koordinasyon sa DSWD Social Pension Program",
     ],
     simulatorType: "barangay",
     icon: "home-outline",
     color: "#059669",
   },
   {
-    title: "OSCA Office – Lokal na Serbisyo",
+    title: "OSCA Office – Cabanatuan City Hall",
     description:
-      "Ang Office for Senior Citizens Affairs sa inyong lungsod o munisipyo ang pangunahing ahensya para sa senior services.",
+      "Ang Office for Senior Citizens Affairs ng Cabanatuan City ay nasa Cabanatuan City Hall, M. de Leon Avenue. Ito ang pangunahing opisina para sa lahat ng senior citizen services sa lungsod.",
     services: [
-      "Pag-process ng Senior Citizens ID",
-      "Pagtulong sa availing ng discounts",
-      "Livelihood programs para sa seniors",
-      "Senior Citizens Week activities",
-      "Coordination ng DSWD social pension",
+      "Pag-process ng Senior Citizens ID (libre, ilang araw ng trabaho)",
+      "Pagtulong sa availing ng 20% diskwento at iba pang benepisyo",
+      "Koordinasyon ng DSWD Social Pension para sa indigent seniors",
+      "Livelihood programs at Senior Citizens Week activities",
+      "Referral sa Dr. PJG Hospital, SSS, PhilHealth, at GSIS",
     ],
     simulatorType: "osca_office",
     icon: "people-outline",
     color: "#0EA5E9",
   },
   {
-    title: "Lokal na Cash Gift at Allowance",
+    title: "Cabanatuan City Hall – Lokal na Benepisyo",
     description:
-      "Maraming LGU ang nagbibigay ng karagdagang cash assistance sa mga senior citizen bilang local benefit.",
+      "Ang Cabanatuan City Hall sa M. de Leon Avenue ay nagbibigay ng karagdagang lokal na benepisyo para sa mga senior citizen ng lungsod bilang city ordinance.",
     examples: [
-      "Ilang lungsod: ₱1,000 – ₱5,000 quarterly",
-      "Birthday cash gift (sa ilang LGU)",
-      "Libre na gamot at check-up",
-      "Libre na glasses at hearing aids (sa ilang lugar)",
+      "Birthday cash gift para sa centenarian seniors (100 taong gulang)",
+      "Priority service sa lahat ng city government windows at counters",
+      "Libre na medikal na check-up sa city-sponsored health missions",
+      "Coordination sa CSWD para sa emergency financial assistance",
     ],
-    tip: "Makipag-ugnayan sa inyong OSCA office para malaman ang mga available na benepisyo sa inyong lugar.",
-    simulatorType: "cash_gift",
+    tip: "Makipag-ugnayan sa Cabanatuan City OSCA Office sa City Hall, M. de Leon Avenue para malaman ang lahat ng available na benepisyo para sa mga senior ng Cabanatuan.",
+    simulatorType: null,
     icon: "cash-outline",
     color: "#D97706",
   },
 ];
 
+// ─────────────────────────────────────────────
+// VERIFIED HOTLINES – Cabanatuan City, Nueva Ecija
+// All numbers verified from official sources
+// ─────────────────────────────────────────────
 const HOTLINES = [
-  { name: "NCSC Hotline", number: "1-800-10-737-0011", icon: "people", color: "#0EA5E9", desc: "National Commission of Senior Citizens" },
-  { name: "DSWD", number: "8931-8101", icon: "heart", color: "#059669", desc: "Departamento ng Panlipunang Kagalingan" },
-  { name: "PhilHealth", number: "8441-7442", icon: "medical", color: "#DC2626", desc: "Philippine Health Insurance Corporation" },
-  { name: "SSS", number: "8920-6446", icon: "business", color: "#7C3AED", desc: "Social Security System" },
-  { name: "GSIS", number: "8847-4747", icon: "shield-checkmark", color: "#0EA5E9", desc: "Government Service Insurance System" },
-  { name: "Pag-IBIG Fund", number: "8724-4244", icon: "home", color: "#D97706", desc: "Home Development Mutual Fund" },
-  { name: "DTI Hotline", number: "1-800-10-384-0349", icon: "megaphone", color: "#059669", desc: "Department of Trade and Industry" },
-  { name: "Emergency / 911", number: "911", icon: "call", color: "#DC2626", desc: "Emergency Response – bukas 24/7" },
-  { name: "DOH", number: "8651-7800", icon: "fitness", color: "#7C3AED", desc: "Department of Health" },
+  {
+    name: "Emergency / 911",
+    number: "911",
+    icon: "call",
+    color: "#DC2626",
+    desc: "Emergency Response – bukas 24/7 sa buong Pilipinas",
+  },
+  {
+    name: "NCSC Hotline",
+    number: "1-800-10-737-0011",
+    icon: "people",
+    color: "#0EA5E9",
+    desc: "National Commission of Senior Citizens – libre ang tawag, 24/7",
+  },
+  {
+    name: "Cabanatuan City PNP",
+    number: "(044) 600-4506",
+    icon: "shield",
+    color: "#1D4ED8",
+    desc: "Cabanatuan City Police Station – pangunahing linya",
+  },
+  {
+    name: "Cabanatuan City PNP (Mobile)",
+    number: "0998 598 5425",
+    icon: "shield",
+    color: "#1D4ED8",
+    desc: "Cabanatuan City Police Station – mobile number",
+  },
+  {
+    name: "Dr. PJG Hospital",
+    number: "0953-574-4529",
+    icon: "fitness",
+    color: "#DC2626",
+    desc: "Dr. Paulino J. Garcia Memorial R&MC – Mabini St., Quezon District",
+  },
+  {
+    name: "PhilHealth Cabanatuan",
+    number: "(044) 940-3723",
+    icon: "heart",
+    color: "#059669",
+    desc: "2/F NE Pacific Mall, Km 111, Maharlika Highway",
+  },
+  {
+    name: "SSS Cabanatuan",
+    number: "(044) 463-0691",
+    icon: "business",
+    color: "#7C3AED",
+    desc: "NE Pacific Shopping Center, Maharlika Highway – Email: cabanatuan@sss.gov.ph",
+  },
+  {
+    name: "GSIS Cabanatuan",
+    number: "(044) 463-0572",
+    icon: "shield-checkmark",
+    color: "#0EA5E9",
+    desc: "NFA Compound, Maharlika Highway – Para sa Nueva Ecija at Aurora",
+  },
+  {
+    name: "Pag-IBIG Cabanatuan",
+    number: "(044) 600-1225",
+    icon: "home",
+    color: "#D97706",
+    desc: "Duran Building, Quezon District, Maharlika Highway",
+  },
+  {
+    name: "DTI Region III",
+    number: "1-800-10-384-0349",
+    icon: "megaphone",
+    color: "#059669",
+    desc: "Para sa reklamo ng hindi binibigay na senior diskwento – libre ang tawag",
+  },
 ];
 
 // ─────────────────────────────────────────────
@@ -517,6 +602,7 @@ export default function EGovScreen({ navigation }) {
 
   // ─────────────────────────────────────────────
   // SCREEN SIMULATORS
+  // Only shown for cases where visual demo adds real value
   // ─────────────────────────────────────────────
   const renderSimulator = () => {
     if (!simulatorData) return null;
@@ -554,15 +640,15 @@ export default function EGovScreen({ navigation }) {
     );
 
     switch (type) {
-      // OSCA ID
+      // ── OSCA ID Card ──────────────────────────────
       case "osca_id":
         return (
-          <PhoneShell headerBg="#0EA5E9" headerTitle="OSCA Office" headerIcon="card">
+          <PhoneShell headerBg="#0EA5E9" headerTitle="OSCA – Cabanatuan City" headerIcon="card">
             <View style={s.idCard}>
               <View style={[s.idCardHeader, {backgroundColor:"#0EA5E9"}]}>
                 <Ionicons name="people" size={30} color="#fff"/>
                 <Text style={s.idCardHeaderTitle}>Republic of the Philippines</Text>
-                <Text style={s.idCardHeaderSub}>Senior Citizens ID</Text>
+                <Text style={s.idCardHeaderSub}>Senior Citizens ID – Cabanatuan City</Text>
               </View>
               <View style={s.idCardBody}>
                 <View style={s.idPhotoPlaceholder}>
@@ -574,25 +660,27 @@ export default function EGovScreen({ navigation }) {
                   <Text style={s.idLabel}>Edad:</Text>
                   <Text style={s.idValue}>72 taong gulang</Text>
                   <Text style={s.idLabel}>Barangay:</Text>
-                  <Text style={s.idValue}>Sta. Cruz, Talavera</Text>
+                  <Text style={s.idValue}>Brgy. H. Concepcion, Cabanatuan City</Text>
+                  <Text style={s.idLabel}>ID No.:</Text>
+                  <Text style={s.idValue}>CAB-2024-00123</Text>
                 </View>
               </View>
               <View style={s.idCardFooter}>
-                <Text style={s.idFooterText}>Valid until: December 31, 2026</Text>
+                <Text style={s.idFooterText}>Issued by: OSCA – Cabanatuan City Hall, M. de Leon Ave.</Text>
               </View>
             </View>
-            <StatusBadge safe text="Ang OSCA ID ay ang official ID ng senior citizens. Gamitin ito para sa lahat ng diskwento at serbisyo."/>
+            <StatusBadge safe text="Ang OSCA ID mula sa Cabanatuan City Hall ang official ID ng senior citizens. Gamitin sa lahat ng establisyimento sa Nueva Ecija at buong Pilipinas."/>
           </PhoneShell>
         );
 
-      // PhilSys
+      // ── PhilSys / National ID ─────────────────────
       case "philsys":
         return (
           <PhoneShell headerBg="#059669" headerTitle="PhilSys – National ID" headerIcon="id-card">
             <View style={[s.idCard, {borderColor:"#059669"}]}>
               <View style={[s.idCardHeader, {backgroundColor:"#059669"}]}>
                 <Text style={s.idCardHeaderTitle}>Philippine Identification System</Text>
-                <Text style={s.idCardHeaderSub}>PhilSys ID</Text>
+                <Text style={s.idCardHeaderSub}>PhilSys ID – Nueva Ecija (PSC 3100)</Text>
               </View>
               <View style={s.idCardBody}>
                 <View style={[s.idPhotoPlaceholder, {borderColor:"#059669"}]}>
@@ -603,14 +691,18 @@ export default function EGovScreen({ navigation }) {
                   <Text style={[s.idValue, {fontFamily: Platform.OS==="ios"?"Courier":"monospace"}]}>1234-5678-9012</Text>
                   <Text style={s.idLabel}>Pangalan:</Text>
                   <Text style={s.idValue}>Maria D. Santos</Text>
+                  <Text style={s.idLabel}>Lugar:</Text>
+                  <Text style={s.idValue}>Cabanatuan City, N.E.</Text>
+                  <Text style={s.idLabel}>Petsa ng Kapanganakan:</Text>
+                  <Text style={s.idValue}>01 Enero 1952</Text>
                 </View>
               </View>
             </View>
-            <StatusBadge safe text="Ang PhilSys ay libre para sa lahat. Ito ay tinatanggap bilang valid ID sa lahat ng government at private offices."/>
+            <StatusBadge safe text="Ang PhilSys ay libre para sa lahat. I-register sa PSA-Nueva Ecija office sa Cabanatuan City. Tinatanggap bilang valid ID sa lahat ng government at private offices sa buong Pilipinas."/>
           </PhoneShell>
         );
 
-      // Digital ID (eGovPH)
+      // ── Digital ID (eGovPH) ───────────────────────
       case "digital_id":
         return (
           <PhoneShell headerBg="#7C3AED" headerTitle="eGovPH App" headerIcon="phone-portrait">
@@ -624,26 +716,29 @@ export default function EGovScreen({ navigation }) {
                   <Ionicons name="person-circle" size={40} color="#fff"/>
                   <View style={{marginLeft:12}}>
                     <Text style={s.digitalIdName}>Maria D. Santos</Text>
-                    <Text style={s.digitalIdType}>Senior Citizen</Text>
+                    <Text style={s.digitalIdType}>Senior Citizen – Cabanatuan City</Text>
+                    <Text style={[s.digitalIdType,{marginTop:2}]}>Brgy. H. Concepcion, N.E. 3100</Text>
                   </View>
                 </View>
                 <View style={s.qrPlaceholder}>
                   <Ionicons name="qr-code" size={60} color="#7C3AED"/>
                   <Text style={s.qrLabel}>I-scan para i-verify</Text>
+                  <Text style={[s.qrLabel,{fontSize:10,marginTop:4,color:"#94A3B8"}]}>Valid • Verified by eGovPH</Text>
                 </View>
               </View>
-              <StatusBadge safe text="Available na ang Digital NSCID sa eGovPH app. Hindi na kailangan ng physical card para sa mga benepisyo!"/>
+              <StatusBadge safe text="Available na ang Digital NSCID sa eGovPH app. Tinatanggap sa mga establisyimento sa Cabanatuan City! Hindi na kailangan ng physical card."/>
             </View>
           </PhoneShell>
         );
 
-      // Discount
+      // ── Discount Receipt ──────────────────────────
       case "discount":
         return (
           <PhoneShell headerBg="#D97706" headerTitle="Senior Discount" headerIcon="pricetag">
             <View style={s.receiptSim}>
               <Text style={s.receiptTitle}>Official Receipt</Text>
-              <Text style={s.receiptStore}>Jollibee – Talavera, N.E.</Text>
+              <Text style={s.receiptStore}>Jollibee – SM City Cabanatuan</Text>
+              <Text style={[s.receiptStore,{fontSize:11,color:"#94A3B8",marginBottom:8}]}>Maharlika Highway, Cabanatuan City</Text>
               <View style={s.receiptDivider}/>
               <View style={s.receiptRow}><Text style={s.receiptItem}>Chickenjoy Meal</Text><Text style={s.receiptPrice}>₱185.00</Text></View>
               <View style={s.receiptRow}><Text style={s.receiptItem}>Palabok</Text><Text style={s.receiptPrice}>₱99.00</Text></View>
@@ -653,20 +748,22 @@ export default function EGovScreen({ navigation }) {
               <View style={s.receiptRow}><Text style={[s.receiptItem,{color:"#D97706"}]}>VAT Exemption</Text><Text style={[s.receiptPrice,{color:"#D97706"}]}>-₱30.43</Text></View>
               <View style={s.receiptDivider}/>
               <View style={s.receiptRow}><Text style={[s.receiptItem,{fontWeight:"bold",fontSize:16}]}>TOTAL</Text><Text style={[s.receiptPrice,{fontWeight:"bold",fontSize:16}]}>₱196.77</Text></View>
+              <View style={s.receiptDivider}/>
+              <Text style={[s.receiptStore,{fontSize:10,color:"#94A3B8",marginTop:4}]}>OSCA ID No.: CAB-2024-00123</Text>
             </View>
-            <StatusBadge safe text="Ang 20% diskwento at VAT exemption ay inyong karapatan bilang senior citizen. Magdala palagi ng OSCA ID!"/>
+            <StatusBadge safe text="Ang 20% diskwento at VAT exemption ay inyong karapatan sa lahat ng establisyimento sa Cabanatuan City. Magdala palagi ng OSCA ID!"/>
           </PhoneShell>
         );
 
-      // PhilHealth card
+      // ── PhilHealth Card ───────────────────────────
       case "philhealth":
         return (
-          <PhoneShell headerBg="#DC2626" headerTitle="PhilHealth" headerIcon="heart">
+          <PhoneShell headerBg="#DC2626" headerTitle="PhilHealth Cabanatuan" headerIcon="heart">
             <View style={[s.idCard, {borderColor:"#DC2626"}]}>
               <View style={[s.idCardHeader, {backgroundColor:"#DC2626"}]}>
                 <Ionicons name="heart" size={24} color="#fff"/>
                 <Text style={s.idCardHeaderTitle}>Philippine Health Insurance</Text>
-                <Text style={s.idCardHeaderSub}>PhilHealth Member</Text>
+                <Text style={s.idCardHeaderSub}>2/F NE Pacific Mall, Km 111, Maharlika Hwy</Text>
               </View>
               <View style={s.idCardBody}>
                 <View style={[s.idPhotoPlaceholder, {borderColor:"#DC2626"}]}>
@@ -677,67 +774,97 @@ export default function EGovScreen({ navigation }) {
                   <Text style={[s.idValue,{fontFamily:Platform.OS==="ios"?"Courier":"monospace"}]}>12-123456789-0</Text>
                   <Text style={s.idLabel}>Type:</Text>
                   <Text style={s.idValue}>Senior Citizen (Lifetime)</Text>
+                  <Text style={s.idLabel}>Tel:</Text>
+                  <Text style={s.idValue}>(044) 940-3723</Text>
                 </View>
               </View>
             </View>
-            <StatusBadge safe text="Ang lahat ng 60 taong gulang pataas ay awtomatikong lifetime member ng PhilHealth. Libre ang hospitalization benefits!"/>
+            <StatusBadge safe text="Ang lahat ng 60+ na senior ng Cabanatuan City ay awtomatikong lifetime member ng PhilHealth. Gamitin sa Dr. PJG Hospital at iba pang accredited hospitals."/>
           </PhoneShell>
         );
 
-      // DSWD Pension
+      // ── DSWD Social Pension ───────────────────────
       case "dswd":
         return (
-          <PhoneShell headerBg="#059669" headerTitle="DSWD SocPen" headerIcon="cash">
+          <PhoneShell headerBg="#059669" headerTitle="DSWD – Cabanatuan City" headerIcon="cash">
             <View style={s.appScreen}>
               <View style={s.pensionCard}>
                 <View style={[s.pensionCardHeader, {backgroundColor:"#059669"}]}>
                   <Ionicons name="cash" size={28} color="#fff"/>
-                  <Text style={s.pensionCardTitle}>Social Pension</Text>
+                  <Text style={s.pensionCardTitle}>Social Pension Program</Text>
                 </View>
                 <View style={s.pensionCardBody}>
                   <Text style={s.pensionLabel}>Buwanang Stipend:</Text>
                   <Text style={s.pensionAmount}>₱1,000.00</Text>
                   <View style={s.pensionDivider}/>
-                  <InfoRow icon="checkmark-circle" text="Indigent Senior Citizen" color="#059669"/>
-                  <InfoRow icon="checkmark-circle" text="Walang iba pang pension" color="#059669"/>
+                  <InfoRow icon="location" text="DSWD SWAD Nueva Ecija – Mabini Extension St., Cabanatuan City" color="#059669"/>
+                  <InfoRow icon="checkmark-circle" text="Indigent Senior Citizen ng Cabanatuan City" color="#059669"/>
+                  <InfoRow icon="checkmark-circle" text="Walang iba pang regular na pension" color="#059669"/>
                   <InfoRow icon="checkmark-circle" text="60 taong gulang pataas" color="#059669"/>
                 </View>
               </View>
-              <StatusBadge safe text="Ang DSWD Social Pension ay tumutulong sa mga mahihirap na senior citizen. Mag-apply sa inyong barangay o DSWD office."/>
+              <StatusBadge safe text="Mag-apply sa inyong barangay hall sa Cabanatuan City para sa DSWD Social Pension. Ang DSWD SWAD Nueva Ecija ay nasa Mabini Extension Street."/>
             </View>
           </PhoneShell>
         );
 
-      // SSS
+      // ── SSS Dashboard ─────────────────────────────
       case "sss":
         return (
-          <PhoneShell headerBg="#0EA5E9" headerTitle="My.SSS App" headerIcon="business">
+          <PhoneShell headerBg="#0EA5E9" headerTitle="SSS – Cabanatuan Branch" headerIcon="business">
             <View style={s.appScreen}>
               <View style={s.appDashboard}>
                 <View style={s.dashCard}>
-                  <Text style={s.dashLabel}>Monthly Pension</Text>
+                  <Text style={s.dashLabel}>Monthly Pension (Sample)</Text>
                   <Text style={[s.dashValue, {color:"#0EA5E9"}]}>₱3,500.00</Text>
                 </View>
                 <View style={s.dashCard}>
-                  <Text style={s.dashLabel}>Total Contributions</Text>
-                  <Text style={[s.dashValue,{color:"#059669"}]}>₱240,000</Text>
+                  <Text style={s.dashLabel}>SSS Cabanatuan Branch</Text>
+                  <Text style={[s.dashValue,{color:"#059669",fontSize:11}]}>NE Pacific Shopping Center</Text>
+                  <Text style={[s.dashValue,{color:"#059669",fontSize:11}]}>Maharlika Highway, Brgy. H. Concepcion</Text>
                 </View>
                 <View style={s.dashCard}>
-                  <Text style={s.dashLabel}>Status</Text>
-                  <Text style={[s.dashValue,{color:"#059669",fontSize:14}]}>Retirement Pensioner</Text>
+                  <Text style={s.dashLabel}>Tel / Email</Text>
+                  <Text style={[s.dashValue,{color:"#0EA5E9",fontSize:12}]}>(044) 463-0691</Text>
+                  <Text style={[s.dashValue,{color:"#64748B",fontSize:10}]}>cabanatuan@sss.gov.ph</Text>
                 </View>
               </View>
-              <StatusBadge safe text="Ang My.SSS app ay nagbibigay ng madaling access sa inyong SSS benefits at pension. I-download ito sa App Store o Google Play."/>
+              <StatusBadge safe text="Ang SSS Cabanatuan Branch ay nasa NE Pacific Shopping Center, Maharlika Highway. Maaari ring gamitin ang My.SSS app para sa online transactions."/>
             </View>
           </PhoneShell>
         );
 
-      // eGovPH App
+      // ── GSIS Dashboard ────────────────────────────
+      case "gsis":
+        return (
+          <PhoneShell headerBg="#7C3AED" headerTitle="GSIS – Cabanatuan Branch" headerIcon="shield-checkmark">
+            <View style={s.appScreen}>
+              <View style={s.appDashboard}>
+                <View style={s.dashCard}>
+                  <Text style={s.dashLabel}>Retirement Pension (Sample)</Text>
+                  <Text style={[s.dashValue, {color:"#7C3AED"}]}>₱8,200.00</Text>
+                </View>
+                <View style={s.dashCard}>
+                  <Text style={s.dashLabel}>GSIS Cabanatuan Branch</Text>
+                  <Text style={[s.dashValue,{color:"#7C3AED",fontSize:11}]}>NFA Compound, Maharlika Highway</Text>
+                  <Text style={[s.dashValue,{color:"#64748B",fontSize:10}]}>Coverage: Nueva Ecija & Aurora</Text>
+                </View>
+                <View style={s.dashCard}>
+                  <Text style={s.dashLabel}>Telephone</Text>
+                  <Text style={[s.dashValue,{color:"#7C3AED",fontSize:12}]}>(044) 463-0572</Text>
+                </View>
+              </View>
+              <StatusBadge safe text="Ang GSIS Cabanatuan Branch ay para sa mga dating empleyado ng pamahalaan sa Nueva Ecija at Aurora. Gamitin ang GSIS Touch app para sa online transactions."/>
+            </View>
+          </PhoneShell>
+        );
+
+      // ── eGovPH App ────────────────────────────────
       case "egovph_app":
         return (
           <PhoneShell headerBg="#0EA5E9" headerTitle="eGovPH Super App" headerIcon="phone-portrait">
             <View style={s.appScreen}>
-              <Text style={s.appGridTitle}>Mga Serbisyo</Text>
+              <Text style={s.appGridTitle}>Mga Serbisyo – Cabanatuan City</Text>
               <View style={s.appGrid}>
                 {[
                   {icon:"card", label:"Senior ID", color:"#0EA5E9"},
@@ -755,12 +882,12 @@ export default function EGovScreen({ navigation }) {
                   </View>
                 ))}
               </View>
-              <StatusBadge safe text="Ang eGovPH Super App ay ang opisyal na app ng pamahalaan. Dito makikita ang lahat ng government services sa isang lugar!"/>
+              <StatusBadge safe text="Ang eGovPH Super App ay ang opisyal na app ng pamahalaan. Dito makikita ang lahat ng government services – kasama ang mga opisina sa Cabanatuan City!"/>
             </View>
           </PhoneShell>
         );
 
-      // RA 9994
+      // ── RA 9994 ───────────────────────────────────
       case "ra9994":
         return (
           <PhoneShell headerBg="#0EA5E9" headerTitle="RA 9994 – Inyong Karapatan" headerIcon="document-text">
@@ -771,23 +898,23 @@ export default function EGovScreen({ navigation }) {
                 <Text style={s.lawSubtitle}>Expanded Senior Citizens Act</Text>
               </View>
               {[
-                "20% diskwento sa pagkain, gamot, at transportasyon",
-                "VAT exemption sa lahat ng purchases",
-                "Priority lane sa lahat ng establisyimento",
-                "Libreng medical services sa gov't hospitals",
-                "Proteksyon laban sa diskriminasyon",
+                "20% diskwento sa lahat ng establisyimento sa Cabanatuan City",
+                "VAT exemption sa lahat ng covered na pagbili",
+                "Priority lane sa City Hall, SSS, PhilHealth, Dr. PJG Hospital",
+                "Libreng medical services sa government hospitals ng Cabanatuan",
+                "Proteksyon laban sa diskriminasyon at elder abuse",
               ].map((r,i)=>(
                 <View key={i} style={s.lawItem}>
                   <Ionicons name="checkmark-circle" size={18} color="#059669"/>
                   <Text style={s.lawItemText}>{r}</Text>
                 </View>
               ))}
-              <StatusBadge safe text="Ito ang inyong karapatan bilang senior citizen ng Pilipinas. Huwag hayaang hindi ito maibigay sa inyo!"/>
+              <StatusBadge safe text="Ito ang inyong karapatan bilang senior citizen ng Cabanatuan City. Kung hindi ito ibinibigay, mag-report sa OSCA o DTI Region III: 1-800-10-384-0349!"/>
             </View>
           </PhoneShell>
         );
 
-      // Elder abuse
+      // ── Elder Abuse Hotlines ──────────────────────
       case "elder_abuse":
         return (
           <PhoneShell headerBg="#DC2626" headerTitle="I-Report ang Pang-aabuso" headerIcon="alert-circle">
@@ -797,35 +924,35 @@ export default function EGovScreen({ navigation }) {
                 <Text style={[s.alertTitle, {color:"#DC2626"}]}>Humingi ng Tulong Agad!</Text>
               </View>
               {[
-                {name:"DSWD ReSPPEC", number:"(02) 8931-8101", color:"#059669"},
-                {name:"NCSC Hotline", number:"1-800-10-737-0011", color:"#0EA5E9"},
-                {name:"PNP Hotline", number:"117", color:"#DC2626"},
+                {name:"Emergency 911", number:"911", color:"#DC2626"},
+                {name:"NCSC Hotline (libre)", number:"18001737-0011", color:"#0EA5E9"},
+                {name:"Cabanatuan City PNP", number:"0446004506", color:"#1D4ED8"},
               ].map((h,i)=>(
-                <TouchableOpacity key={i} style={s.hotlineCard} onPress={()=>Linking.openURL(`tel:${h.number.replace(/[^0-9]/g,"")}`)}>
+                <TouchableOpacity key={i} style={s.hotlineCard} onPress={()=>Linking.openURL(`tel:${h.number}`)}>
                   <Ionicons name="call" size={20} color={h.color}/>
                   <View style={{marginLeft:12,flex:1}}>
                     <Text style={s.hotlineCardName}>{h.name}</Text>
-                    <Text style={[s.hotlineCardNum, {color:h.color}]}>{h.number}</Text>
+                    <Text style={[s.hotlineCardNum, {color:h.color}]}>{h.number === "18001737-0011" ? "1-800-10-737-0011" : h.number === "0446004506" ? "(044) 600-4506" : h.number}</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={16} color="#94A3B8"/>
                 </TouchableOpacity>
               ))}
-              <StatusBadge safe={false} text="Kung kayo o ang inyong kakilala ay nang-aabuso ng isang senior citizen, mag-report kaagad. May batas na nagpoprotekta sa inyo!"/>
+              <StatusBadge safe={false} text="Kung may nang-aabuso sa inyo sa Cabanatuan City, tumawag kaagad. May batas na nagpoprotekta sa inyo – ang RA 9994 at iba pang batas ng Pilipinas!"/>
             </View>
           </PhoneShell>
         );
 
-      // Barangay
+      // ── Barangay Services ─────────────────────────
       case "barangay":
         return (
-          <PhoneShell headerBg="#059669" headerTitle="Barangay Hall" headerIcon="home">
+          <PhoneShell headerBg="#059669" headerTitle="Barangay – Cabanatuan City" headerIcon="home">
             <View style={s.appScreen}>
-              <Text style={s.appGridTitle}>Mga Serbisyo ng Barangay</Text>
+              <Text style={s.appGridTitle}>89 Barangay ng Cabanatuan City</Text>
               {[
-                {icon:"document-text", label:"Barangay Clearance", color:"#059669"},
-                {icon:"people", label:"Senior Citizen Programs", color:"#0EA5E9"},
-                {icon:"cash", label:"Cash Assistance", color:"#D97706"},
-                {icon:"medkit", label:"Health Referral", color:"#DC2626"},
+                {icon:"document-text", label:"Barangay Clearance at Certificate of Residency", color:"#059669"},
+                {icon:"people", label:"Senior Citizen Programs at Referral sa OSCA", color:"#0EA5E9"},
+                {icon:"cash", label:"Referral sa DSWD Social Pension", color:"#D97706"},
+                {icon:"medkit", label:"Health Referral sa Dr. PJG Hospital", color:"#DC2626"},
               ].map((item,i)=>(
                 <View key={i} style={s.menuListItem}>
                   <View style={[s.menuListIcon, {backgroundColor:item.color+"22"}]}>
@@ -835,12 +962,47 @@ export default function EGovScreen({ navigation }) {
                   <Ionicons name="chevron-forward" size={16} color="#94A3B8"/>
                 </View>
               ))}
-              <StatusBadge safe text="Ang inyong barangay ay ang pinakamalapit na lugar para humingi ng tulong. Makipag-ugnayan sa inyong Barangay Chairman o OSCA officer!"/>
+              <StatusBadge safe text="Pumunta sa inyong barangay hall (Lunes-Biyernes, 8AM-5PM) para sa tulong at serbisyo para sa senior citizens ng Cabanatuan City!"/>
             </View>
           </PhoneShell>
         );
 
-      // Default
+      // ── OSCA Office ───────────────────────────────
+      case "osca_office":
+        return (
+          <PhoneShell headerBg="#0EA5E9" headerTitle="OSCA – Cabanatuan City Hall" headerIcon="people">
+            <View style={s.appScreen}>
+              <View style={s.appDashboard}>
+                <View style={s.dashCard}>
+                  <Text style={s.dashLabel}>OSCA Office</Text>
+                  <Text style={[s.dashValue,{color:"#0EA5E9",fontSize:11}]}>Cabanatuan City Hall</Text>
+                  <Text style={[s.dashValue,{color:"#64748B",fontSize:10,marginTop:2}]}>M. de Leon Avenue, Cabanatuan City</Text>
+                </View>
+                <View style={s.dashCard}>
+                  <Text style={s.dashLabel}>Oras ng Serbisyo</Text>
+                  <Text style={[s.dashValue,{color:"#059669",fontSize:12}]}>Lunes – Biyernes</Text>
+                  <Text style={[s.dashValue,{color:"#64748B",fontSize:11}]}>8:00 AM – 5:00 PM</Text>
+                </View>
+              </View>
+              {[
+                "Pag-process ng Senior Citizens ID (libre)",
+                "Tulong sa 20% diskwento at benepisyo",
+                "DSWD Social Pension coordination",
+                "Livelihood at Senior Citizens Week programs",
+              ].map((svc,i)=>(
+                <View key={i} style={s.menuListItem}>
+                  <View style={[s.menuListIcon, {backgroundColor:"#0EA5E9"+"22"}]}>
+                    <Ionicons name="checkmark-circle" size={20} color="#0EA5E9"/>
+                  </View>
+                  <Text style={s.menuListText}>{svc}</Text>
+                </View>
+              ))}
+              <StatusBadge safe text="Ang OSCA Office sa Cabanatuan City Hall ang inyong pangunahing lugar para sa lahat ng senior citizen services. Libre ang lahat ng serbisyo!"/>
+            </View>
+          </PhoneShell>
+        );
+
+      // ── Default ───────────────────────────────────
       default:
         return (
           <PhoneShell headerBg="#0EA5E9" headerTitle="E-Government Services" headerIcon="globe">
@@ -870,7 +1032,7 @@ export default function EGovScreen({ navigation }) {
             <View style={s.tipBox}>
               <Text style={s.tipBoxTitle}>💡 Tandaan:</Text>
               <Text style={s.tipBoxText}>
-                {"• Gamitin ang mga totoong government websites at apps lamang\n• Huwag ibigay ang personal information sa hindi kilalang websites\n• Kung hindi sigurado, magtanong sa pamilya o sa OSCA office"}
+                {"• Gamitin ang mga totoong government websites at apps lamang\n• Huwag ibigay ang personal information sa hindi kilalang websites\n• Kung hindi sigurado, magtanong sa pamilya o sa OSCA Office sa Cabanatuan City Hall, M. de Leon Avenue"}
               </Text>
             </View>
           </ScrollView>
@@ -894,7 +1056,7 @@ export default function EGovScreen({ navigation }) {
             <Ionicons name="globe" size={32} color="#0F172A"/>
           </View>
           <Text style={s.headerTitle}>E-Government Services</Text>
-          <Text style={s.headerSubtitle}>Para sa mga Senior Citizens ng Pilipinas</Text>
+          <Text style={s.headerSubtitle}>Para sa mga Senior Citizens ng Cabanatuan City, Nueva Ecija</Text>
           <View style={s.headerDivider}/>
         </View>
         <View style={s.moduleGrid}>
@@ -913,7 +1075,7 @@ export default function EGovScreen({ navigation }) {
         </View>
         <View style={s.footer}>
           <Text style={s.footerText}>💡 Pindutin ang Basahin para marinig ang bawat seksyon</Text>
-          <Text style={s.footerSub}>May screen simulator para makita ang mga halimbawa!</Text>
+          <Text style={s.footerSub}>May screen simulator para sa mga ID, diskwento, at iba pang serbisyo!</Text>
         </View>
       </GradientScreen>
     );
@@ -927,7 +1089,7 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>IDs at Rehistrasyon</Text>
-          <ReadBtn text="Ang IDs at Rehistrasyon ay ang unang hakbang para ma-access ang lahat ng senior citizen benefits sa Pilipinas. Matutuhan natin ang OSCA ID, PhilSys National ID, at Digital Senior Citizens ID." id="ids-main"/>
+          <ReadBtn text="Ang IDs at Rehistrasyon ay ang unang hakbang para ma-access ang lahat ng senior citizen benefits sa Cabanatuan City, Nueva Ecija. Matutuhan natin ang OSCA ID mula sa Cabanatuan City Hall, PhilSys National ID, at Digital Senior Citizens ID." id="ids-main"/>
         </View>
         {IDS_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
@@ -954,7 +1116,7 @@ export default function EGovScreen({ navigation }) {
                 <Ionicons name={isNarrating(`ids-${i}`)?"stop":"play"} size={16} color="#38BDF8"/>
                 <Text style={s.listenBtnText}>{isNarrating(`ids-${i}`)?"Tumutugtog...":"Basahin"}</Text>
               </TouchableOpacity>
-              <SimBtn type={item.simulatorType} data={item}/>
+              {item.simulatorType && <SimBtn type={item.simulatorType} data={item}/>}
             </View>
           </View>
         ))}
@@ -970,7 +1132,7 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>Mga Benepisyo at Diskwento</Text>
-          <ReadBtn text="Bilang senior citizen ng Pilipinas, marami kayong karapatan sa ilalim ng Batas RA 9994 o Expanded Senior Citizens Act. Matutuhan natin ang lahat ng mga benepisyo na dapat ninyong matanggap." id="ben-main"/>
+          <ReadBtn text="Bilang senior citizen ng Cabanatuan City, Nueva Ecija, marami kayong karapatan sa ilalim ng Batas RA 9994 o Expanded Senior Citizens Act. Matutuhan natin ang lahat ng mga benepisyo na dapat ninyong matanggap sa lahat ng establisyimento sa Cabanatuan." id="ben-main"/>
         </View>
         {BENEFITS_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
@@ -992,7 +1154,7 @@ export default function EGovScreen({ navigation }) {
                 <Ionicons name={isNarrating(`ben-${i}`)?"stop":"play"} size={16} color="#38BDF8"/>
                 <Text style={s.listenBtnText}>{isNarrating(`ben-${i}`)?"Tumutugtog...":"Basahin"}</Text>
               </TouchableOpacity>
-              <SimBtn type={item.simulatorType} data={item}/>
+              {item.simulatorType && <SimBtn type={item.simulatorType} data={item}/>}
             </View>
           </View>
         ))}
@@ -1008,7 +1170,7 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>Serbisyong Pangkalusugan</Text>
-          <ReadBtn text="Ang kalusugan ang pinakamahalagang bagay para sa mga senior citizen. Mayroon tayong PhilHealth, DOH programs, at iba pang health benefits na maaaring gamitin." id="health-main"/>
+          <ReadBtn text="Ang kalusugan ang pinakamahalagang bagay para sa mga senior citizen ng Cabanatuan City. Mayroon tayong PhilHealth office sa NE Pacific Mall, ang Dr. Paulino J. Garcia Memorial Hospital sa Mabini Street na may hotline na 044-463-8888, at ang M.V. Gallego City General Hospital para sa inyong kalusugan." id="health-main"/>
         </View>
         {HEALTH_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
@@ -1018,7 +1180,7 @@ export default function EGovScreen({ navigation }) {
             </View>
             <Text style={s.infoCardDesc}>{item.description}</Text>
             <View style={s.stepList}>
-              <Text style={s.stepListLabel}>Mga Hakbang:</Text>
+              <Text style={s.stepListLabel}>Mga Hakbang / Serbisyo:</Text>
               {item.steps.map((step, j) => (
                 <View key={j} style={s.stepItem}>
                   <View style={[s.stepNum, {backgroundColor: item.color}]}><Text style={s.stepNumText}>{j+1}</Text></View>
@@ -1031,7 +1193,7 @@ export default function EGovScreen({ navigation }) {
                 <Ionicons name={isNarrating(`health-${i}`)?"stop":"play"} size={16} color="#38BDF8"/>
                 <Text style={s.listenBtnText}>{isNarrating(`health-${i}`)?"Tumutugtog...":"Basahin"}</Text>
               </TouchableOpacity>
-              <SimBtn type={item.simulatorType} data={item}/>
+              {item.simulatorType && <SimBtn type={item.simulatorType} data={item}/>}
             </View>
           </View>
         ))}
@@ -1047,7 +1209,7 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>Social Pension</Text>
-          <ReadBtn text="Ang social pension ay tumutulong sa mga senior citizen para sa kanilang pangangailangan. Mayroon tayong DSWD Social Pension, SSS Pension, at GSIS Pension." id="pen-main"/>
+          <ReadBtn text="Ang social pension ay tumutulong sa mga senior citizen ng Cabanatuan City para sa kanilang pangangailangan. Mayroon tayong DSWD Social Pension sa Mabini Extension Street, SSS Cabanatuan Branch sa NE Pacific Mall na may numero 044-463-0691, at GSIS Cabanatuan Branch sa NFA Compound Maharlika Highway na may numero 044-463-0572." id="pen-main"/>
         </View>
         {PENSION_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
@@ -1083,7 +1245,7 @@ export default function EGovScreen({ navigation }) {
                 <Ionicons name={isNarrating(`pen-${i}`)?"stop":"play"} size={16} color="#38BDF8"/>
                 <Text style={s.listenBtnText}>{isNarrating(`pen-${i}`)?"Tumutugtog...":"Basahin"}</Text>
               </TouchableOpacity>
-              <SimBtn type={item.simulatorType} data={item}/>
+              {item.simulatorType && <SimBtn type={item.simulatorType} data={item}/>}
             </View>
           </View>
         ))}
@@ -1099,7 +1261,7 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>Gabay sa eGov Apps</Text>
-          <ReadBtn text="Ang mga eGov apps ay nagbibigay ng madaling access sa mga serbisyo ng pamahalaan sa inyong telepono. Matutuhan natin ang eGovPH, My SSS, PhilHealth, at Pag-IBIG apps." id="apps-main"/>
+          <ReadBtn text="Ang mga eGov apps ay nagbibigay ng madaling access sa mga serbisyo ng pamahalaan sa inyong telepono. Para sa mga senior ng Cabanatuan City, matutuhan natin ang eGovPH, My SSS, PhilHealth, at Pag-IBIG apps bilang alternatibo sa personal na pagpunta sa mga opisina." id="apps-main"/>
         </View>
         {APPS_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
@@ -1122,7 +1284,7 @@ export default function EGovScreen({ navigation }) {
                 <Ionicons name={isNarrating(`apps-${i}`)?"stop":"play"} size={16} color="#38BDF8"/>
                 <Text style={s.listenBtnText}>{isNarrating(`apps-${i}`)?"Tumutugtog...":"Basahin"}</Text>
               </TouchableOpacity>
-              <SimBtn type={item.simulatorType} data={item}/>
+              {item.simulatorType && <SimBtn type={item.simulatorType} data={item}/>}
               <TouchableOpacity style={[s.listenBtn, {borderColor: item.color, backgroundColor: item.color+"15"}]} onPress={()=>Linking.openURL(item.downloadLink)}>
                 <Ionicons name="download-outline" size={16} color={item.color}/>
                 <Text style={[s.listenBtnText, {color: item.color}]}>I-download</Text>
@@ -1142,7 +1304,7 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>Legal na Proteksyon</Text>
-          <ReadBtn text="Bilang senior citizen ng Pilipinas, kayo ay protektado ng batas. Ang Republic Act 9994 at iba pang batas ay nagbibigay ng karapatan at proteksyon sa lahat ng matatanda." id="legal-main"/>
+          <ReadBtn text="Bilang senior citizen ng Cabanatuan City, Nueva Ecija, kayo ay protektado ng batas. Ang Republic Act 9994 at iba pang batas ay nagbibigay ng karapatan at proteksyon sa lahat ng matatanda sa lungsod." id="legal-main"/>
         </View>
         {LEGAL_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
@@ -1164,7 +1326,7 @@ export default function EGovScreen({ navigation }) {
             )}
             {item.reportTo && (
               <View style={s.bulletList}>
-                <Text style={s.stepListLabel}>Saan Mag-report:</Text>
+                <Text style={s.stepListLabel}>Saan Mag-report sa Cabanatuan City:</Text>
                 {item.reportTo.map((r,j)=>(
                   <View key={j} style={s.bulletItem}>
                     <Ionicons name="call" size={16} color={item.color}/>
@@ -1189,7 +1351,7 @@ export default function EGovScreen({ navigation }) {
                 <Ionicons name={isNarrating(`legal-${i}`)?"stop":"play"} size={16} color="#38BDF8"/>
                 <Text style={s.listenBtnText}>{isNarrating(`legal-${i}`)?"Tumutugtog...":"Basahin"}</Text>
               </TouchableOpacity>
-              <SimBtn type={item.simulatorType} data={item} danger={item.color==="#DC2626"}/>
+              {item.simulatorType && <SimBtn type={item.simulatorType} data={item} danger={item.color==="#DC2626"}/>}
             </View>
           </View>
         ))}
@@ -1205,7 +1367,7 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>LGU / Barangay Serbisyo</Text>
-          <ReadBtn text="Ang inyong lokal na pamahalaan, partikular ang barangay at OSCA office, ay ang pinakamalapit na lugar para humingi ng tulong at serbisyo bilang senior citizen." id="lgu-main"/>
+          <ReadBtn text="Ang Cabanatuan City Hall sa M. de Leon Avenue at ang inyong barangay sa isa sa 89 barangay ng Cabanatuan City ang pinakamalapit na lugar para humingi ng tulong at serbisyo bilang senior citizen." id="lgu-main"/>
         </View>
         {LGU_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
@@ -1232,7 +1394,7 @@ export default function EGovScreen({ navigation }) {
                 <Ionicons name={isNarrating(`lgu-${i}`)?"stop":"play"} size={16} color="#38BDF8"/>
                 <Text style={s.listenBtnText}>{isNarrating(`lgu-${i}`)?"Tumutugtog...":"Basahin"}</Text>
               </TouchableOpacity>
-              <SimBtn type={item.simulatorType} data={item}/>
+              {item.simulatorType && <SimBtn type={item.simulatorType} data={item}/>}
             </View>
           </View>
         ))}
@@ -1248,14 +1410,18 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>Mga Hotline at Emergency</Text>
-          <ReadBtn text="Narito ang lahat ng mahahalagang numero na maaari ninyong tawagan para sa tulong. I-save ang mga numerong ito sa inyong telepono." id="hotlines-main"/>
+          <ReadBtn text="Narito ang lahat ng mahahalagang numero para sa mga senior citizen ng Cabanatuan City, Nueva Ecija. I-save ang mga numerong ito sa inyong telepono para sa inyong kaligtasan at kaginhawahan. Para sa emergency, tumawag sa 911 anumang oras ng araw o gabi." id="hotlines-main"/>
         </View>
         <View style={[s.tipBox, {marginBottom:20}]}>
           <Text style={s.tipBoxTitle}>📞 I-save ang mga numerong ito!</Text>
-          <Text style={s.tipBoxText}>Pindutin ang numero para direktang tumawag.</Text>
+          <Text style={s.tipBoxText}>Mga opisyal na numero ng government offices sa Cabanatuan City at Nueva Ecija. Pindutin ang numero para direktang tumawag.</Text>
         </View>
         {HOTLINES.map((h, i) => (
-          <TouchableOpacity key={i} style={s.hotlineFullCard} onPress={()=>Linking.openURL(`tel:${h.number.replace(/[^0-9]/g,"")}`)}>
+          <TouchableOpacity
+            key={i}
+            style={s.hotlineFullCard}
+            onPress={()=>Linking.openURL(`tel:${h.number.replace(/[^0-9]/g,"")}`)}
+          >
             <View style={[s.hotlineIconWrap, {backgroundColor: h.color+"22"}]}>
               <Ionicons name={h.icon} size={26} color={h.color}/>
             </View>
@@ -1271,8 +1437,8 @@ export default function EGovScreen({ navigation }) {
           </TouchableOpacity>
         ))}
         <View style={[s.tipBox, {marginTop:8}]}>
-          <Text style={s.tipBoxTitle}>⚠️ Emergency:</Text>
-          <Text style={s.tipBoxText}>Para sa emergency na sitwasyon, tumawag kaagad sa 911. Bukas ito 24 na oras, 7 araw sa isang linggo.</Text>
+          <Text style={s.tipBoxTitle}>⚠️ Emergency sa Cabanatuan City:</Text>
+          <Text style={s.tipBoxText}>Para sa emergency na sitwasyon sa Cabanatuan City at Nueva Ecija, tumawag kaagad sa 911. Bukas ito 24 na oras, 7 araw sa isang linggo.</Text>
         </View>
       </GradientScreen>
     );
@@ -1511,7 +1677,7 @@ const s = StyleSheet.create({
     borderColor: "#FDE68A", borderStyle: "dashed", marginBottom: 16,
   },
   receiptTitle: { fontSize: 16, fontWeight: "bold", color: "#0F172A", textAlign: "center", marginBottom: 2 },
-  receiptStore: { fontSize: 12, color: "#64748B", textAlign: "center", marginBottom: 12 },
+  receiptStore: { fontSize: 12, color: "#64748B", textAlign: "center", marginBottom: 4 },
   receiptDivider: { height: 1, backgroundColor: "#E2E8F0", marginVertical: 8 },
   receiptRow: { flexDirection: "row", justifyContent: "space-between", marginVertical: 3 },
   receiptItem: { fontSize: 13, color: "#475569" },
@@ -1550,7 +1716,7 @@ const s = StyleSheet.create({
   hotlineCardName: { fontSize: 14, fontWeight: "bold", color: "#0F172A" },
   hotlineCardNum: { fontSize: 13, fontWeight: "600", marginTop: 2 },
 
-  // Menu List (barangay simulator)
+  // Menu List (barangay/osca simulator)
   menuListItem: {
     flexDirection: "row", alignItems: "center", backgroundColor: "#F8FAFC",
     padding: 14, borderRadius: 10, marginBottom: 10, borderWidth: 1, borderColor: "#E2E8F0",

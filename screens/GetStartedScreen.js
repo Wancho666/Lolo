@@ -78,8 +78,7 @@ export default function GetStartedScreen({ navigation }) {
   const checkReturningUser = async () => {
     try {
       const hasOnboarded = await AsyncStorage.getItem("hasOnboarded");
-      const nickname = await AsyncStorage.getItem("nickname");
-      if (hasOnboarded && nickname) {
+      if (hasOnboarded) {
         navigation.replace("Home");
       }
     } catch (error) {
@@ -230,7 +229,7 @@ export default function GetStartedScreen({ navigation }) {
 
     try {
       await AsyncStorage.setItem("hasOnboarded", "true");
-      navigation.replace("NameInput");
+      navigation.replace("Home");
     } catch (error) {
       console.log("Error saving onboarding flag:", error);
     }

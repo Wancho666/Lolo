@@ -382,7 +382,7 @@ export default function HomeScreen({ navigation }) {
             />
           </Animated.View>
 
-          {/* Welcome Section */}
+          {/* Welcome Section
           <Animated.View
             style={[
               styles.welcomeContainer,
@@ -398,7 +398,7 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.subtitleText}>
               Choose what you'd like to learn today
             </Text>
-          </Animated.View>
+          </Animated.View> */}
 
           {/* Features Grid */}
           <View style={styles.featuresContainer}>
