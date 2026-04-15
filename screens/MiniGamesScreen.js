@@ -22,11 +22,10 @@ const MiniGamesScreen = () => {
   const [currentGame, setCurrentGame] = useState(null);
 
   const games = [
-    { id: 'color-match',   name: 'Color Match',   icon: 'palette',      color: '#3B82F6', description: 'Match colors to their names' },
-    { id: 'math-quiz',     name: 'Quick Math',    icon: 'calculator',   color: '#8B5CF6', description: 'Simple arithmetic to keep your mind sharp' },
-    { id: 'word-scramble', name: 'Word Scramble', icon: 'spell-check',  color: '#EC4899', description: 'Unscramble the hidden word' },
-    { id: 'pair-match',    name: 'Pair Match',    icon: 'clone',        color: '#10B981', description: 'Flip cards and find matching pairs' },
-    { id: 'true-or-false', name: 'True or False', icon: 'check-circle', color: '#F59E0B', description: 'Test your knowledge with fun facts' },
+    { id: 'color-match',   name: 'Color Match',   icon: 'palette',      color: '#3B82F6', description: 'Itugma ang mga kulay sa kanilang mga pangalan' },
+    { id: 'word-scramble', name: 'Bugtong',        icon: 'question',     color: '#EC4899', description: 'Hulaan ang sagot sa bugtong' },
+    { id: 'pair-match',    name: 'Pair Match',     icon: 'clone',        color: '#10B981', description: 'Baliktarin ang mga card at hanapin ang magkapares' },
+    { id: 'true-or-false', name: 'Tama o Mali',    icon: 'check-circle', color: '#F59E0B', description: 'Subukan ang inyong kaalaman sa mga katotohanan tungkol sa Pilipinas' },
   ];
 
   // ─── Shared Gradient Background ──────────────────────────────────────────────
@@ -46,17 +45,13 @@ const MiniGamesScreen = () => {
       <View style={styles.container}>
         <GradientBg />
 
-        {/* Inline nav bar — same flow as gameHeader, never overlaps */}
-        <View style={styles.selectorNavBar}>
-          <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()} activeOpacity={0.8}>
-            <Icon name="arrow-left" size={18} color="#0F172A" />
-            <Text style={styles.headerButtonText}>Back</Text>
-          </TouchableOpacity>
-          <View style={{ flex: 1 }} />
-        </View>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('HomeScreen')} activeOpacity={0.8}>
+          <Icon name="arrow-left" size={18} color="#0F172A" />
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          {/* Header — matches InternetBrowsingScreen header card */}
+          {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerIconContainer}>
               <Icon name="brain" size={32} color="#0F172A" />
@@ -66,7 +61,7 @@ const MiniGamesScreen = () => {
             <View style={styles.headerDivider} />
           </View>
 
-          {/* Game Cards — matches moduleCard */}
+          {/* Game Cards */}
           <View style={styles.moduleGrid}>
             {games.map((game) => (
               <TouchableOpacity
@@ -89,7 +84,7 @@ const MiniGamesScreen = () => {
             ))}
           </View>
 
-          {/* Footer — matches InternetBrowsingScreen footer */}
+          {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>💡 Tip: Pumili ng laro at simulan ang iyong brain training!</Text>
             <Text style={styles.footerSubtext}>Bawat laro ay nagpapalakas ng inyong memorya at isip.</Text>
@@ -102,9 +97,8 @@ const MiniGamesScreen = () => {
   // ─── Shared Game Header Bar ───────────────────────────────────────────────────
   const GameHeader = ({ title, onReset, score = null, level = null }) => (
     <View style={styles.gameHeader}>
-      {/* Row 1: Back + Reset buttons */}
       <View style={styles.gameHeaderRow}>
-        <TouchableOpacity style={styles.headerButton} onPress={() => setCurrentGame(null)}>
+        <TouchableOpacity style={styles.headerButton} onPress={() => setCurrentGame(null)} activeOpacity={0.8}>
           <Icon name="arrow-left" size={18} color="#0F172A" />
           <Text style={styles.headerButtonText}>Back</Text>
         </TouchableOpacity>
@@ -115,7 +109,6 @@ const MiniGamesScreen = () => {
           <Icon name="redo" size={18} color="#38BDF8" />
         </TouchableOpacity>
       </View>
-      {/* Row 2: Score / Level pills — only when needed */}
       {(score !== null || level !== null) && (
         <View style={styles.gameStats}>
           {score !== null && (
@@ -137,7 +130,7 @@ const MiniGamesScreen = () => {
 
   // ─── Shared Game Shell ────────────────────────────────────────────────────────
   const GameShell = ({ title, onReset, score, level, children }) => (
-    <SafeAreaView style={styles.safeAreaGame} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.safeAreaGame}>
       <View style={styles.container}>
         <GradientBg />
         <GameHeader title={title} onReset={onReset} score={score} level={level} />
@@ -160,6 +153,7 @@ const MiniGamesScreen = () => {
       { name: 'Purple', hex: '#8B5CF6' },
       { name: 'Orange', hex: '#F97316' },
     ];
+
     const [score, setScore]       = useState(0);
     const [level, setLevel]       = useState(1);
     const [round, setRound]       = useState(null);
@@ -168,31 +162,64 @@ const MiniGamesScreen = () => {
     const [feedback, setFeedback] = useState(null);
     const fadeAnim                = useRef(new Animated.Value(1)).current;
 
+    // FIX: Use ref to track streak without stale closures
+    const streakRef = useRef(0);
+    const scoreRef  = useRef(0);
+    const levelRef  = useRef(1);
+
     const buildRound = useCallback(() => {
       const word = colorData[Math.floor(Math.random() * colorData.length)];
       let inkIdx;
       do { inkIdx = Math.floor(Math.random() * colorData.length); } while (colorData[inkIdx].name === word.name);
-      const inkColor   = colorData[inkIdx];
+      const inkColor    = colorData[inkIdx];
       const distractors = colorData.filter(c => c.name !== inkColor.name).sort(() => Math.random() - 0.5).slice(0, 3);
       setRound({ word, inkColor });
       setOptions([...distractors, inkColor].sort(() => Math.random() - 0.5));
       setFeedback(null);
       Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start();
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    useEffect(() => { buildRound(); }, []);
+    useEffect(() => { buildRound(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleAnswer = (chosen) => {
       if (feedback) return;
       const correct = chosen.name === round.inkColor.name;
       setFeedback(correct ? 'correct' : 'wrong');
-      if (correct) { setScore(s => s + 10 + (streak >= 2 ? 5 : 0)); setStreak(s => s + 1); if ((score + 10) >= level * 60) setLevel(l => l + 1); }
-      else { setStreak(0); }
-      Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => setTimeout(buildRound, 200));
+
+      if (correct) {
+        const bonus     = streakRef.current >= 2 ? 5 : 0;
+        const newScore  = scoreRef.current + 10 + bonus;
+        const newStreak = streakRef.current + 1;
+        streakRef.current = newStreak;
+        scoreRef.current  = newScore;
+        setScore(newScore);
+        setStreak(newStreak);
+        if (newScore >= levelRef.current * 60) {
+          const newLevel = levelRef.current + 1;
+          levelRef.current = newLevel;
+          setLevel(newLevel);
+        }
+      } else {
+        streakRef.current = 0;
+        setStreak(0);
+      }
+
+      Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true })
+        .start(() => setTimeout(buildRound, 200));
+    };
+
+    const handleReset = () => {
+      streakRef.current = 0;
+      scoreRef.current  = 0;
+      levelRef.current  = 1;
+      setScore(0);
+      setLevel(1);
+      setStreak(0);
+      buildRound();
     };
 
     return (
-      <GameShell title="Color Match" onReset={() => { setScore(0); setLevel(1); setStreak(0); buildRound(); }} score={score} level={level}>
+      <GameShell title="Color Match" onReset={handleReset} score={score} level={level}>
         <View style={styles.lessonHeader}>
           <Text style={styles.lessonTitle}>Color Match</Text>
           <Text style={styles.lessonSubtitle}>Tap the color that matches the INK — not what the word says!</Text>
@@ -232,184 +259,102 @@ const MiniGamesScreen = () => {
   };
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // GAME 2 — QUICK MATH
+  // GAME 2 — BUGTONG
   // ═══════════════════════════════════════════════════════════════════════════════
-  const MathQuiz = () => {
+  const Bugtong = () => {
+    const bugtongList = [
+      { riddle: 'Ano ang puno na walang dahon?',                           answer: 'Saging',           options: ['Saging', 'Mangga', 'Bayabas', 'Kalabasa'] },
+      { riddle: 'Ano ang bahay na walang pintuan?',                        answer: 'Itlog',            options: ['Itlog', 'Bahay', 'Silo', 'Kubo'] },
+      { riddle: 'Ano ang puno na nagiging bato?',                          answer: 'Bato',             options: ['Bato', 'Puno', 'Lupa', 'Dagat'] },
+      { riddle: 'Ano ang ilog na hindi tumatakbo?',                        answer: 'Pasig',            options: ['Pasig', 'Cagayan', 'Pampanga', 'Agusan'] },
+      { riddle: 'Ano ang bundok na maaaring kainin?',                      answer: 'Pinatuyong isda',  options: ['Pinatuyong isda', 'Bundok', 'Tinapay', 'Gulay'] },
+      { riddle: 'Ano ang hayop na may sungay na maaaring kainin?',         answer: 'Kalabasa',         options: ['Kalabasa', 'Baka', 'Kambing', 'Toro'] },
+      { riddle: 'Ano ang tubig na hindi basang-basang?',                   answer: 'Litrato',          options: ['Litrato', 'Dagat', 'Ilog', 'Lawang'] },
+      { riddle: 'Ano ang puno na nagiging damit?',                         answer: 'Piyesta',          options: ['Piyesta', 'Mangga', 'Sampaloc', 'Bayabas'] },
+      { riddle: 'Ano ang araw na walang liwanag?',                         answer: 'Linggo',           options: ['Linggo', 'Lunes', 'Martes', 'Miyerkules'] },
+      { riddle: 'Ano ang ulan na hindi nababasa?',                         answer: 'Ulan ng apoy',     options: ['Ulan ng apoy', 'Ulan ng tubig', 'Ulan ng bato', 'Ulan ng dahon'] },
+    ];
+
     const [score, setScore]       = useState(0);
     const [level, setLevel]       = useState(1);
-    const [question, setQuestion] = useState(null);
-    const [options, setOptions]   = useState([]);
-    const [answered, setAnswered] = useState(false);
+    const [current, setCurrent]   = useState(null);
     const [selected, setSelected] = useState(null);
-    const timerRef                = useRef(null);
+    const [result, setResult]     = useState(null);
 
-    const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-
-    const buildQuestion = useCallback(() => {
-      const ops  = level <= 1 ? ['+', '-'] : level === 2 ? ['+', '-', '×'] : ['+', '-', '×', '÷'];
-      const op   = ops[Math.floor(Math.random() * ops.length)];
-      const maxN = level <= 1 ? 20 : level === 2 ? 50 : 99;
-      let a, b, answer;
-      if (op === '+')      { a = rand(1, maxN); b = rand(1, maxN); answer = a + b; }
-      else if (op === '-') { b = rand(1, maxN); a = rand(b, maxN); answer = a - b; }
-      else if (op === '×') { a = rand(2, 12);  b = rand(2, 12);   answer = a * b; }
-      else                 { b = rand(2, 9);   answer = rand(2, 12); a = b * answer; }
-      const wrongs = new Set();
-      while (wrongs.size < 3) {
-        const w = answer + (Math.random() < 0.5 ? 1 : -1) * rand(1, Math.max(5, Math.floor(answer * 0.3)));
-        if (w !== answer && w >= 0) wrongs.add(w);
-      }
-      setQuestion({ a, b, op, answer, text: `${a} ${op} ${b}` });
-      setOptions([answer, ...Array.from(wrongs)].sort(() => Math.random() - 0.5));
-      setAnswered(false);
-      setSelected(null);
-    }, [level]);
-
-    useEffect(() => { buildQuestion(); }, [level]);
-
-    const handleAnswer = (val) => {
-      if (answered) return;
-      setSelected(val); setAnswered(true); clearTimeout(timerRef.current);
-      if (val === question.answer) { setScore(s => s + 10 * level); if (score + 10 * level >= level * 50) setLevel(l => l + 1); }
-      timerRef.current = setTimeout(buildQuestion, 1400);
-    };
-    useEffect(() => () => clearTimeout(timerRef.current), []);
-
-    return (
-      <GameShell title="Quick Math" onReset={() => { setScore(0); setLevel(1); }} score={score} level={level}>
-        <View style={styles.lessonHeader}>
-          <Text style={styles.lessonTitle}>Quick Math</Text>
-          <Text style={styles.lessonSubtitle}>Solve the math problem as quickly as you can!</Text>
-        </View>
-
-        {question && (
-          <View style={[styles.gameContentCard, styles.mathCard]}>
-            <Text style={styles.mathEquation}>{question.text} = ?</Text>
-          </View>
-        )}
-
-        <View style={styles.mathOptionsGrid}>
-          {options.map((opt, i) => {
-            let bg = '#fff', borderColor = '#BAE6FD';
-            if (answered && opt === question.answer)                           { bg = '#059669'; borderColor = '#059669'; }
-            else if (answered && opt === selected && opt !== question.answer)  { bg = '#DC2626'; borderColor = '#DC2626'; }
-            return (
-              <TouchableOpacity key={i} style={[styles.mathOption, { backgroundColor: bg, borderColor }]} onPress={() => handleAnswer(opt)} activeOpacity={0.85} disabled={answered}>
-                <Text style={[styles.mathOptionText, (answered && (opt === question.answer || opt === selected)) && { color: '#fff' }]}>{opt}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {answered && (
-          <View style={selected === question?.answer ? styles.feedbackCorrectCard : styles.feedbackWrongCard}>
-            <Icon name={selected === question?.answer ? 'check-circle' : 'times-circle'} size={20} color={selected === question?.answer ? '#059669' : '#DC2626'} />
-            <Text style={selected === question?.answer ? styles.feedbackCorrectText : styles.feedbackWrongText}>
-              {selected === question?.answer ? `Correct! The answer is ${question.answer}.` : `The answer was ${question?.answer}.`}
-            </Text>
-          </View>
-        )}
-      </GameShell>
-    );
-  };
-
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // GAME 3 — WORD SCRAMBLE
-  // ═══════════════════════════════════════════════════════════════════════════════
-  const WordScramble = () => {
-    const wordList = [
-      { word: 'APPLE',   hint: '🍎 A fruit' },          { word: 'BEACH',  hint: '🏖️ A sandy place' },
-      { word: 'CLOCK',   hint: '⏰ Tells the time' },    { word: 'DANCE',  hint: '💃 Movement to music' },
-      { word: 'EAGLE',   hint: '🦅 A large bird' },      { word: 'FLOWER', hint: '🌸 Grows in a garden' },
-      { word: 'GARDEN',  hint: '🌿 Where plants grow' }, { word: 'HONEY',  hint: '🍯 Sweet bee product' },
-      { word: 'ISLAND',  hint: '🏝️ Land surrounded by water' }, { word: 'JUNGLE', hint: '🌴 Dense tropical forest' },
-      { word: 'KITTEN',  hint: '🐱 A baby cat' },        { word: 'LEMON',  hint: '🍋 A sour yellow fruit' },
-      { word: 'MIRROR',  hint: '🪞 Shows your reflection' }, { word: 'NEEDLE', hint: '🧵 Used for sewing' },
-      { word: 'ORANGE',  hint: '🍊 A citrus fruit' },    { word: 'PIANO',  hint: '🎹 A musical instrument' },
-      { word: 'QUEEN',   hint: '👑 A royal lady' },      { word: 'RIVER',  hint: '🌊 Flowing water' },
-      { word: 'SUNSET',  hint: '🌅 Evening sky colors' },{ word: 'TURTLE', hint: '🐢 Has a hard shell' },
-    ];
-    const [score, setScore]         = useState(0);
-    const [level, setLevel]         = useState(1);
-    const [current, setCurrent]     = useState(null);
-    const [scrambled, setScrambled] = useState([]);
-    const [selected, setSelected]   = useState([]);
-    const [result, setResult]       = useState(null);
-    const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+    // FIX: refs to avoid stale closures
+    const scoreRef = useRef(0);
+    const levelRef = useRef(1);
 
     const buildRound = useCallback(() => {
-      const entry = wordList[Math.floor(Math.random() * wordList.length)];
-      let letters = shuffle(entry.word.split(''));
-      while (letters.join('') === entry.word) letters = shuffle(letters);
-      setCurrent(entry); setScrambled(letters); setSelected([]); setResult(null);
-    }, []);
+      const entry = bugtongList[Math.floor(Math.random() * bugtongList.length)];
+      setCurrent(entry);
+      setSelected(null);
+      setResult(null);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    useEffect(() => { buildRound(); }, []);
+    useEffect(() => { buildRound(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const toggleLetter = (index) => {
-      if (result) return;
-      setSelected(prev => {
-        if (prev.includes(index)) return prev.filter(i => i !== index);
-        const next = [...prev, index];
-        if (next.length === current.word.length) {
-          const formed = next.map(i => scrambled[i]).join('');
-          if (formed === current.word) {
-            setResult('correct'); setScore(s => s + 15 * level);
-            if (score + 15 * level >= level * 75) setLevel(l => l + 1);
-            setTimeout(buildRound, 1500);
-          } else {
-            setResult('wrong');
-            setTimeout(() => { setSelected([]); setResult(null); }, 900);
-          }
+    const handleAnswer = (choice) => {
+      if (result || !current) return;
+      setSelected(choice);
+
+      if (choice === current.answer) {
+        const gained   = 15 * levelRef.current;
+        const newScore = scoreRef.current + gained;
+        scoreRef.current = newScore;
+        setScore(newScore);
+        setResult('correct');
+        if (newScore >= levelRef.current * 75) {
+          const newLevel = levelRef.current + 1;
+          levelRef.current = newLevel;
+          setLevel(newLevel);
         }
-        return next;
-      });
+        setTimeout(buildRound, 1500);
+      } else {
+        setResult('wrong');
+        setTimeout(() => { setSelected(null); setResult(null); }, 900);
+      }
     };
 
-    const formed = selected.map(i => scrambled[i]).join('');
+    const handleReset = () => {
+      scoreRef.current = 0;
+      levelRef.current = 1;
+      setScore(0);
+      setLevel(1);
+      buildRound();
+    };
 
     return (
-      <GameShell title="Word Scramble" onReset={() => { setScore(0); setLevel(1); buildRound(); }} score={score} level={level}>
+      <GameShell title="Bugtong" onReset={handleReset} score={score} level={level}>
         <View style={styles.lessonHeader}>
-          <Text style={styles.lessonTitle}>Word Scramble</Text>
-          <Text style={styles.lessonSubtitle}>Tap the letters in the correct order to spell the word!</Text>
+          <Text style={styles.lessonTitle}>Bugtong</Text>
+          <Text style={styles.lessonSubtitle}>Hulaan ang sagot sa bugtong na ibinigay!</Text>
         </View>
 
         {current && (
           <View style={styles.exampleContainer}>
-            <Text style={styles.exampleText}>{current.hint}</Text>
+            <Text style={styles.exampleText}>{current.riddle}</Text>
           </View>
         )}
 
-        <View style={styles.scrambleAnswer}>
-          {current && Array.from({ length: current.word.length }).map((_, i) => (
-            <View key={i} style={[styles.scrambleSlot, result === 'correct' && { backgroundColor: '#059669', borderColor: '#059669' }, result === 'wrong' && { backgroundColor: '#FEE2E2', borderColor: '#DC2626' }]}>
-              <Text style={[styles.scrambleSlotText, result === 'correct' && { color: '#fff' }]}>{formed[i] || ''}</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.scrambleLetters}>
-          {scrambled.map((letter, i) => {
-            const isUsed = selected.includes(i);
+        <View style={styles.bugtongOptions}>
+          {current && current.options.map((option, i) => {
+            let bg = '#fff', borderColor = '#BAE6FD', textColor = '#0F172A';
+            if (result === 'correct' && option === current.answer) { bg = '#059669'; borderColor = '#059669'; textColor = '#fff'; }
+            else if (result === 'wrong' && option === selected)    { bg = '#DC2626'; borderColor = '#DC2626'; textColor = '#fff'; }
             return (
-              <TouchableOpacity key={i} style={[styles.scrambleLetter, isUsed && styles.scrambleLetterUsed]} onPress={() => toggleLetter(i)} disabled={isUsed} activeOpacity={0.8}>
-                <Text style={[styles.scrambleLetterText, isUsed && { color: '#9CA3AF' }]}>{letter}</Text>
+              <TouchableOpacity key={i} style={[styles.bugtongOption, { backgroundColor: bg, borderColor }]} onPress={() => handleAnswer(option)} activeOpacity={0.8} disabled={!!result}>
+                <Text style={[styles.bugtongOptionText, { color: textColor }]}>{option}</Text>
               </TouchableOpacity>
             );
           })}
         </View>
-
-        <TouchableOpacity style={styles.listenBtn} onPress={() => { setSelected([]); setResult(null); }}>
-          <Icon name="backspace" size={16} color="#38BDF8" />
-          <Text style={styles.listenText}>Clear</Text>
-        </TouchableOpacity>
 
         {result && (
           <View style={result === 'correct' ? styles.feedbackCorrectCard : styles.feedbackWrongCard}>
             <Icon name={result === 'correct' ? 'check-circle' : 'times-circle'} size={20} color={result === 'correct' ? '#059669' : '#DC2626'} />
             <Text style={result === 'correct' ? styles.feedbackCorrectText : styles.feedbackWrongText}>
-              {result === 'correct' ? `Correct! "${current?.word}"` : 'Not quite — try again!'}
+              {result === 'correct' ? `Tama! Ang sagot ay "${current?.answer}".` : 'Mali — subukan ulit!'}
             </Text>
           </View>
         )}
@@ -418,19 +363,25 @@ const MiniGamesScreen = () => {
   };
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // GAME 4 — PAIR MATCH
+  // GAME 3 — PAIR MATCH
   // ═══════════════════════════════════════════════════════════════════════════════
   const PairMatch = () => {
     const emojiSets = [
-      ['🍎','🍌','🍇','🍓'], ['🐶','🐱','🐸','🐧'],
-      ['🚗','✈️','🚢','🚂'], ['⚽','🏀','🎾','🏐'], ['🎸','🎹','🎺','🥁'],
+      ['🍎','🍌','🍇','🍓'],
+      ['🐶','🐱','🐸','🐧'],
+      ['🚗','✈️','🚢','🚂'],
+      ['⚽','🏀','🎾','🏐'],
+      ['🎸','🎹','🎺','🥁'],
     ];
+
     const buildDeck = useCallback(() => {
       const set = emojiSets[Math.floor(Math.random() * emojiSets.length)];
-      return [...set, ...set].sort(() => Math.random() - 0.5).map((emoji, i) => ({ id: i, emoji, flipped: false, matched: false }));
-    }, []);
+      return [...set, ...set]
+        .sort(() => Math.random() - 0.5)
+        .map((emoji, i) => ({ id: i, emoji, flipped: false, matched: false }));
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const [cards, setCards]       = useState(buildDeck);
+    const [cards, setCards]       = useState(() => buildDeck());
     const [flipped, setFlipped]   = useState([]);
     const [score, setScore]       = useState(0);
     const [level, setLevel]       = useState(1);
@@ -438,25 +389,52 @@ const MiniGamesScreen = () => {
     const [disabled, setDisabled] = useState(false);
     const [won, setWon]           = useState(false);
 
-    const resetGame = () => { setCards(buildDeck()); setFlipped([]); setMoves(0); setDisabled(false); setWon(false); };
+    const resetGame = useCallback(() => {
+      setCards(buildDeck());
+      setFlipped([]);
+      setMoves(0);
+      setDisabled(false);
+      setWon(false);
+    }, [buildDeck]);
 
     useEffect(() => {
       if (flipped.length === 2) {
-        setDisabled(true); setMoves(m => m + 1);
+        setDisabled(true);
+        setMoves(m => m + 1);
         const [a, b] = flipped;
-        if (cards[a].emoji === cards[b].emoji) {
-          setCards(prev => prev.map((c, i) => i === a || i === b ? { ...c, matched: true, flipped: true } : c));
-          setFlipped([]); setDisabled(false); setScore(s => s + 20);
-          const next = cards.map((c, i) => i === a || i === b ? { ...c, matched: true } : c);
-          if (next.every(c => c.matched)) { setWon(true); setLevel(l => l + 1); }
-        } else {
-          setTimeout(() => { setCards(prev => prev.map((c, i) => i === a || i === b ? { ...c, flipped: false } : c)); setFlipped([]); setDisabled(false); }, 900);
-        }
+
+        setCards(prev => {
+          if (prev[a].emoji === prev[b].emoji) {
+            const next = prev.map((c, i) =>
+              i === a || i === b ? { ...c, matched: true, flipped: true } : c
+            );
+            // Check win after matching
+            if (next.every(c => c.matched)) {
+              setWon(true);
+              setLevel(l => l + 1);
+            }
+            setScore(s => s + 20);
+            setFlipped([]);
+            setDisabled(false);
+            return next;
+          } else {
+            // Flip back after delay
+            setTimeout(() => {
+              setCards(prev2 => prev2.map((c, i) =>
+                i === a || i === b ? { ...c, flipped: false } : c
+              ));
+              setFlipped([]);
+              setDisabled(false);
+            }, 900);
+            return prev;
+          }
+        });
       }
-    }, [flipped]);
+    }, [flipped]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const flipCard = (index) => {
       if (disabled || cards[index].flipped || cards[index].matched) return;
+      if (flipped.length >= 2) return;
       setCards(prev => prev.map((c, i) => i === index ? { ...c, flipped: true } : c));
       setFlipped(prev => [...prev, index]);
     };
@@ -486,7 +464,17 @@ const MiniGamesScreen = () => {
 
         <View style={styles.cardGrid}>
           {cards.map((card, index) => (
-            <TouchableOpacity key={card.id} style={[styles.flipCard, card.flipped && !card.matched && styles.flipCardOpen, card.matched && styles.flipCardMatched]} onPress={() => flipCard(index)} activeOpacity={0.85} disabled={card.matched || disabled}>
+            <TouchableOpacity
+              key={card.id}
+              style={[
+                styles.flipCard,
+                card.flipped && !card.matched && styles.flipCardOpen,
+                card.matched && styles.flipCardMatched,
+              ]}
+              onPress={() => flipCard(index)}
+              activeOpacity={0.85}
+              disabled={card.matched || disabled}
+            >
               <Text style={styles.flipCardEmoji}>{card.flipped || card.matched ? card.emoji : '❓'}</Text>
             </TouchableOpacity>
           ))}
@@ -496,57 +484,98 @@ const MiniGamesScreen = () => {
   };
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // GAME 5 — TRUE OR FALSE
+  // GAME 4 — TRUE OR FALSE
+  // FIX: Removed duplicate nested TrueOrFalse declaration; single clean component
   // ═══════════════════════════════════════════════════════════════════════════════
   const TrueOrFalse = () => {
     const facts = [
-      { statement: 'The Great Wall of China can be seen from space with the naked eye.', answer: false, explanation: 'Actually, the wall is too narrow to be seen from space without aid.' },
-      { statement: 'Honey never spoils. Archaeologists have found edible honey in ancient Egyptian tombs.', answer: true, explanation: "Honey's low moisture and acidity make it last thousands of years!" },
-      { statement: 'A group of flamingos is called a "flock."', answer: false, explanation: 'A group of flamingos is called a "flamboyance."' },
-      { statement: 'The human body has more bacterial cells than human cells.', answer: true, explanation: 'We carry roughly 38 trillion bacteria versus 30 trillion human cells.' },
-      { statement: "Mt. Everest is the tallest mountain when measured from the Earth's center.", answer: false, explanation: "Mt. Chimborazo in Ecuador is farthest from Earth's center due to the equatorial bulge." },
-      { statement: 'Octopuses have three hearts.', answer: true, explanation: 'Two hearts pump blood to the gills; one pumps it to the body.' },
-      { statement: 'Lightning never strikes the same place twice.', answer: false, explanation: 'Lightning often strikes the same spot many times. The Empire State Building gets struck ~25 times a year.' },
-      { statement: 'Bananas are technically berries, but strawberries are not.', answer: true, explanation: 'Botanically, bananas qualify as berries. Strawberries are "accessory fruits."' },
-      { statement: 'A day on Venus is shorter than a year on Venus.', answer: false, explanation: 'A Venusian day (243 Earth days) is longer than its year (225 Earth days).' },
-      { statement: 'Goldfish have a memory span of only 3 seconds.', answer: false, explanation: 'Goldfish can remember things for months. The 3-second myth is just that — a myth!' },
-      { statement: 'Cleopatra lived closer in time to the Moon landing than to the building of the Great Pyramid.', answer: true, explanation: 'The pyramids are ~2,500 years older than Cleopatra. The Moon landing was only ~2,000 years after her.' },
-      { statement: 'The Eiffel Tower grows taller in summer.', answer: true, explanation: 'Heat expands the iron, making the tower up to 15 cm taller on hot days.' },
-      { statement: 'Humans share 50% of their DNA with bananas.', answer: true, explanation: 'About half of our genes have a functional equivalent in bananas!' },
-      { statement: "The ocean covers about 50% of the Earth's surface.", answer: false, explanation: "Oceans cover about 71% of Earth's surface." },
-      { statement: 'Sharks are older than trees.', answer: true, explanation: 'Sharks have existed for ~450 million years; trees evolved only ~350 million years ago.' },
+      { statement: 'Ang Pilipinas ay mayroong 7,107 isla.',                                        answer: true,  explanation: 'Oo, ang Pilipinas ay isang archipelago na mayroong higit sa 7,000 isla.' },
+      { statement: 'Ang Maynila ay ang kabisera ng Pilipinas.',                                     answer: true,  explanation: 'Ang Maynila ang kabisera ng Pilipinas mula pa noong 1898.' },
+      { statement: 'Ang Pinatubo ay isang bulkan na sumabog noong 1991.',                           answer: true,  explanation: 'Ang Bulkang Pinatubo ay sumabog noong Hunyo 1991 at isa sa pinakamalaking pagsabog sa mundo.' },
+      { statement: 'Ang Baybayin ay ang unang alpabetong ginamit sa Pilipinas.',                    answer: false, explanation: 'Ang Baybayin ay isang sistema ng pagsulat na ginamit ng mga katutubo bago dumating ang mga Espanyol.' },
+      { statement: 'Ang Pilipinas ay naging kolonya ng Espanya sa loob ng 300 taon.',               answer: true,  explanation: 'Mula 1565 hanggang 1898, ang Pilipinas ay kolonya ng Espanya.' },
+      { statement: 'Ang Rizal ay ang bayani ng Pilipinas.',                                         answer: true,  explanation: 'Si Jose Rizal ay itinuturing na pambansang bayani ng Pilipinas.' },
+      { statement: 'Ang Pilipinas ay mayroong tatlong wika na opisyal.',                            answer: true,  explanation: 'Ang Filipino, Ingles, at Espanyol ang tatlong opisyal na wika.' },
+      { statement: 'Ang Banaue Rice Terraces ay isa sa mga Seven Wonders of the World.',            answer: false, explanation: 'Ito ay isa sa mga UNESCO World Heritage Sites, hindi sa Seven Wonders of the World.' },
+      { statement: 'Ang Pilipinas ay mayroong pinakamahabang Christmas season sa mundo.',           answer: true,  explanation: 'Mula Setyembre hanggang Enero, ipinagdiriwang ang Pasko sa Pilipinas.' },
+      { statement: 'Ang Lapu-Lapu ay ang unang Filipino na tumutol sa mga Espanyol.',               answer: true,  explanation: 'Si Lapu-Lapu ay nagwagi laban kay Magellan noong 1521.' },
+      { statement: 'Ang Pilipinas ay mayroong higit sa 100 wika.',                                  answer: false, explanation: 'Mayroong higit sa 170 wika sa Pilipinas.' },
+      { statement: 'Ang Intramuros ay ang matandang lungsod ng Maynila.',                           answer: true,  explanation: 'Ito ang walled city na itinayo ng mga Espanyol.' },
+      { statement: 'Ang Pilipinas ay ang unang bansa sa Asya na nagkaroon ng republika.',           answer: true,  explanation: 'Ang Unang Republika ng Pilipinas ay itinatag noong 1899.' },
+      { statement: 'Ang Taal Volcano ay ang pinakamaliit na bulkan sa mundo.',                      answer: true,  explanation: 'Ito ay may crater lake sa loob ng isang isla.' },
+      { statement: 'Ang Pilipinas ay mayroong 81 lalawigan.',                                       answer: true,  explanation: 'Kasama ang National Capital Region.' },
     ];
+
     const [score, setScore]             = useState(0);
     const [level, setLevel]             = useState(1);
     const [index, setIndex]             = useState(() => Math.floor(Math.random() * facts.length));
     const [answered, setAnswered]       = useState(false);
     const [chosen, setChosen]           = useState(null);
-    const [usedIndices, setUsedIndices] = useState([]);
+    const [usedIndices, setUsedIndices] = useState([index]);
+
+    // FIX: refs to avoid stale closures
+    const scoreRef = useRef(0);
+    const levelRef = useRef(1);
+
     const current = facts[index];
 
     const nextQuestion = useCallback(() => {
-      const remaining = facts.map((_, i) => i).filter(i => !usedIndices.includes(i));
-      if (remaining.length === 0) { setUsedIndices([]); setIndex(Math.floor(Math.random() * facts.length)); }
-      else { const next = remaining[Math.floor(Math.random() * remaining.length)]; setUsedIndices(prev => [...prev, next]); setIndex(next); }
-      setAnswered(false); setChosen(null);
-    }, [usedIndices]);
+      setUsedIndices(prev => {
+        const remaining = facts.map((_, i) => i).filter(i => !prev.includes(i));
+        let next;
+        if (remaining.length === 0) {
+          // Reset used list when all questions exhausted
+          next = Math.floor(Math.random() * facts.length);
+          setIndex(next);
+          return [next];
+        } else {
+          next = remaining[Math.floor(Math.random() * remaining.length)];
+          setIndex(next);
+          return [...prev, next];
+        }
+      });
+      setAnswered(false);
+      setChosen(null);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleAnswer = (val) => {
       if (answered) return;
-      setChosen(val); setAnswered(true);
-      if (val === current.answer) { setScore(s => s + 10 * level); if (score + 10 * level >= level * 50) setLevel(l => l + 1); }
+      setChosen(val);
+      setAnswered(true);
+      if (val === current.answer) {
+        const gained   = 10 * levelRef.current;
+        const newScore = scoreRef.current + gained;
+        scoreRef.current = newScore;
+        setScore(newScore);
+        if (newScore >= levelRef.current * 50) {
+          const newLevel = levelRef.current + 1;
+          levelRef.current = newLevel;
+          setLevel(newLevel);
+        }
+      }
+    };
+
+    const handleReset = () => {
+      scoreRef.current = 0;
+      levelRef.current = 1;
+      const startIdx = Math.floor(Math.random() * facts.length);
+      setScore(0);
+      setLevel(1);
+      setUsedIndices([startIdx]);
+      setAnswered(false);
+      setChosen(null);
+      setIndex(startIdx);
     };
 
     const isCorrect = chosen === current.answer;
 
     return (
-      <GameShell title="True or False" onReset={() => { setScore(0); setLevel(1); setUsedIndices([]); setAnswered(false); setChosen(null); setIndex(Math.floor(Math.random() * facts.length)); }} score={score} level={level}>
+      <GameShell title="Tama o Mali" onReset={handleReset} score={score} level={level}>
         <View style={styles.lessonHeader}>
-          <Text style={styles.lessonTitle}>True or False</Text>
-          <Text style={styles.lessonSubtitle}>Read the statement carefully — is it True or False?</Text>
+          <Text style={styles.lessonTitle}>Tama o Mali</Text>
+          <Text style={styles.lessonSubtitle}>Basahin ang pahayag nang mabuti — Tama ba o Mali?</Text>
         </View>
 
-        {/* Fact card — mirrors tipCard with left border accent */}
         <View style={[styles.tipCard, { borderLeftColor: '#0EA5E9' }]}>
           <Text style={styles.tipDescription}>{current.statement}</Text>
         </View>
@@ -555,11 +584,11 @@ const MiniGamesScreen = () => {
           <View style={styles.tfButtons}>
             <TouchableOpacity style={[styles.tfBtn, { backgroundColor: '#059669' }]} onPress={() => handleAnswer(true)} activeOpacity={0.85}>
               <Icon name="check" size={22} color="#fff" />
-              <Text style={styles.tfBtnText}>True</Text>
+              <Text style={styles.tfBtnText}>Tama</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.tfBtn, { backgroundColor: '#DC2626' }]} onPress={() => handleAnswer(false)} activeOpacity={0.85}>
               <Icon name="times" size={22} color="#fff" />
-              <Text style={styles.tfBtnText}>False</Text>
+              <Text style={styles.tfBtnText}>Mali</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -567,16 +596,15 @@ const MiniGamesScreen = () => {
             <View style={isCorrect ? styles.feedbackCorrectCard : styles.feedbackWrongCard}>
               <Icon name={isCorrect ? 'check-circle' : 'times-circle'} size={20} color={isCorrect ? '#059669' : '#DC2626'} />
               <Text style={isCorrect ? styles.feedbackCorrectText : styles.feedbackWrongText}>
-                {isCorrect ? 'Correct!' : `The answer is ${current.answer ? 'TRUE' : 'FALSE'}.`}
+                {isCorrect ? 'Tama!' : `Ang sagot ay ${current.answer ? 'TAMA' : 'MALI'}.`}
               </Text>
             </View>
-            {/* Explanation — mirrors exampleContainer */}
             <View style={styles.exampleContainer}>
               <Text style={styles.exampleText}>{current.explanation}</Text>
             </View>
             <TouchableOpacity style={[styles.simulatorBtn, { alignSelf: 'center', marginTop: 4 }]} onPress={nextQuestion}>
               <Icon name="arrow-right" size={14} color="#059669" />
-              <Text style={styles.simulatorBtnText}>Next Question</Text>
+              <Text style={styles.simulatorBtnText}>Susunod na Tanong</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -588,8 +616,7 @@ const MiniGamesScreen = () => {
   const renderGame = () => {
     switch (currentGame) {
       case 'color-match':   return <ColorMatch />;
-      case 'math-quiz':     return <MathQuiz />;
-      case 'word-scramble': return <WordScramble />;
+      case 'word-scramble': return <Bugtong />;      // FIX: was missing, now correctly routes
       case 'pair-match':    return <PairMatch />;
       case 'true-or-false': return <TrueOrFalse />;
       default:              return <GameSelector />;
@@ -599,22 +626,19 @@ const MiniGamesScreen = () => {
   return renderGame();
 };
 
-// ─── Styles — mirrors InternetBrowsingScreen exactly ─────────────────────────
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
 
-  // ── Base shells ──────────────────────────────────────────────────────────────
   safeArea: {
     flex: 1,
     backgroundColor: '#F0F9FF',
   },
-  // Game shell: edges={['bottom','left','right']} equivalent — top handled manually
   safeAreaGame: {
     flex: 1,
     backgroundColor: '#F0F9FF',
   },
   container: {
     flex: 1,
-    backgroundColor: '#F0F9FF',
   },
   gradientBackground: {
     position: 'absolute',
@@ -623,84 +647,66 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: {
     padding: 20,
-    paddingTop: 16,   // nav bar is inline now — no extra offset needed
-    paddingBottom: 50,
+    paddingTop: 80,
+    paddingBottom: 60,
   },
   gameScrollContent: {
     padding: 20,
     paddingBottom: 60,
   },
 
-  // ── Selector nav bar — inline flow, never overlaps ───────────────────────────
-  selectorNavBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android'
-      ? (StatusBar.currentHeight ?? 24) + 8
-      : 12,
-    paddingBottom: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(56, 189, 248, 0.15)',
+  backButton: {
+    position: 'absolute', top: Platform.OS === 'ios' ? 50 : 30, left: 20,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+    elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12, shadowRadius: 4, zIndex: 10,
   },
+  backButtonText: { marginLeft: 6, fontSize: 15, fontWeight: '600', color: '#0F172A' },
 
-  // ── Header card — exact match ─────────────────────────────────────────────────
   header: {
-    alignItems: 'center',
-    marginBottom: 35,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    padding: 24,
-    borderRadius: 24,
-    elevation: 8,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    alignItems: 'center', marginBottom: 28, backgroundColor: 'rgba(255,255,255,0.92)',
+    padding: 24, borderRadius: 20, elevation: 6,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08, shadowRadius: 6,
   },
   headerIconContainer: {
-    width: 80, height: 80, borderRadius: 40,
+    width: 72, height: 72, borderRadius: 36,
     backgroundColor: '#F0F9FF',
-    justifyContent: 'center', alignItems: 'center',
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    justifyContent: 'center', alignItems: 'center', marginBottom: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1, shadowRadius: 8, elevation: 5,
   },
   headerTitle: {
-    fontSize: 28, fontWeight: 'bold', color: '#0F172A',
-    textAlign: 'center', marginBottom: 5,
+    fontSize: 26, fontWeight: 'bold', color: '#0F172A',
+    textAlign: 'center', marginBottom: 4,
     textShadowColor: 'rgba(255, 255, 255, 0.8)',
     textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2,
   },
-  headerSubtitle: { fontSize: 16, color: '#64748B', textAlign: 'center', marginBottom: 20, fontWeight: '400' },
-  headerDivider: { width: 60, height: 4, backgroundColor: '#38BDF8', borderRadius: 2 },
+  headerSubtitle: { fontSize: 15, color: '#64748B', textAlign: 'center', marginBottom: 16, fontWeight: '400' },
+  headerDivider: { width: 50, height: 4, backgroundColor: '#38BDF8', borderRadius: 2 },
 
-  // ── Module/game cards — exact match ──────────────────────────────────────────
   moduleGrid: { gap: 16 },
   moduleCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 16, padding: 20,
+    backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 14, padding: 18,
     flexDirection: 'row', alignItems: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1, shadowRadius: 8, elevation: 3,
+    shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
   },
-  moduleIconBg: { width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  moduleIconBg: { width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
   moduleContent: { flex: 1 },
-  moduleTitle: { fontSize: 18, fontWeight: '600', color: '#0F172A', marginBottom: 4 },
-  moduleDescription: { fontSize: 14, color: '#64748B', lineHeight: 20 },
+  moduleTitle: { fontSize: 17, fontWeight: '600', color: '#0F172A', marginBottom: 3 },
+  moduleDescription: { fontSize: 13, color: '#64748B', lineHeight: 18 },
   arrowIcon: { marginLeft: 12 },
 
-  // ── Footer — exact match ──────────────────────────────────────────────────────
   footer: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    padding: 20, borderRadius: 16, marginTop: 30,
-    alignItems: 'center', elevation: 4,
+    padding: 18, borderRadius: 14, marginTop: 24, alignItems: 'center',
   },
-  footerText: { fontSize: 16, color: '#0F172A', fontWeight: '600', textAlign: 'center' },
+  footerText: { fontSize: 15, color: '#0F172A', fontWeight: '500', textAlign: 'center' },
   footerSubtext: { fontSize: 14, color: '#475569', textAlign: 'center', marginTop: 8, fontStyle: 'italic' },
 
-  // ── In-game header bar ────────────────────────────────────────────────────────
   gameHeader: {
     paddingTop: Platform.OS === 'android'
       ? (StatusBar.currentHeight ?? 24) + 8
@@ -715,9 +721,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(56, 189, 248, 0.15)',
   },
   gameHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
   gameHeaderCenter: { flex: 1, alignItems: 'center' },
   headerButton: {
@@ -736,19 +740,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   gameStats: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 10,
-    marginTop: 8,
+    flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 8,
   },
-  statText: { fontSize: 13, color: '#64748B', marginHorizontal: 6 },
 
-  // ── Lesson header inside game — mirrors lessonHeader ─────────────────────────
   lessonHeader: {
     alignItems: 'center', marginBottom: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    padding: 24, borderRadius: 20,
-    elevation: 6,
+    padding: 24, borderRadius: 20, elevation: 6,
     shadowColor: '#0F172A', shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08, shadowRadius: 6,
   },
@@ -760,7 +758,6 @@ const styles = StyleSheet.create({
   },
   lessonSubtitle: { fontSize: 16, color: '#475569', textAlign: 'center', lineHeight: 22 },
 
-  // ── Tip/content card — mirrors tipCard ───────────────────────────────────────
   tipCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     padding: 24, borderRadius: 16, marginBottom: 20,
@@ -771,22 +768,12 @@ const styles = StyleSheet.create({
   },
   tipDescription: { fontSize: 18, color: '#475569', lineHeight: 26, textAlign: 'center' },
 
-  // ── Example container — mirrors exampleContainer ──────────────────────────────
   exampleContainer: {
     backgroundColor: 'rgba(14, 165, 233, 0.1)',
     padding: 16, borderRadius: 8, marginBottom: 20,
   },
   exampleText: { fontSize: 16, color: '#0F172A', lineHeight: 22, textAlign: 'center' },
 
-  // ── Action buttons — mirrors listenBtn & simulatorBtn ─────────────────────────
-  listenBtn: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#F0F9FF',
-    paddingHorizontal: 16, paddingVertical: 10,
-    borderRadius: 8, borderWidth: 1, borderColor: '#38BDF8',
-    alignSelf: 'center', marginTop: 4,
-  },
-  listenText: { color: '#38BDF8', fontSize: 15, marginLeft: 6, fontWeight: '600' },
   simulatorBtn: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: 'rgba(5, 150, 105, 0.1)',
@@ -796,7 +783,6 @@ const styles = StyleSheet.create({
   },
   simulatorBtnText: { marginLeft: 8, fontSize: 15, fontWeight: '600', color: '#059669' },
 
-  // ── Feedback bubbles — mirrors warningBubble pattern ─────────────────────────
   feedbackCorrectCard: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: 'rgba(5, 150, 105, 0.1)',
@@ -814,7 +800,6 @@ const styles = StyleSheet.create({
   },
   feedbackWrongText: { marginLeft: 10, fontSize: 16, color: '#DC2626', fontWeight: '600', flex: 1, lineHeight: 22 },
 
-  // ── Streak banner ─────────────────────────────────────────────────────────────
   streakCard: {
     backgroundColor: 'rgba(249, 115, 22, 0.12)',
     borderWidth: 1.5, borderColor: '#F97316',
@@ -823,7 +808,6 @@ const styles = StyleSheet.create({
   },
   streakText: { fontSize: 16, fontWeight: 'bold', color: '#EA580C' },
 
-  // ── Generic game content card ─────────────────────────────────────────────────
   gameContentCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: 20, padding: 32, alignItems: 'center', marginBottom: 24,
@@ -832,7 +816,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1, shadowRadius: 8,
   },
 
-  // ── GAME 1: Color Match ───────────────────────────────────────────────────────
+  // Color Match
   colorWord: { fontSize: 52, fontWeight: 'bold', letterSpacing: 2, marginBottom: 12 },
   colorHint: { fontSize: 16, color: '#64748B', fontWeight: '500' },
   colorOptionsGrid: {
@@ -847,52 +831,17 @@ const styles = StyleSheet.create({
   },
   colorOptionText: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
 
-  // ── GAME 2: Quick Math ────────────────────────────────────────────────────────
-  mathCard: {
-    borderLeftWidth: 6, borderLeftColor: '#8B5CF6',
-  },
-  mathEquation: { fontSize: 44, fontWeight: 'bold', color: '#0F172A', letterSpacing: 2 },
-  mathOptionsGrid: {
-    flexDirection: 'row', flexWrap: 'wrap',
-    justifyContent: 'center', gap: 14, width: '100%', marginBottom: 4,
-  },
-  mathOption: {
-    width: (width - 90) / 2, paddingVertical: 22, borderRadius: 16,
-    alignItems: 'center', elevation: 4,
+  // Bugtong
+  bugtongOptions: { gap: 12, marginBottom: 4 },
+  bugtongOption: {
+    paddingVertical: 16, borderRadius: 12,
+    alignItems: 'center', elevation: 3,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12, shadowRadius: 4, borderWidth: 2,
+    shadowOpacity: 0.1, shadowRadius: 4, borderWidth: 2,
   },
-  mathOptionText: { fontSize: 28, fontWeight: 'bold', color: '#0F172A' },
+  bugtongOptionText: { fontSize: 18, fontWeight: '600', color: '#0F172A' },
 
-  // ── GAME 3: Word Scramble ─────────────────────────────────────────────────────
-  scrambleAnswer: {
-    flexDirection: 'row', flexWrap: 'wrap',
-    justifyContent: 'center', gap: 8, marginBottom: 24,
-  },
-  scrambleSlot: {
-    width: 44, height: 52, borderRadius: 10, borderWidth: 2,
-    borderColor: '#38BDF8',
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    justifyContent: 'center', alignItems: 'center', elevation: 2,
-  },
-  scrambleSlotText: { fontSize: 22, fontWeight: 'bold', color: '#0F172A' },
-  scrambleLetters: {
-    flexDirection: 'row', flexWrap: 'wrap',
-    justifyContent: 'center', gap: 10, marginBottom: 16,
-  },
-  scrambleLetter: {
-    width: 52, height: 60, borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    justifyContent: 'center', alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1, shadowRadius: 4,
-    borderWidth: 1.5, borderColor: '#BAE6FD',
-  },
-  scrambleLetterUsed: { backgroundColor: '#F1F5F9', borderColor: '#CBD5E1', elevation: 0 },
-  scrambleLetterText: { fontSize: 22, fontWeight: 'bold', color: '#0F172A' },
-
-  // ── GAME 4: Pair Match ────────────────────────────────────────────────────────
+  // Pair Match
   statsRow: { flexDirection: 'row', justifyContent: 'center', gap: 12, marginBottom: 16 },
   statPill: {
     flexDirection: 'row', alignItems: 'center',
@@ -922,10 +871,8 @@ const styles = StyleSheet.create({
   flipCardMatched: { backgroundColor: 'rgba(5, 150, 105, 0.15)', borderWidth: 2, borderColor: '#059669' },
   flipCardEmoji: { fontSize: 32 },
 
-  // ── GAME 5: True or False ─────────────────────────────────────────────────────
-  tfButtons: {
-    flexDirection: 'row', gap: 14, width: '100%', marginBottom: 12,
-  },
+  // True or False
+  tfButtons: { flexDirection: 'row', gap: 14, width: '100%', marginBottom: 12 },
   tfBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingVertical: 22, borderRadius: 16, gap: 10,
