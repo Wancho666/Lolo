@@ -323,8 +323,30 @@ export default function InternetBrowsingScreen({ navigation }) {
   const BackBtn = () => (
     <TouchableOpacity style={styles.backButton} onPress={goBack} activeOpacity={0.8}>
       <Ionicons name="arrow-back" size={18} color="#0F172A" />
-      <Text style={styles.backButtonText}>Bumalik</Text>
+      <Text style={styles.backButtonText}>Back</Text>
     </TouchableOpacity>
+  );
+
+  const PageHeader = ({ title, subtitle, badgeIcon, badgeText, progress }) => (
+    <View style={styles.pageHeader}>
+      <View style={styles.pageHeaderTop}>
+        <BackBtn />
+        <View style={styles.pageHeaderBadge}>
+          <Ionicons name={badgeIcon || 'shield-checkmark'} size={18} color="#38BDF8" />
+          <Text style={styles.pageHeaderBadgeText}>{badgeText || 'Internet Safety'}</Text>
+        </View>
+      </View>
+      <Text style={styles.pageHeaderTitle}>{title}</Text>
+      {subtitle ? <Text style={styles.pageHeaderSub}>{subtitle}</Text> : null}
+      {progress ? (
+        <>
+          <View style={styles.pageHeaderProgressBar}>
+            <View style={[styles.pageHeaderProgressFill, { width: `${(progress.value / progress.total) * 100}%` }]} />
+          </View>
+          <Text style={styles.pageHeaderProgressLabel}>{progress.label}</Text>
+        </>
+      ) : null}
+    </View>
   );
 
   // ── Gradient wrapper ─────────────────────────────────────────────────────────
@@ -1101,6 +1123,9 @@ export default function InternetBrowsingScreen({ navigation }) {
           <GradientBg />
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
             <View style={styles.simHeader}>
+              <View style={styles.simHeaderTop}>
+                <BackBtn />
+              </View>
               <Text style={styles.simHeaderTitle}>Screen Demo</Text>
               <Text style={styles.simHeaderSub}>Tingnan ang halimbawa sa screen</Text>
             </View>
@@ -1117,7 +1142,6 @@ export default function InternetBrowsingScreen({ navigation }) {
               </Text>
             </View>
           </ScrollView>
-          <BackBtn />
         </View>
       </SafeAreaView>
     );
@@ -1132,12 +1156,12 @@ export default function InternetBrowsingScreen({ navigation }) {
         <View style={styles.container}>
           <GradientBg />
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-            <View style={styles.menuHeader}>
-              <View style={styles.menuIconCircle}><Ionicons name="shield-checkmark" size={32} color="#0F172A" /></View>
-              <Text style={styles.menuTitle}>Internet Safety Tutorial</Text>
-              <Text style={styles.menuSub}>Para sa mga Senior Citizens</Text>
-              <View style={styles.menuDivider} />
-            </View>
+            <PageHeader
+              title="Internet Safety Tutorial"
+              subtitle="Para sa mga Senior Citizens"
+              badgeIcon="shield-checkmark"
+              badgeText="Internet Safety"
+            />
             <View style={styles.moduleList}>
               {TUTORIAL_MODULES.map((m) => (
                 <TouchableOpacity key={m.id} style={styles.moduleCard} onPress={() => goToModule(m.id)} activeOpacity={0.9}>
@@ -1154,7 +1178,6 @@ export default function InternetBrowsingScreen({ navigation }) {
               <Text style={styles.menuFooterTxt}>I-tap ang "Basahin" para marinig ang bawat lesson</Text>
             </View>
           </ScrollView>
-          <BackBtn />
         </View>
       </SafeAreaView>
     );
@@ -1169,10 +1192,13 @@ export default function InternetBrowsingScreen({ navigation }) {
         <View style={styles.container}>
           <GradientBg />
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-            <View style={styles.lessonHeader}>
-              <Text style={styles.lessonTitle}>Basic Internet Safety</Text>
-              <ReadBtn id="basics-main" text="Ang basic internet safety ay ang pag-alam kung paano protektahan ang inyong sarili sa internet. Matutuhan natin ang mga dapat at hindi dapat gawin para manatiling ligtas." />
-            </View>
+            <PageHeader
+              title="Basic Internet Safety"
+              subtitle="Matutuhan natin ang mga dapat at hindi dapat gawin para manatiling ligtas."
+              badgeIcon="shield-checkmark"
+              badgeText="Module"
+            />
+            <ReadBtn id="basics-main" text="Ang basic internet safety ay ang pag-alam kung paano protektahan ang inyong sarili sa internet. Matutuhan natin ang mga dapat at hindi dapat gawin para manatiling ligtas." />
 
             <Text style={styles.sectionLabel}>MGA DAPAT GAWIN</Text>
             {SAFETY_RULES.dos.map((r, i) => (
@@ -1182,7 +1208,9 @@ export default function InternetBrowsingScreen({ navigation }) {
                   <Text style={styles.ruleDetail}>{r.detail}</Text>
                   <Ionicons name={isNarrating(`do-${i}`) ? 'stop' : 'volume-medium'} size={20} color="#059669" style={styles.speakIco} />
                 </TouchableOpacity>
-                <SimBtn type={r.simulatorType} data={{ safe: true, detail: r.detail }} />
+                <View style={styles.cardFooter}>
+                  <SimBtn type={r.simulatorType} data={{ safe: true, detail: r.detail }} />
+                </View>
               </View>
             ))}
 
@@ -1194,11 +1222,12 @@ export default function InternetBrowsingScreen({ navigation }) {
                   <Text style={styles.ruleDetail}>{r.detail}</Text>
                   <Ionicons name={isNarrating(`dont-${i}`) ? 'stop' : 'volume-medium'} size={20} color="#DC2626" style={styles.speakIco} />
                 </TouchableOpacity>
-                <SimBtn type={r.simulatorType} data={{ safe: false, detail: r.detail }} danger />
+                <View style={styles.cardFooter}>
+                  <SimBtn type={r.simulatorType} data={{ safe: false, detail: r.detail }} danger />
+                </View>
               </View>
             ))}
           </ScrollView>
-          <BackBtn />
         </View>
       </SafeAreaView>
     );
@@ -1213,26 +1242,27 @@ export default function InternetBrowsingScreen({ navigation }) {
         <View style={styles.container}>
           <GradientBg />
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-            <View style={styles.lessonHeader}>
-              <Text style={styles.lessonTitle}>Safe Browsing Tips</Text>
-              <ReadBtn id="browsing-main" text="Matutuhan natin ang tatlong simpleng paraan para mag-browse nang ligtas sa internet. Laging tingnan ang lock icon, gamitin ang search engine, at huwag mahiyang magtanong sa pamilya." />
-            </View>
+            <PageHeader
+              title="Safe Browsing Tips"
+              subtitle="Matutuhan natin ang tatlong simpleng paraan para mag-browse nang ligtas sa internet."
+              badgeIcon="globe"
+              badgeText="Browsing"
+            />
+            <ReadBtn id="browsing-main" text="Matutuhan natin ang tatlong simpleng paraan para mag-browse nang ligtas sa internet. Laging tingnan ang lock icon, gamitin ang search engine, at huwag mahiyang magtanong sa pamilya." />
             {BROWSING_TIPS.map((t, i) => (
               <View key={i} style={styles.tipCard}>
+                <TouchableOpacity style={styles.listenIconCorner} onPress={() => narrate(`${t.title}. ${t.description}`, `tip-${i}`)}>
+                  <Ionicons name={isNarrating(`tip-${i}`) ? 'stop' : 'volume-medium'} size={18} color="#38BDF8" />
+                </TouchableOpacity>
                 <Text style={styles.tipTitle}>{t.title}</Text>
                 <Text style={styles.tipDesc}>{t.description}</Text>
                 <View style={styles.exampleBox}><Text style={styles.exampleTxt}>{t.example}</Text></View>
-                <View style={styles.tipActions}>
-                  <TouchableOpacity style={styles.listenBtn} onPress={() => narrate(`${t.title}. ${t.description}`, `tip-${i}`)}>
-                    <Ionicons name={isNarrating(`tip-${i}`) ? 'stop' : 'play'} size={15} color="#38BDF8" />
-                    <Text style={styles.listenTxt}>{isNarrating(`tip-${i}`) ? 'Tumutugtog...' : 'Basahin'}</Text>
-                  </TouchableOpacity>
+                <View style={styles.cardFooter}>
                   <SimBtn type={t.simulatorType} data={{ safe: true, detail: t.description }} />
                 </View>
               </View>
             ))}
           </ScrollView>
-          <BackBtn />
         </View>
       </SafeAreaView>
     );
@@ -1247,26 +1277,27 @@ export default function InternetBrowsingScreen({ navigation }) {
         <View style={styles.container}>
           <GradientBg />
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-            <View style={styles.lessonHeader}>
-              <Text style={styles.lessonTitle}>Paano Makilala ang mga Scam</Text>
-              <ReadBtn id="scams-main" text="Maraming uri ng scam sa internet. Matutuhan natin kung paano sila makilala para hindi kayo maging biktima. Ang mga scammer ay nagpapanggap na bangko, gobyerno, o nagbibigay ng pekeng premyo." />
-            </View>
+            <PageHeader
+              title="Paano Makilala ang mga Scam"
+              subtitle="Maraming uri ng scam sa internet. Matutuhan natin kung paano sila makilala para hindi kayo maging biktima."
+              badgeIcon="warning"
+              badgeText="Scam"
+            />
+            <ReadBtn id="scams-main" text="Maraming uri ng scam sa internet. Matutuhan natin kung paano sila makilala para hindi kayo maging biktima. Ang mga scammer ay nagpapanggap na bangko, gobyerno, o nagbibigay ng pekeng premyo." />
             {SCAM_EXAMPLES.map((s, i) => (
-              <View key={i} style={[styles.scamCard, s.safe ? styles.safeCard : styles.dangerCard, { marginBottom: 16 }]}>
+              <View key={i} style={[styles.scamCard, s.safe ? styles.safeCard : styles.dangerCard, { marginBottom: 16 }]}> 
+                <TouchableOpacity style={styles.listenIconCorner} onPress={() => narrate(`${s.type}. ${s.message}. ${s.warning}`, `scam-${i}`)}>
+                  <Ionicons name={isNarrating(`scam-${i}`) ? 'stop' : 'volume-medium'} size={18} color="#38BDF8" />
+                </TouchableOpacity>
                 <Text style={styles.scamType}>{s.type}</Text>
                 <Text style={styles.scamMsg}>"{s.message}"</Text>
                 <Text style={[styles.scamWarning, s.safe && { color: '#059669' }]}>{s.warning}</Text>
-                <View style={styles.scamActions}>
-                  <TouchableOpacity style={styles.listenBtn} onPress={() => narrate(`${s.type}. ${s.message}. ${s.warning}`, `scam-${i}`)}>
-                    <Ionicons name={isNarrating(`scam-${i}`) ? 'stop' : 'play'} size={15} color="#38BDF8" />
-                    <Text style={styles.listenTxt}>{isNarrating(`scam-${i}`) ? 'Tumutugtog...' : 'Basahin'}</Text>
-                  </TouchableOpacity>
+                <View style={styles.cardFooter}>
                   <SimBtn type={s.simulatorType} data={s} danger={!s.safe} />
                 </View>
               </View>
             ))}
           </ScrollView>
-          <BackBtn />
         </View>
       </SafeAreaView>
     );
@@ -1283,23 +1314,16 @@ export default function InternetBrowsingScreen({ navigation }) {
           <View style={styles.container}>
             <GradientBg />
             <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-              <View style={styles.lessonHeader}>
-                <View style={[styles.appDetailIcon, { backgroundColor: app.color }]}>
-                  <Ionicons name={app.icon} size={36} color="#fff" />
-                </View>
-                <Text style={styles.lessonTitle}>{app.name}</Text>
-                <Text style={styles.appDetailDesc}>{app.description}</Text>
-                <ReadBtn
-                  id={`app-${app.id}`}
-                  text={`${app.name}. ${app.description}. ${app.steps.map(s => s.title + ': ' + s.detail).join('. ')}`}
-                />
-              </View>
-
-              <Text style={[styles.sectionLabel, { color: app.color }]}>
-                MGA BAHAGI NG {app.name.toUpperCase()}
-              </Text>
-
-              <View style={styles.moduleList}>
+              <PageHeader
+                title={app.name}
+                subtitle={app.description}
+                badgeIcon={app.icon}
+                badgeText={app.name}
+              />
+              <ReadBtn
+                id={`app-${app.id}`}
+                text={`${app.name}. ${app.description}. ${app.steps.map(s => s.title + ': ' + s.detail).join('. ')}`}
+              />
                 {app.steps.map((s, i) => (
                   <View key={i} style={[styles.ruleCard, { borderLeftColor: app.color }]}>
                     <TouchableOpacity
@@ -1317,31 +1341,26 @@ export default function InternetBrowsingScreen({ navigation }) {
                         style={styles.speakIco}
                       />
                     </TouchableOpacity>
-                    <SimBtn
-                      type={app.simulatorType}
-                      data={{ detail: s.detail, highlight: s.highlight }}
-                      appColor={app.color}
-                    />
+                    <View style={styles.cardFooter}>
+                      <SimBtn
+                        type={app.simulatorType}
+                        data={{ detail: s.detail, highlight: s.highlight }}
+                        appColor={app.color}
+                      />
+                    </View>
                   </View>
                 ))}
-              </View>
 
               <View style={styles.quickTryCard}>
                 <Text style={styles.quickTryTitle}>Subukan ang buong simulator</Text>
                 <Text style={styles.quickTryDesc}>Tingnan ang {app.name} sa screen demo</Text>
-                <TouchableOpacity
-                  style={[styles.quickTryBtn, { backgroundColor: app.color }]}
-                  onPress={() => showScreenSimulator(app.simulatorType, {
-                    detail: `Ito ang ${app.name} app. I-tap ang bawat Step button sa itaas para makita ang bawat bahagi ng app.`,
-                    highlight: null,
-                  })}
-                >
-                  <Ionicons name="phone-portrait" size={18} color="#fff" />
-                  <Text style={styles.quickTryBtnTxt}>Buksan ang {app.name} Demo</Text>
-                </TouchableOpacity>
+                <SimBtn
+                  type={app.simulatorType}
+                  data={{ detail: `Ito ang ${app.name} app. I-tap ang bawat Step button sa itaas para makita ang bawat bahagi ng app.`, highlight: null }}
+                  appColor={app.color}
+                />
               </View>
             </ScrollView>
-            <BackBtn />
           </View>
         </SafeAreaView>
       );
@@ -1352,13 +1371,16 @@ export default function InternetBrowsingScreen({ navigation }) {
         <View style={styles.container}>
           <GradientBg />
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-            <View style={styles.lessonHeader}>
-              <Text style={styles.lessonTitle}>Common Apps Tutorial</Text>
-              <ReadBtn
-                id="apps-main"
-                text="Matutuhan natin kung paano gamitin ang mga sikat na apps tulad ng Facebook para makipag-ugnayan sa pamilya, YouTube para manood ng video, at Messenger para makausap ang mga mahal sa buhay."
-              />
-            </View>
+            <PageHeader
+              title="Common Apps Tutorial"
+              subtitle="Matutuhan natin kung paano gamitin ang mga sikat na apps tulad ng Facebook, YouTube, at Messenger."
+              badgeIcon="apps"
+              badgeText="Apps"
+            />
+            <ReadBtn
+              id="apps-main"
+              text="Matutuhan natin kung paano gamitin ang mga sikat na apps tulad ng Facebook para makipag-ugnayan sa pamilya, YouTube para manood ng video, at Messenger para makausap ang mga mahal sa buhay."
+            />
 
             <Text style={styles.sectionLabel}>PILIIN ANG APP</Text>
 
@@ -1370,30 +1392,27 @@ export default function InternetBrowsingScreen({ navigation }) {
                   onPress={() => setSelectedApp(app.id)}
                   activeOpacity={0.9}
                 >
-                  <View style={[styles.moduleIconBg, { backgroundColor: `${app.color}20` }]}>
-                    <Ionicons name={app.icon} size={30} color={app.color} />
+                  <View style={styles.moduleCardLeft}>
+                    <View style={[styles.moduleIconBg, { backgroundColor: `${app.color}20` }]}> 
+                      <Ionicons name={app.icon} size={30} color={app.color} />
+                    </View>
+                    <View style={styles.moduleCardText}>
+                      <Text style={styles.moduleTitle}>{app.name}</Text>
+                      <Text style={styles.moduleSub}>{app.description}</Text>
+                    </View>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.moduleTitle}>{app.name}</Text>
-                    <Text style={styles.moduleSub}>{app.description}</Text>
+                  <View style={styles.moduleCardRight}>
+                    <View style={styles.appStepBadge}>
+                      <Text style={[styles.appStepBadgeTxt, { color: app.color }]}>
+                        {app.steps.length} Steps
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={app.color} />
                   </View>
-                  <View style={styles.appStepBadge}>
-                    <Text style={[styles.appStepBadgeTxt, { color: app.color }]}>
-                      {app.steps.length} Steps
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={app.color} />
                 </TouchableOpacity>
               ))}
             </View>
-
-            <View style={styles.menuFooter}>
-              <Text style={styles.menuFooterTxt}>
-                Bawat app ay may step-by-step na demo sa screen
-              </Text>
-            </View>
           </ScrollView>
-          <BackBtn />
         </View>
       </SafeAreaView>
     );
@@ -1410,11 +1429,10 @@ const styles = StyleSheet.create({
   container:          { flex: 1 },
   gradientBackground: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
   scrollView:         { flex: 1 },
-  scrollContent:      { padding: 20, paddingTop: 80, paddingBottom: 60 },
+  scrollContent:      { padding: 20, paddingTop: 0, paddingBottom: 60 },
 
   // ── Back button ────────────────────────────────────────────────────────────
   backButton: {
-    position: 'absolute', top: Platform.OS === 'ios' ? 50 : 30, left: 20,
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.95)',
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
@@ -1423,51 +1441,115 @@ const styles = StyleSheet.create({
   },
   backButtonText: { marginLeft: 6, fontSize: 15, fontWeight: '600', color: '#0F172A' },
 
-  moduleList: { rowGap: 14 },
+  pageHeader: {
+    marginBottom: 10,
+    marginHorizontal: -20,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    paddingTop: Platform.OS === 'ios' ? 56 : 36,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+  },
+  pageHeaderTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginBottom: 16,
+  },
+  pageHeaderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 12,
+    backgroundColor: 'rgba(56,189,248,0.1)',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#38BDF8',
+  },
+  pageHeaderBadgeText: { color: '#38BDF8', fontSize: 12, fontWeight: '600' },
+  pageHeaderTitle: { fontSize: 28, fontWeight: '800', color: '#0F172A', lineHeight: 36, marginBottom: 6 },
+  pageHeaderSub: { fontSize: 15, color: '#475569', marginBottom: 8 },
+  pageHeaderProgressBar: {
+    height: 4,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 2,
+    marginBottom: 6,
+  },
+  pageHeaderProgressFill: {
+    height: '100%',
+    backgroundColor: '#38BDF8',
+    borderRadius: 2,
+  },
+  pageHeaderProgressLabel: {
+    fontSize: 11,
+    color: '#64748B',
+  },
+
+  moduleList: { rowGap: 16, marginTop: 18 },
 
   // ── Menu ───────────────────────────────────────────────────────────────────
   menuHeader: {
-    alignItems: 'center', marginBottom: 28, backgroundColor: 'rgba(255,255,255,0.92)',
-    padding: 24, borderRadius: 20, elevation: 6,
+    alignItems: 'center', marginBottom: 28, backgroundColor: 'rgba(255,255,255,0.96)',
+    padding: 24, borderRadius: 28, elevation: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.12, shadowRadius: 16,
   },
   menuIconCircle: {
     width: 72, height: 72, borderRadius: 36, backgroundColor: '#F0F9FF',
-    justifyContent: 'center', alignItems: 'center', marginBottom: 12,
+    justifyContent: 'center', alignItems: 'center', marginBottom: 14,
   },
-  menuTitle:   { fontSize: 26, fontWeight: 'bold', color: '#0F172A', textAlign: 'center', marginBottom: 4 },
-  menuSub:     { fontSize: 15, color: '#64748B', textAlign: 'center', marginBottom: 16 },
-  menuDivider: { width: 50, height: 4, backgroundColor: '#38BDF8', borderRadius: 2 },
+  menuTitle:   { fontSize: 28, fontWeight: 'bold', color: '#0F172A', textAlign: 'center', marginBottom: 6 },
+  menuSub:     { fontSize: 15, color: '#475569', textAlign: 'center', marginBottom: 16 },
+  menuDivider: { width: 56, height: 4, backgroundColor: '#38BDF8', borderRadius: 2 },
   menuFooter: {
     backgroundColor: 'rgba(255,255,255,0.9)', padding: 18, borderRadius: 14, marginTop: 24, alignItems: 'center',
   },
   menuFooterTxt: { fontSize: 15, color: '#0F172A', fontWeight: '500', textAlign: 'center' },
 
   moduleCard: {
-    backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 14, padding: 18,
-    flexDirection: 'row', alignItems: 'center', elevation: 3,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6,
+    backgroundColor: '#FFFFFF', borderRadius: 20, paddingVertical: 16, paddingHorizontal: 18,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', elevation: 3,
+    borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8,
+  },
+  moduleCardLeft: {
+    flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 14, minWidth: 0,
+  },
+  moduleCardText: {
+    flex: 1, minWidth: 0,
+  },
+  moduleCardRight: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end',
   },
   moduleIconBg: {
-    width: 56, height: 56, borderRadius: 28, backgroundColor: '#F0F9FF',
-    justifyContent: 'center', alignItems: 'center', marginRight: 14,
+    width: 52, height: 52, borderRadius: 20, backgroundColor: '#EFF6FF',
+    justifyContent: 'center', alignItems: 'center', marginRight: 14, borderWidth: 1, borderColor: '#DBEAFE',
   },
-  moduleTitle: { fontSize: 17, fontWeight: '600', color: '#0F172A', marginBottom: 3 },
-  moduleSub:   { fontSize: 13, color: '#64748B', lineHeight: 18 },
-  appStepBadge:    { backgroundColor: '#F0F9FF', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, marginRight: 6 },
-  appStepBadgeTxt: { fontSize: 11, fontWeight: '700' },
+  moduleTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
+  moduleSub:   { fontSize: 14, color: '#64748B', lineHeight: 20 },
+  appStepBadge:    { backgroundColor: '#F8FAFC', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, marginLeft: 0 },
+  appStepBadgeTxt: { fontSize: 12, fontWeight: '700' },
 
   // ── Lesson header ──────────────────────────────────────────────────────────
   lessonHeader: {
-    alignItems: 'center', marginBottom: 24, backgroundColor: 'rgba(255,255,255,0.92)',
-    padding: 22, borderRadius: 18, elevation: 5,
+    alignItems: 'center', marginBottom: 24, backgroundColor: 'rgba(255,255,255,0.96)',
+    padding: 24, borderRadius: 26, elevation: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.12, shadowRadius: 16,
   },
-  lessonTitle: { fontSize: 22, fontWeight: 'bold', color: '#0F172A', textAlign: 'center', marginBottom: 16 },
+  lessonTitle: { fontSize: 24, fontWeight: 'bold', color: '#0F172A', textAlign: 'center', marginBottom: 16 },
 
   // ── Audio button ───────────────────────────────────────────────────────────
   audioBtn: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0F9FF',
     paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12,
     borderWidth: 2, borderColor: '#38BDF8',
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    marginBottom: 16,
   },
   speakingBtn:         { backgroundColor: '#38BDF8' },
   audioBtnText:        { marginLeft: 7, fontSize: 15, fontWeight: '600', color: '#38BDF8' },
@@ -1476,22 +1558,22 @@ const styles = StyleSheet.create({
   // ── Section label ──────────────────────────────────────────────────────────
   sectionLabel: {
     fontSize: 18, fontWeight: 'bold', color: '#059669',
-    marginBottom: 14, marginTop: 4, textAlign: 'center',
+    marginBottom: 14, marginTop: 10, textAlign: 'left',
   },
 
   // ── Rule card ──────────────────────────────────────────────────────────────
   ruleCard: {
     backgroundColor: 'rgba(255,255,255,0.93)', borderRadius: 14,
-    elevation: 4, borderLeftWidth: 5, overflow: 'hidden',
+    elevation: 4, borderLeftWidth: 5, overflow: 'hidden', marginBottom: 16, padding: 20,
   },
-  ruleInner:  { padding: 18, position: 'relative' },
+  ruleInner:  { position: 'relative' },
   ruleTxt:    { fontSize: 17, fontWeight: 'bold', color: '#0F172A', paddingRight: 40, lineHeight: 23, marginBottom: 6 },
   ruleDetail: { fontSize: 15, color: '#475569', lineHeight: 21, paddingRight: 40 },
   speakIco:   { position: 'absolute', top: 18, right: 18 },
 
   simulatorBtn: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(5,150,105,0.1)',
-    paddingHorizontal: 12, paddingVertical: 8, margin: 14, marginTop: 0,
+    paddingHorizontal: 12, paddingVertical: 8, marginTop: 14, marginHorizontal: 0,
     borderRadius: 8, alignSelf: 'flex-start', borderWidth: 1, borderColor: '#059669',
   },
   dangerSimulatorBtn:  { backgroundColor: 'rgba(220,38,38,0.08)', borderColor: '#DC2626' },
@@ -1500,10 +1582,10 @@ const styles = StyleSheet.create({
 
   // ── Tip card ───────────────────────────────────────────────────────────────
   tipCard: {
-    backgroundColor: 'rgba(255,255,255,0.93)', padding: 18, borderRadius: 14, marginBottom: 18,
+    backgroundColor: 'rgba(255,255,255,0.93)', padding: 20, borderRadius: 14, marginBottom: 18,
     elevation: 4, borderLeftWidth: 5, borderLeftColor: '#0EA5E9',
   },
-  tipTitle:   { fontSize: 18, fontWeight: 'bold', color: '#0F172A', marginBottom: 8 },
+  tipTitle:   { fontSize: 18, fontWeight: 'bold', color: '#0F172A', marginBottom: 8, paddingRight: 48 },
   tipDesc:    { fontSize: 15, color: '#475569', lineHeight: 21, marginBottom: 12 },
   exampleBox: { backgroundColor: 'rgba(14,165,233,0.1)', padding: 12, borderRadius: 8, marginBottom: 14 },
   exampleTxt: { fontSize: 13, color: '#0F172A', fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', lineHeight: 20 },
@@ -1512,16 +1594,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0F9FF',
     paddingHorizontal: 10, paddingVertical: 7, borderRadius: 8, borderWidth: 1, borderColor: '#38BDF8',
   },
+  listenIconBtn: {
+    width: 40, height: 40, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F0F9FF', borderRadius: 12,
+    borderWidth: 1, borderColor: '#38BDF8', marginRight: 10,
+  },
+  listenIconCorner: {
+    position: 'absolute', top: 14, right: 14, width: 38, height: 38,
+    justifyContent: 'center', alignItems: 'center', backgroundColor: '#F0F9FF', borderRadius: 12,
+    borderWidth: 1, borderColor: '#38BDF8', zIndex: 2,
+  },
+  cardFooter: {
+    marginTop: 8,
+    alignItems: 'flex-start',
+  },
   listenTxt: { color: '#38BDF8', fontSize: 13, marginLeft: 5, fontWeight: '600' },
 
   // ── Scam card ──────────────────────────────────────────────────────────────
   scamCard: {
-    backgroundColor: 'rgba(255,255,255,0.93)', padding: 18, borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.93)', padding: 20, borderRadius: 14,
     elevation: 4, borderLeftWidth: 5,
   },
-  safeCard:    { borderLeftColor: '#059669' },
+  safeCard:    { borderLeftColor: '#10B981' },
   dangerCard:  { borderLeftColor: '#DC2626' },
-  scamType:    { fontSize: 17, fontWeight: 'bold', color: '#0F172A', marginBottom: 10 },
+  scamType:    { fontSize: 17, fontWeight: 'bold', color: '#0F172A', marginBottom: 10, paddingRight: 48 },
   scamMsg:     { fontSize: 14, fontStyle: 'italic', color: '#475569', backgroundColor: '#F8FAFC', padding: 12, borderRadius: 8, lineHeight: 20, marginBottom: 10 },
   scamWarning: { fontSize: 15, fontWeight: '600', color: '#DC2626', marginBottom: 14, lineHeight: 21 },
   scamActions: { flexDirection: 'row', gap: 10 },
@@ -1535,8 +1630,8 @@ const styles = StyleSheet.create({
 
   // ── Quick try card ─────────────────────────────────────────────────────────
   quickTryCard: {
-    backgroundColor: 'rgba(255,255,255,0.93)', padding: 18, borderRadius: 14, marginTop: 8,
-    elevation: 4, alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.95)', padding: 20, borderRadius: 18, marginTop: 18,
+    elevation: 4, alignItems: 'flex-start', borderWidth: 1, borderColor: '#E2E8F0',
   },
   quickTryTitle:  { fontSize: 16, fontWeight: 'bold', color: '#0F172A', marginBottom: 4 },
   quickTryDesc:   { fontSize: 14, color: '#64748B', marginBottom: 14 },
@@ -1714,11 +1809,15 @@ const styles = StyleSheet.create({
 
   // ── Simulator screen header ────────────────────────────────────────────────
   simHeader: {
-    alignItems: 'center', marginBottom: 20, backgroundColor: 'rgba(255,255,255,0.92)',
-    padding: 20, borderRadius: 16, elevation: 5,
+    alignItems: 'stretch', marginBottom: 18, backgroundColor: 'transparent',
+    padding: 0, borderRadius: 0, elevation: 0,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0,
   },
-  simHeaderTitle: { fontSize: 22, fontWeight: 'bold', color: '#0F172A', marginBottom: 4 },
-  simHeaderSub:   { fontSize: 14, color: '#64748B', textAlign: 'center' },
+  simHeaderTop: {
+    alignItems: 'flex-start', marginBottom: 12,
+  },
+  simHeaderTitle: { fontSize: 22, fontWeight: 'bold', color: '#0F172A', marginBottom: 4, textAlign: 'center' },
+  simHeaderSub:   { fontSize: 14, color: '#475569', textAlign: 'center', marginBottom: 16 },
   tipBox:     { backgroundColor: 'rgba(255,255,255,0.92)', padding: 18, borderRadius: 14, elevation: 4 },
   tipBoxTitle:{ fontSize: 16, fontWeight: 'bold', color: '#0F172A', marginBottom: 10 },
   tipBoxTxt:  { fontSize: 14, color: '#475569', lineHeight: 22 },

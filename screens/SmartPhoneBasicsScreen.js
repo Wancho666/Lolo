@@ -19,2788 +19,2684 @@ import Slider from "@react-native-community/slider";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
-import * as Speech from 'expo-speech';
+import * as Speech from "expo-speech";
 
 const { width, height } = Dimensions.get("window");
-// Responsive phone shell sizing so all simulators fit nicely on screen
-const SIM_PHONE_WIDTH = Math.min(180, Math.floor(width * 0.42));
-const SIM_PHONE_HEIGHT = Math.floor(SIM_PHONE_WIDTH * 1.75);
-const BASE_PHONE_WIDTH = 160;
-const BASE_PHONE_HEIGHT = 280;
-const SCREEN_SCALE = Math.min(
-  SIM_PHONE_WIDTH / BASE_PHONE_WIDTH,
-  SIM_PHONE_HEIGHT / BASE_PHONE_HEIGHT
-);
 
-// Fixed TTS Wrapper
-const TTSWrapper = {
-  speak: (text, options = {}) => {
-    const { onStart, onDone, onError } = options;
-    
+// ─── Phone shell sizing ───────────────────────────────────────────────────────
+const PHONE_W = 220;
+const PHONE_H = 430;
+const SCREEN_W = PHONE_W - 20;
+const SCREEN_H = PHONE_H - 80;
+
+// ─── TTS ──────────────────────────────────────────────────────────────────────
+const TTS = {
+  speak: (text, opts = {}) => {
+    const { onStart, onDone, onError } = opts;
     try {
-      if (typeof onStart === 'function') onStart();
-      
+      if (onStart) onStart();
       Speech.speak(text, {
-        language: 'en',
+        language: "fil",
         pitch: 1,
-        rate: 0.8,
-        onStart: typeof onStart === 'function' ? onStart : undefined,
-        onDone: typeof onDone === 'function' ? onDone : undefined,
-        onStopped: typeof onDone === 'function' ? onDone : undefined,
-        onError: typeof onError === 'function' ? onError : undefined,
+        rate: 0.85,
+        onStart,
+        onDone,
+        onStopped: onDone,
+        onError,
       });
-    } catch (error) {
-      console.warn('TTS Error:', error);
-      if (typeof onError === 'function') onError(error);
+    } catch (e) {
+      console.warn("TTS:", e);
+      if (onError) onError(e);
     }
   },
-  
   stop: () => {
-    try {
-      Speech.stop();
-    } catch (error) {
-      console.warn('TTS Stop Error:', error);
-    }
-  }
+    try { Speech.stop(); } catch (_) {}
+  },
 };
 
-// --- Phone Anatomy Simulator ---
+// ─── Shared Phone Shell ───────────────────────────────────────────────────────
+const PhoneShell = ({ children, onVolumeUp, onVolumeDown, onPowerPressIn, onPowerPressOut, powerHighlight }) => (
+  <View style={phoneStyles.shell}>
+    {/* Left side volume buttons */}
+    <View style={phoneStyles.leftSide}>
+      <TouchableOpacity
+        style={phoneStyles.volBtn}
+        onPress={onVolumeUp}
+        accessibilityLabel="Volume Up"
+      >
+        <View style={phoneStyles.volBtnInner} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[phoneStyles.volBtn, { marginTop: 6 }]}
+        onPress={onVolumeDown}
+        accessibilityLabel="Volume Down"
+      >
+        <View style={phoneStyles.volBtnInner} />
+      </TouchableOpacity>
+    </View>
+
+    {/* Phone body */}
+    <View style={phoneStyles.body}>
+      {/* Notch / dynamic island style */}
+      <View style={phoneStyles.notch}>
+        <View style={phoneStyles.camera} />
+        <View style={phoneStyles.speaker} />
+      </View>
+
+      {/* Screen */}
+      <View style={phoneStyles.screen}>
+        {children}
+      </View>
+
+      {/* Home indicator */}
+      <View style={phoneStyles.homeIndicatorWrap}>
+        <View style={phoneStyles.homeIndicator} />
+      </View>
+    </View>
+
+    {/* Right side power button */}
+    <View style={phoneStyles.rightSide}>
+      <TouchableOpacity
+        style={[phoneStyles.powerBtn, powerHighlight && phoneStyles.powerBtnActive]}
+        onPressIn={onPowerPressIn}
+        onPressOut={onPowerPressOut}
+        accessibilityLabel="Power Button"
+      >
+        <View style={phoneStyles.powerBtnInner} />
+      </TouchableOpacity>
+    </View>
+  </View>
+);
+
+// ─── Status Bar ───────────────────────────────────────────────────────────────
+const StatusBar = ({ dark = false, charging = false, batteryLevel = 80 }) => (
+  <View style={[simStyles.statusBar, dark && simStyles.statusBarDark]}>
+    <Text style={[simStyles.statusTime, dark && { color: "#111" }]}>9:41</Text>
+    <View style={simStyles.statusRight}>
+      <Icon name="signal" size={10} color={dark ? "#111" : "#fff"} />
+      <Icon name="wifi" size={10} color={dark ? "#111" : "#fff"} style={{ marginHorizontal: 3 }} />
+      <View style={simStyles.batteryContainer}>
+        <View style={[simStyles.batteryFillSmall, {
+          width: `${batteryLevel}%`,
+          backgroundColor: batteryLevel < 20 ? "#ef4444" : dark ? "#111" : "#fff"
+        }]} />
+      </View>
+    </View>
+  </View>
+);
+
+// ─── 1. Phone Anatomy Simulator ───────────────────────────────────────────────
 const PhoneAnatomySimulator = ({ onSuccess }) => {
-  const [highlightedPart, setHighlightedPart] = useState(null);
-  const [identifiedParts, setIdentifiedParts] = useState(new Set());
+  const [identified, setIdentified] = useState(new Set());
+  const [highlighted, setHighlighted] = useState(null);
 
   const parts = [
-    { id: "power", name: "Power Button" },
-    { id: "volume", name: "Volume Buttons" },
-    { id: "screen", name: "Screen" },
-    { id: "home", name: "Home Button" },
-    { id: "speaker", name: "Speaker" },
+    { id: "notch", name: "Notch / Camera", desc: "Ito ang harap na kamera at sensor." },
+    { id: "screen", name: "Screen", desc: "Ito ang touch screen – dito ka nag-ta-tap at nag-si-swipe." },
+    { id: "volume", name: "Volume Buttons", desc: "Pataas o pababa ang volume gamit ang mga button na ito." },
+    { id: "power", name: "Power Button", desc: "Pindutin ito para i-on o i-off ang phone." },
+    { id: "home", name: "Home Indicator", desc: "I-swipe pataas para bumalik sa Home Screen." },
   ];
 
-  const handlePartPress = (part) => {
-    if (identifiedParts.has(part.id)) return;
-    Vibration.vibrate(10);
-    setHighlightedPart(part.id);
-    setIdentifiedParts((prev) => new Set([...prev, part.id]));
-    TTSWrapper.speak(`This is the ${part.name}`);
-    if (identifiedParts.size + 1 >= 5) {
-      setTimeout(() => onSuccess(), 1000);
-    }
-    setTimeout(() => setHighlightedPart(null), 800);
+  const tap = (part) => {
+    if (identified.has(part.id)) return;
+    Vibration.vibrate(15);
+    setHighlighted(part.id);
+    const updated = new Set([...identified, part.id]);
+    setIdentified(updated);
+    TTS.speak(part.desc);
+    setTimeout(() => setHighlighted(null), 1000);
+    if (updated.size >= 5) setTimeout(onSuccess, 1200);
   };
 
   return (
-    <View style={styles.simulatorContainer}>
-      <Text style={styles.simulatorTitle}>Tap each part to learn about it</Text>
-      <View style={styles.phoneFrame}>
-        <View style={styles.phoneBody}>
-          {/* Power Button */}
-          <TouchableOpacity
-            style={[
-              styles.powerButton,
-              highlightedPart === "power" && styles.highlighted,
-              identifiedParts.has("power") && { backgroundColor: "#10B981" },
-            ]}
-            onPress={() => handlePartPress(parts[0])}
-            accessibilityLabel="Power Button"
-          />
+    <View style={simStyles.container}>
+      <Text style={simStyles.title}>I-tap ang bawat bahagi ng phone para malaman ang tungkulin nito</Text>
 
-          {/* Volume Buttons */}
-          <View style={styles.volumeButtons}>
-            <TouchableOpacity
-              style={[
-                styles.volumeUp,
-                highlightedPart === "volume" && styles.highlighted,
-                identifiedParts.has("volume") && { backgroundColor: "#10B981" },
-              ]}
-              onPress={() => handlePartPress(parts[1])}
-              accessibilityLabel="Volume Up"
-            />
-            <TouchableOpacity
-              style={[
-                styles.volumeDown,
-                highlightedPart === "volume" && styles.highlighted,
-                identifiedParts.has("volume") && { backgroundColor: "#10B981" },
-              ]}
-              onPress={() => handlePartPress(parts[1])}
-              accessibilityLabel="Volume Down"
-            />
-          </View>
+      <View style={phoneStyles.shell}>
+        {/* Left side volume */}
+        <View style={phoneStyles.leftSide}>
+          <TouchableOpacity
+            style={[phoneStyles.volBtn, identified.has("volume") && simStyles.identifiedBtn, highlighted === "volume" && simStyles.highlightedBtn]}
+            onPress={() => tap(parts[2])}
+          >
+            <View style={phoneStyles.volBtnInner} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[phoneStyles.volBtn, { marginTop: 6 }, identified.has("volume") && simStyles.identifiedBtn, highlighted === "volume" && simStyles.highlightedBtn]}
+            onPress={() => tap(parts[2])}
+          >
+            <View style={phoneStyles.volBtnInner} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={phoneStyles.body}>
+          {/* Notch */}
+          <TouchableOpacity
+            style={[phoneStyles.notch, identified.has("notch") && simStyles.identifiedNotch, highlighted === "notch" && simStyles.highlightedNotch]}
+            onPress={() => tap(parts[0])}
+            activeOpacity={0.7}
+          >
+            <View style={phoneStyles.camera} />
+            <View style={phoneStyles.speaker} />
+          </TouchableOpacity>
 
           {/* Screen */}
           <TouchableOpacity
-            style={[
-              styles.phoneScreen,
-              highlightedPart === "screen" && styles.highlighted,
-              identifiedParts.has("screen") && {
-                borderColor: "#10B981",
-                borderWidth: 2,
-              },
-            ]}
-            onPress={() => handlePartPress(parts[2])}
-            activeOpacity={0.8}
-            accessibilityLabel="Screen"
+            style={[phoneStyles.screen, identified.has("screen") && { borderColor: "#10B981", borderWidth: 2 }]}
+            onPress={() => tap(parts[1])}
+            activeOpacity={0.85}
           >
-            <View style={styles.statusBar}>
-              <Text style={styles.time}>9:41</Text>
-              <View style={styles.statusIcons}>
-                <Icon name="signal" size={12} color="#fff" />
-                <Icon name="wifi" size={12} color="#fff" />
-                <Icon name="battery-full" size={12} color="#fff" />
+            <View style={[simStyles.lockBg, highlighted === "screen" && { backgroundColor: "#F59E0B" }]}>
+              <StatusBar />
+              <View style={simStyles.clockCenter}>
+                <Text style={simStyles.bigClock}>9:41</Text>
+                <Text style={simStyles.clockSub}>Martes, Setyembre 10</Text>
+              </View>
+              <View style={simStyles.slideUp}>
+                <Icon name="chevron-up" size={14} color="rgba(255,255,255,0.7)" />
+                <Text style={simStyles.slideUpText}>I-swipe pataas</Text>
               </View>
             </View>
           </TouchableOpacity>
 
-          {/* Speaker */}
+          {/* Home indicator */}
           <TouchableOpacity
-            style={[
-              styles.speaker,
-              highlightedPart === "speaker" && styles.highlighted,
-              identifiedParts.has("speaker") && { backgroundColor: "#10B981" },
-            ]}
-            onPress={() => handlePartPress(parts[4])}
-            accessibilityLabel="Speaker"
-          />
+            style={[phoneStyles.homeIndicatorWrap, identified.has("home") && simStyles.identifiedHome, highlighted === "home" && simStyles.highlightedHome]}
+            onPress={() => tap(parts[4])}
+          >
+            <View style={[phoneStyles.homeIndicator, identified.has("home") && { backgroundColor: "#10B981" }]} />
+          </TouchableOpacity>
+        </View>
 
-          {/* Home Button */}
+        {/* Right power */}
+        <View style={phoneStyles.rightSide}>
           <TouchableOpacity
-            style={[
-              styles.homeButton,
-              highlightedPart === "home" && styles.highlighted,
-              identifiedParts.has("home") && {
-                backgroundColor: "#10B981",
-                borderColor: "#10B981",
-              },
-            ]}
-            onPress={() => handlePartPress(parts[3])}
-            accessibilityLabel="Home Button"
-          />
+            style={[phoneStyles.powerBtn, identified.has("power") && simStyles.identifiedBtn, highlighted === "power" && simStyles.highlightedBtn]}
+            onPress={() => tap(parts[3])}
+          >
+            <View style={phoneStyles.powerBtnInner} />
+          </TouchableOpacity>
         </View>
       </View>
-      <View style={styles.progressIndicator}>
-        <Text style={styles.simProgressText}>
-          {identifiedParts.size}/5 parts identified
-        </Text>
+
+      <View style={simStyles.progressPill}>
+        <Text style={simStyles.progressText}>{identified.size}/5 bahagi na natukoy</Text>
+      </View>
+
+      {/* Label guide */}
+      <View style={simStyles.labelGuide}>
+        {parts.map(p => (
+          <View key={p.id} style={simStyles.labelRow}>
+            <Icon name={identified.has(p.id) ? "check-circle" : "circle"} size={12} color={identified.has(p.id) ? "#10B981" : "#CBD5E1"} />
+            <Text style={[simStyles.labelText, identified.has(p.id) && { color: "#10B981" }]}>{p.name}</Text>
+          </View>
+        ))}
       </View>
     </View>
   );
 };
 
-// --- Power On/Off Simulator ---
+// ─── 2. Power On/Off Simulator ────────────────────────────────────────────────
 const PowerSimulator = ({ onSuccess }) => {
-  const [phoneState, setPhoneState] = useState("off");
-  const [pressTime, setPressTime] = useState(0);
-  const pressInterval = useRef(null);
+  const [state, setState] = useState("off"); // off | booting | on
+  const [held, setHeld] = useState(0);
+  const [succeeded, setSucceeded] = useState(false);
+  const intervalRef = useRef(null);
+  const progressAnim = useRef(new Animated.Value(0)).current;
 
-  const handlePowerPress = () => {
-    if (phoneState === "off") {
-      pressInterval.current = setInterval(() => {
-        setPressTime((prev) => prev + 100);
-      }, 100);
-    }
+  const startPress = () => {
+    if (state !== "off") return;
+    intervalRef.current = setInterval(() => {
+      setHeld(p => p + 100);
+    }, 100);
+    Animated.timing(progressAnim, { toValue: 1, duration: 2000, useNativeDriver: false }).start();
   };
 
-  const handlePowerRelease = () => {
-    if (pressInterval.current) {
-      clearInterval(pressInterval.current);
-    }
-    if (pressTime >= 1000 && phoneState === "off") {
-      Vibration.vibrate(20);
-      setPhoneState("booting");
+  const endPress = () => {
+    clearInterval(intervalRef.current);
+    progressAnim.stopAnimation();
+    if (held >= 1800 && state === "off") {
+      Vibration.vibrate(30);
+      setState("booting");
       setTimeout(() => {
-        setPhoneState("on");
-        onSuccess();
-        TTSWrapper.speak("Phone turned on!");
-      }, 1200);
-    } else if (phoneState === "on") {
-      Vibration.vibrate(10);
-      setPhoneState("off");
-      TTSWrapper.speak("Phone turned off!");
+        setState("on");
+        if (!succeeded) { setSucceeded(true); onSuccess(); }
+        TTS.speak("Nag-on na ang phone!");
+      }, 1500);
+    } else if (state === "on") {
+      Vibration.vibrate(15);
+      setState("off");
+      setHeld(0);
+      progressAnim.setValue(0);
+      TTS.speak("Na-off ang phone.");
+    } else {
+      progressAnim.setValue(0);
     }
-    setPressTime(0);
+    setHeld(0);
   };
+
+  const progressWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] });
 
   return (
-    <View style={styles.simulatorContainer}>
-      <Text style={styles.simulatorTitle}>
-        {phoneState === "off"
-          ? "Hold power button for 1 second"
-          : "Tap power to turn off"}
+    <View style={simStyles.container}>
+      <Text style={simStyles.title}>
+        {state === "off" ? "Pindutin at hawakan ang Power Button ng 2 segundo para i-on ang phone" :
+          state === "booting" ? "Nagsisimula ang phone..." : "Naka-on na! I-tap ang Power para i-off."}
       </Text>
-      <View style={styles.phoneFrame}>
-        <View style={styles.phoneBody}>
-          <TouchableOpacity
-            style={[
-              styles.powerButton,
-              pressTime > 0 && styles.pressing,
-              phoneState === "on" && { backgroundColor: "#10B981" },
-            ]}
-            onPressIn={handlePowerPress}
-            onPressOut={handlePowerRelease}
-            accessibilityLabel="Power Button"
-          />
-          <View
-            style={[
-              styles.phoneScreen,
-              phoneState === "off" && styles.screenOff,
-              phoneState === "booting" && styles.screenBooting,
-            ]}
-          >
-            {phoneState === "off" && <View style={styles.blackScreen} />}
-            {phoneState === "booting" && (
-              <View style={styles.bootScreen}>
-                <Icon name="mobile-alt" size={40} color="#fff" />
-                <Text style={styles.bootText}>Starting...</Text>
-              </View>
-            )}
-            {phoneState === "on" && (
-              <View style={styles.homeScreen}>
-                <View style={styles.statusBar}>
-                  <Text style={styles.time}>9:41</Text>
-                  <View style={styles.statusIcons}>
-                    <Icon name="signal" size={12} color="#fff" />
-                    <Icon name="wifi" size={12} color="#fff" />
-                    <Icon name="battery-full" size={12} color="#fff" />
-                  </View>
-                </View>
-                <Text style={styles.welcomeText}>Welcome!</Text>
-              </View>
-            )}
+
+      <PhoneShell
+        powerHighlight={held > 0 || state === "on"}
+        onPowerPressIn={startPress}
+        onPowerPressOut={endPress}
+        onVolumeUp={() => {}}
+        onVolumeDown={() => {}}
+      >
+        {state === "off" && (
+          <View style={simStyles.blackScreen}>
+            <Icon name="mobile-alt" size={32} color="rgba(255,255,255,0.15)" />
+            <Text style={simStyles.offText}>Hawakan ang Power Button →</Text>
           </View>
-        </View>
-      </View>
-      {pressTime > 0 && phoneState === "off" && (
-        <View style={styles.pressIndicator}>
-          <View
-            style={[
-              styles.pressBar,
-              { width: `${Math.min(pressTime / 10, 100)}%` },
-            ]}
-          />
-          <Text style={styles.pressText}>Hold to power on...</Text>
+        )}
+        {state === "booting" && (
+          <View style={simStyles.bootScreen}>
+            <View style={simStyles.brandLogo}>
+              <Icon name="mobile-alt" size={48} color="#fff" />
+            </View>
+            <Text style={simStyles.brandText}>SmartPhone</Text>
+            <View style={simStyles.bootLoader}>
+              <View style={simStyles.bootLoaderFill} />
+            </View>
+          </View>
+        )}
+        {state === "on" && (
+          <View style={simStyles.lockBg}>
+            <StatusBar />
+            <View style={simStyles.clockCenter}>
+              <Text style={simStyles.bigClock}>9:41</Text>
+              <Text style={simStyles.clockSub}>Martes, Setyembre 10</Text>
+            </View>
+            <View style={simStyles.slideUp}>
+              <Icon name="chevron-up" size={14} color="rgba(255,255,255,0.7)" />
+              <Text style={simStyles.slideUpText}>Phone naka-on na!</Text>
+            </View>
+          </View>
+        )}
+      </PhoneShell>
+
+      {held > 0 && state === "off" && (
+        <View style={simStyles.holdBar}>
+          <Animated.View style={[simStyles.holdBarFill, { width: progressWidth }]} />
+          <Text style={simStyles.holdText}>Hawakan...</Text>
         </View>
       )}
     </View>
   );
 };
 
-// --- Unlock Simulator (swipe right to unlock) ---
+// ─── 3. Unlock Simulator ──────────────────────────────────────────────────────
 const UnlockSimulator = ({ onSuccess }) => {
-  const [isLocked, setIsLocked] = useState(true);
-  const [swipeStarted, setSwipeStarted] = useState(false);
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  const [locked, setLocked] = useState(true);
+  const [pin, setPin] = useState("");
+  const [mode, setMode] = useState("swipe"); // swipe | pin
+  const [succeeded, setSucceeded] = useState(false);
   const swipeX = useRef(new Animated.Value(0)).current;
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => isLocked,
-      onMoveShouldSetPanResponder: (_, gestureState) =>
-        isLocked && Math.abs(gestureState.dx) > 10,
-      onPanResponderGrant: () => {
-        setSwipeStarted(true);
-      },
-      onPanResponderMove: Animated.event([null, { dx: swipeX }], {
-        useNativeDriver: false,
-      }),
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dx > 60) {
-          Vibration.vibrate(15);
-          setIsLocked(false);
-          TTSWrapper.speak("Phone unlocked!");
-          onSuccess();
-          Animated.timing(slideAnim, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-          }).start();
-        } else {
-          Animated.spring(swipeX, {
-            toValue: 0,
-            useNativeDriver: false,
-          }).start();
-        }
-        setSwipeStarted(false);
-      },
-    })
-  ).current;
+  const panResponder = useRef(PanResponder.create({
+    onStartShouldSetPanResponder: () => locked && mode === "swipe",
+    onMoveShouldSetPanResponder: (_, g) => locked && mode === "swipe" && Math.abs(g.dx) > 8,
+    onPanResponderMove: Animated.event([null, { dx: swipeX }], { useNativeDriver: false }),
+    onPanResponderRelease: (_, g) => {
+      if (g.dx > 80) {
+        Vibration.vibrate(20);
+        setLocked(false);
+        if (!succeeded) { setSucceeded(true); onSuccess(); }
+        TTS.speak("Na-unlock ang phone!");
+      } else {
+        Animated.spring(swipeX, { toValue: 0, useNativeDriver: false }).start();
+      }
+    },
+  })).current;
 
-  useEffect(() => {
-    if (!isLocked) {
-      Animated.timing(slideAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+  const handlePin = (digit) => {
+    const newPin = pin + digit;
+    setPin(newPin);
+    if (newPin === "1234") {
+      Vibration.vibrate(20);
+      setLocked(false);
+      if (!succeeded) { setSucceeded(true); onSuccess(); }
+      TTS.speak("Tamang PIN! Na-unlock ang phone!");
+    } else if (newPin.length >= 4) {
+      TTS.speak("Maling PIN. Subukan ulit.");
+      setTimeout(() => setPin(""), 500);
     }
-  }, [isLocked, slideAnim]);
+  };
+
+  const clearPin = () => setPin(p => p.slice(0, -1));
 
   return (
-    <View style={styles.simulatorContainer}>
-      <Text style={styles.simulatorTitle}>
-        {isLocked ? "Swipe right to unlock" : "Phone unlocked!"}
+    <View style={simStyles.container}>
+      <Text style={simStyles.title}>
+        {locked ? (mode === "swipe" ? "I-swipe papunta sa kanan para i-unlock, O gamitin ang PIN" : "I-type ang PIN: 1-2-3-4") : "Na-unlock na ang phone!"}
       </Text>
-      <View style={styles.phoneFrame}>
-        <View style={styles.phoneBody}>
-          <View style={styles.phoneScreen}>
-            {isLocked ? (
-              <View style={styles.lockScreen}>
-                <View style={styles.statusBar}>
-                  <Text style={styles.time}>9:41</Text>
-                  <View style={styles.statusIcons}>
-                    <Icon name="lock" size={12} color="#fff" />
-                    <Icon name="battery-full" size={12} color="#fff" />
-                  </View>
-                </View>
-                <View style={styles.clockDisplay}>
-                  <Text style={styles.clockTime}>9:41</Text>
-                  <Text style={styles.clockDate}>Tuesday, September 10</Text>
-                </View>
-                <View style={styles.swipeArea} {...panResponder.panHandlers}>
-  <Animated.View
-    style={[
-      styles.swipeIndicator,
-      { transform: [{ translateX: swipeX }] }
-    ]}
-  >
-    <Icon name="chevron-right" size={16} color="#9CA3AF" />
-    <Text style={styles.swipeText}>Swipe to unlock</Text>
-  </Animated.View>
-</View>
+
+      <PhoneShell onVolumeUp={() => {}} onVolumeDown={() => {}} onPowerPressIn={() => {}} onPowerPressOut={() => {}}>
+        {locked ? (
+          <View style={simStyles.lockBg}>
+            <StatusBar />
+            <View style={simStyles.clockCenter}>
+              <Text style={simStyles.bigClock}>9:41</Text>
+              <Text style={simStyles.clockSub}>Martes, Setyembre 10</Text>
+              <Icon name="lock" size={20} color="rgba(255,255,255,0.6)" style={{ marginTop: 12 }} />
+            </View>
+
+            {mode === "swipe" ? (
+              <View style={simStyles.swipeZone} {...panResponder.panHandlers}>
+                <Animated.View style={[simStyles.swipeHandle, { transform: [{ translateX: swipeX }] }]}>
+                  <Icon name="chevron-right" size={14} color="#fff" />
+                  <Text style={simStyles.swipeHandleText}>I-swipe →</Text>
+                </Animated.View>
               </View>
             ) : (
-              <Animated.View
-                style={[
-                  styles.homeScreen,
-                  {
-                    transform: [
-                      {
-                        translateX: slideAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [SIM_PHONE_WIDTH, 0],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              >
-                <View style={styles.statusBar}>
-                  <Text style={styles.time}>9:41</Text>
-                  <View style={styles.statusIcons}>
-                    <Icon name="signal" size={12} color="#fff" />
-                    <Icon name="wifi" size={12} color="#fff" />
-                    <Icon name="battery-full" size={12} color="#fff" />
-                  </View>
-                </View>
-                <View style={styles.appGrid}>
-                  {["phone", "comment", "camera", "cog"].map((icon, idx) => (
-                    <View key={idx} style={styles.appIcon}>
-                      <Icon name={icon} size={24} color="#38BDF8" />
-                    </View>
-                  ))}
-                </View>
-              </Animated.View>
+              <View style={simStyles.pinDisplay}>
+                {[0,1,2,3].map(i => (
+                  <View key={i} style={[simStyles.pinDot, pin.length > i && simStyles.pinDotFilled]} />
+                ))}
+              </View>
             )}
+
+            <TouchableOpacity style={simStyles.modeToggle} onPress={() => { setMode(m => m === "swipe" ? "pin" : "swipe"); setPin(""); }}>
+              <Text style={simStyles.modeToggleText}>{mode === "swipe" ? "Gamitin ang PIN" : "I-swipe para mag-unlock"}</Text>
+            </TouchableOpacity>
           </View>
+        ) : (
+          <View style={simStyles.homeScreenFull}>
+            <StatusBar />
+            <View style={simStyles.homeAppGrid}>
+              {[["phone","#10B981"],["comment","#3B82F6"],["camera","#8B5CF6"],["envelope","#EF4444"],
+                ["globe","#F59E0B"],["music","#EC4899"],["map-marker-alt","#14B8A6"],["cog","#6B7280"]].map(([ic,cl],i) => (
+                <View key={i} style={simStyles.homeApp}>
+                  <View style={[simStyles.homeAppIcon, { backgroundColor: cl }]}>
+                    <Icon name={ic} size={20} color="#fff" />
+                  </View>
+                  <Text style={simStyles.homeAppLabel}>{["Telepono","Mensahe","Kamera","Gmail","Browser","Musika","Mapa","Settings"][i]}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+      </PhoneShell>
+
+      {/* PIN pad shown below phone when in pin mode */}
+      {locked && mode === "pin" && (
+        <View style={simStyles.pinPad}>
+          {[["1","2","3"],["4","5","6"],["7","8","9"],["","0","⌫"]].map((row, ri) => (
+            <View key={ri} style={simStyles.pinRow}>
+              {row.map((d, di) => (
+                <TouchableOpacity
+                  key={di}
+                  style={[simStyles.pinKey, d === "" && { opacity: 0 }]}
+                  onPress={() => d === "⌫" ? clearPin() : d !== "" && handlePin(d)}
+                  disabled={d === ""}
+                >
+                  <Text style={simStyles.pinKeyText}>{d}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))}
         </View>
-      </View>
+      )}
     </View>
   );
 };
 
-// --- Touch Gesture Simulator (tap, swipe, pinch) ---
+// ─── 4. Touchscreen Gestures ──────────────────────────────────────────────────
 const TouchSimulator = ({ onSuccess }) => {
-  const [gestures, setGestures] = useState({
-    tap: false,
-    swipe: false,
-    pinch: false,
-  });
-  const [currentGesture, setCurrentGesture] = useState(null);
-
-  // Swipe gesture
+  const [done, setDone] = useState({ tap: false, swipe: false, pinch: false });
+  const [active, setActive] = useState(null);
   const swipeX = useRef(new Animated.Value(0)).current;
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => !gestures.swipe,
-      onMoveShouldSetPanResponder: (_, gestureState) =>
-        !gestures.swipe && Math.abs(gestureState.dx) > 10,
-      onPanResponderMove: Animated.event([null, { dx: swipeX }], {
-        useNativeDriver: false,
-      }),
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dx > 80 && !gestures.swipe) {
-          setCurrentGesture("swipe");
-          setGestures((prev) => ({ ...prev, swipe: true }));
-          TTSWrapper.speak("Nice swipe!");
-          setTimeout(() => setCurrentGesture(null), 500);
-          swipeX.setValue(0);
-          if (gestures.tap && gestures.pinch) onSuccess();
-        } else {
-          Animated.spring(swipeX, {
-            toValue: 0,
-            useNativeDriver: false,
-          }).start();
-        }
-      },
-    })
-  ).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  // Pinch gesture (simulate with long press)
-  const handlePinch = () => {
-    if (!gestures.pinch) {
-      Vibration.vibrate(10);
-      setCurrentGesture("pinch");
-      setGestures((prev) => ({ ...prev, pinch: true }));
-      TTSWrapper.speak("Good pinch!");
-      setTimeout(() => setCurrentGesture(null), 500);
-      if (gestures.tap && gestures.swipe) onSuccess();
-    }
+  const complete = (gesture) => {
+    const updated = { ...done, [gesture]: true };
+    setDone(updated);
+    if (Object.values(updated).every(Boolean)) setTimeout(onSuccess, 600);
   };
 
-  // Tap gesture
   const handleTap = () => {
-    if (!gestures.tap) {
-      Vibration.vibrate(8);
-      setCurrentGesture("tap");
-      setGestures((prev) => ({ ...prev, tap: true }));
-      TTSWrapper.speak("Great tap!");
-      setTimeout(() => setCurrentGesture(null), 500);
-      if (gestures.swipe && gestures.pinch) onSuccess();
-    }
+    if (done.tap) return;
+    Vibration.vibrate(10);
+    setActive("tap");
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 0.85, duration: 100, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
+    ]).start();
+    TTS.speak("Magaling! Nag-tap ka.");
+    setTimeout(() => { setActive(null); complete("tap"); }, 600);
   };
+
+  const panResponder = useRef(PanResponder.create({
+    onStartShouldSetPanResponder: () => !done.swipe,
+    onMoveShouldSetPanResponder: (_, g) => !done.swipe && Math.abs(g.dx) > 10,
+    onPanResponderMove: Animated.event([null, { dx: swipeX }], { useNativeDriver: false }),
+    onPanResponderRelease: (_, g) => {
+      if (g.dx > 70 && !done.swipe) {
+        setActive("swipe");
+        TTS.speak("Magaling! Nag-swipe ka.");
+        swipeX.setValue(0);
+        setTimeout(() => { setActive(null); complete("swipe"); }, 600);
+      } else {
+        Animated.spring(swipeX, { toValue: 0, useNativeDriver: false }).start();
+      }
+    },
+  })).current;
+
+  const handlePinch = () => {
+    if (done.pinch) return;
+    Vibration.vibrate(15);
+    setActive("pinch");
+    TTS.speak("Magaling! Nag-pinch ka.");
+    setTimeout(() => { setActive(null); complete("pinch"); }, 600);
+  };
+
+  const gestures = [
+    { key: "tap", icon: "hand-point-up", label: "Tap", sub: "Pindutin nang isang beses", action: handleTap },
+    { key: "swipe", icon: "hand-paper", label: "Swipe", sub: "I-drag papunta sa kanan", action: null },
+    { key: "pinch", icon: "compress-arrows-alt", label: "Pinch/Zoom", sub: "Hawakan ng matagal", action: handlePinch },
+  ];
 
   return (
-    <View style={styles.simulatorContainer}>
-      <Text style={styles.simulatorTitle}>Try all three gestures</Text>
-      <View style={styles.phoneFrame}>
-        <View style={styles.phoneBody}>
-          <View style={styles.phoneScreen}>
-            <View style={styles.gestureArea}>
-              {/* Tap */}
+    <View style={simStyles.container}>
+      <Text style={simStyles.title}>Subukan ang tatlong paraan ng pag-touch sa screen</Text>
+
+      <PhoneShell onVolumeUp={() => {}} onVolumeDown={() => {}} onPowerPressIn={() => {}} onPowerPressOut={() => {}}>
+        <View style={simStyles.gestureScreen}>
+          <StatusBar />
+          <View style={{ flex: 1, justifyContent: "space-evenly", alignItems: "center", padding: 12 }}>
+            {/* Tap */}
+            <Animated.View style={{ transform: [{ scale: scaleAnim }], width: "100%" }}>
               <TouchableOpacity
-                style={[
-                  styles.gestureButton,
-                  currentGesture === "tap" && styles.gestureActive,
-                  gestures.tap && styles.gestureCompleted,
-                ]}
+                style={[simStyles.gestureTile, done.tap && simStyles.gestureTileDone, active === "tap" && simStyles.gestureTileActive]}
                 onPress={handleTap}
                 activeOpacity={0.7}
-                accessibilityLabel="Tap"
               >
-                <Icon
-                  name="hand-point-up"
-                  size={30}
-                  color={gestures.tap ? "#10B981" : "#38BDF8"}
-                />
-                <Text style={styles.gestureLabel}>Tap</Text>
+                <Icon name="hand-point-up" size={22} color={done.tap ? "#10B981" : "#38BDF8"} />
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={simStyles.gestureName}>Tap</Text>
+                  <Text style={simStyles.gestureSub}>I-tap ang kahon na ito</Text>
+                </View>
+                {done.tap && <Icon name="check-circle" size={18} color="#10B981" />}
               </TouchableOpacity>
-              {/* Swipe */}
-              <Animated.View
-                style={[
-                  styles.gestureButton,
-                  {
-                    marginTop: 16,
-                    marginBottom: 16,
-                    transform: [{ translateX: swipeX }],
-                  },
-                  currentGesture === "swipe" && styles.gestureActive,
-                  gestures.swipe && styles.gestureCompleted,
-                ]}
-                {...panResponder.panHandlers}
-                accessibilityLabel="Swipe"
-              >
-                <Icon
-                  name="hand-paper"
-                  size={30}
-                  color={gestures.swipe ? "#10B981" : "#38BDF8"}
-                />
-                <Text style={styles.gestureLabel}>Swipe</Text>
-                <Text
-                  style={{
-                    color: "#94A3B8",
-                    fontSize: 10,
-                    marginTop: 2,
-                  }}
-                >
-                  Drag right
-                </Text>
-              </Animated.View>
-              {/* Pinch (simulate with long press) */}
-              <TouchableOpacity
-                style={[
-                  styles.gestureButton,
-                  currentGesture === "pinch" && styles.gestureActive,
-                  gestures.pinch && styles.gestureCompleted,
-                ]}
-                onLongPress={handlePinch}
-                delayLongPress={200}
-                activeOpacity={0.7}
-                accessibilityLabel="Pinch"
-              >
-                <Icon
-                  name="compress-arrows-alt"
-                  size={30}
-                  color={gestures.pinch ? "#10B981" : "#38BDF8"}
-                />
-                <Text style={styles.gestureLabel}>Pinch</Text>
-                <Text
-                  style={{
-                    color: "#94A3B8",
-                    fontSize: 10,
-                    marginTop: 2,
-                  }}
-                >
-                  Long press
-                </Text>
-              </TouchableOpacity>
-            </View>
+            </Animated.View>
+
+            {/* Swipe */}
+            <Animated.View style={{ transform: [{ translateX: swipeX }], width: "100%" }} {...panResponder.panHandlers}>
+              <View style={[simStyles.gestureTile, done.swipe && simStyles.gestureTileDone, active === "swipe" && simStyles.gestureTileActive]}>
+                <Icon name="hand-paper" size={22} color={done.swipe ? "#10B981" : "#38BDF8"} />
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={simStyles.gestureName}>Swipe →</Text>
+                  <Text style={simStyles.gestureSub}>I-drag papunta sa kanan</Text>
+                </View>
+                {done.swipe && <Icon name="check-circle" size={18} color="#10B981" />}
+              </View>
+            </Animated.View>
+
+            {/* Pinch */}
+            <TouchableOpacity
+              style={[simStyles.gestureTile, done.pinch && simStyles.gestureTileDone, active === "pinch" && simStyles.gestureTileActive]}
+              onLongPress={handlePinch}
+              delayLongPress={300}
+              activeOpacity={0.7}
+            >
+              <Icon name="compress-arrows-alt" size={22} color={done.pinch ? "#10B981" : "#38BDF8"} />
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={simStyles.gestureName}>Pinch/Zoom</Text>
+                <Text style={simStyles.gestureSub}>Hawakan ng matagal</Text>
+              </View>
+              {done.pinch && <Icon name="check-circle" size={18} color="#10B981" />}
+            </TouchableOpacity>
           </View>
         </View>
-      </View>
-      <View style={styles.progressIndicator}>
-        <Text style={styles.simProgressText}>
-          {Object.values(gestures).filter(Boolean).length}/3 gestures completed
-        </Text>
+      </PhoneShell>
+
+      <View style={simStyles.progressPill}>
+        <Text style={simStyles.progressText}>{Object.values(done).filter(Boolean).length}/3 gestures nagawa na</Text>
       </View>
     </View>
   );
 };
 
-// --- Volume & Brightness Simulator ---
+// ─── 5. Volume & Brightness ───────────────────────────────────────────────────
 const VolumeSimulator = ({ onSuccess }) => {
-  const [volume, setVolume] = useState(50);
-  const [brightness, setBrightness] = useState(50);
-  const [showVolumeControl, setShowVolumeControl] = useState(false);
+  const [volume, setVolume] = useState(30);
+  const [brightness, setBrightness] = useState(30);
+  const [showVol, setShowVol] = useState(false);
+  const [succeeded, setSucceeded] = useState(false);
+  const volTimer = useRef(null);
 
-  const handleVolumeChange = (value) => {
-    Vibration.vibrate(5);
-    setVolume(value);
-    if (value >= 80 && brightness >= 80) {
-      onSuccess();
+  const check = (v, b) => {
+    if (v >= 75 && b >= 75 && !succeeded) {
+      setSucceeded(true);
+      TTS.speak("Magaling! Na-adjust mo na ang volume at brightness!");
+      setTimeout(onSuccess, 800);
     }
   };
 
-  const handleBrightnessChange = (value) => {
-    Vibration.vibrate(5);
-    setBrightness(value);
-    if (value >= 80 && volume >= 80) {
-      onSuccess();
-    }
+  const onVol = (val) => {
+    const v = Math.round(val);
+    setVolume(v);
+    setShowVol(true);
+    clearTimeout(volTimer.current);
+    volTimer.current = setTimeout(() => setShowVol(false), 1500);
+    check(v, brightness);
   };
 
-  const handleVolumeButtonPress = (direction) => {
-    setShowVolumeControl(true);
+  const onBright = (val) => {
+    const b = Math.round(val);
+    setBrightness(b);
+    check(volume, b);
+  };
+
+  const physVol = (dir) => {
+    const v = Math.min(100, Math.max(0, volume + (dir === "up" ? 10 : -10)));
     Vibration.vibrate(8);
-    const newVolume =
-      direction === "up"
-        ? Math.min(100, volume + 10)
-        : Math.max(0, volume - 10);
-    setVolume(newVolume);
-    setTimeout(() => setShowVolumeControl(false), 1200);
-    if (newVolume >= 80 && brightness >= 80) {
-      onSuccess();
-    }
+    setVolume(v);
+    setShowVol(true);
+    clearTimeout(volTimer.current);
+    volTimer.current = setTimeout(() => setShowVol(false), 1500);
+    check(v, brightness);
   };
 
   return (
-    <View style={styles.simulatorContainer}>
-      <Text style={styles.simulatorTitle}>
-        Adjust volume and brightness to 80%
-      </Text>
-      <View style={styles.phoneFrame}>
-        <View style={styles.phoneBody}>
-          {/* Volume Buttons */}
-          <View style={styles.volumeButtons}>
-            <TouchableOpacity
-              style={styles.volumeUp}
-              onPress={() => handleVolumeButtonPress("up")}
-              accessibilityLabel="Volume Up"
-            />
-            <TouchableOpacity
-              style={styles.volumeDown}
-              onPress={() => handleVolumeButtonPress("down")}
-              accessibilityLabel="Volume Down"
-            />
-          </View>
-          {/* Phone screen with brightness */}
-          <View
-            style={[
-              styles.phoneScreen,
-              { opacity: Math.min(1, Math.max(brightness / 100, 0.3) + 0.3) },
-            ]}
-          >
-            {/* Volume Overlay */}
-            {showVolumeControl && (
-              <View style={styles.volumeOverlay}>
-                <Icon name="volume-up" size={20} color="#fff" />
-                <View style={styles.volumeBar}>
-                  <View style={[styles.volumeFill, { width: `${volume}%` }]} />
-                </View>
-                <Text style={styles.volumeText}>{volume}%</Text>
+    <View style={simStyles.container}>
+      <Text style={simStyles.title}>I-adjust ang volume at brightness sa 75% o mas mataas gamit ang mga slider</Text>
+
+      <PhoneShell
+        onVolumeUp={() => physVol("up")}
+        onVolumeDown={() => physVol("down")}
+        onPowerPressIn={() => {}}
+        onPowerPressOut={() => {}}
+      >
+        <View style={[simStyles.settingsScreen, { opacity: 0.4 + (brightness / 100) * 0.6 }]}>
+          <StatusBar />
+
+          {/* Volume OSD */}
+          {showVol && (
+            <View style={simStyles.volOSD}>
+              <Icon name={volume === 0 ? "volume-mute" : volume < 50 ? "volume-down" : "volume-up"} size={14} color="#fff" />
+              <View style={simStyles.volOSDBar}>
+                <View style={[simStyles.volOSDFill, { width: `${volume}%` }]} />
               </View>
-            )}
-            {/* Settings Screen */}
-            <View style={styles.settingsScreen}>
-              <View style={styles.statusBar}>
-                <Text style={styles.time}>9:41</Text>
-                <View style={styles.statusIcons}>
-                  <Icon name="signal" size={12} color="#fff" />
-                  <Icon name="wifi" size={12} color="#fff" />
-                  <Icon name="battery-full" size={12} color="#fff" />
-                </View>
-              </View>
-              <Text style={styles.settingsTitle}>Settings</Text>
-              {/* Volume Setting */}
-              <View style={styles.settingItem}>
-                <View style={styles.settingRow}>
-                  <Icon name="volume-up" size={18} color="#38BDF8" />
-                  <Text style={styles.settingLabel}>Volume</Text>
-                  <Text style={styles.settingValue}>{volume}%</Text>
-                </View>
-                <Slider
-                  style={styles.settingSlider}
-                  value={volume}
-                  onValueChange={handleVolumeChange}
-                  minimumValue={0}
-                  maximumValue={100}
-                  step={10}
-                  minimumTrackTintColor="#38BDF8"
-                  maximumTrackTintColor="#CBD5E1"
-                />
-              </View>
-              {/* Brightness Setting */}
-              <View style={styles.settingItem}>
-                <View style={styles.settingRow}>
-                  <Icon name="sun" size={18} color="#38BDF8" />
-                  <Text style={styles.settingLabel}>Brightness</Text>
-                  <Text style={styles.settingValue}>{brightness}%</Text>
-                </View>
-                <Slider
-                  style={styles.settingSlider}
-                  value={brightness}
-                  onValueChange={handleBrightnessChange}
-                  minimumValue={0}
-                  maximumValue={100}
-                  step={10}
-                  minimumTrackTintColor="#38BDF8"
-                  maximumTrackTintColor="#CBD5E1"
-                />
-              </View>
+              <Text style={simStyles.volOSDText}>{volume}</Text>
             </View>
+          )}
+
+          <Text style={simStyles.settingTitle}>Settings</Text>
+
+          {/* Volume row */}
+          <View style={simStyles.settingRow}>
+            <Icon name="volume-up" size={14} color="#38BDF8" />
+            <Text style={simStyles.settingLabel}>Volume</Text>
+            <Text style={[simStyles.settingVal, volume >= 75 && { color: "#10B981" }]}>{volume}%</Text>
           </View>
+          <Slider style={{ width: "100%", height: 28 }} value={volume} onValueChange={onVol}
+            minimumValue={0} maximumValue={100} step={5}
+            minimumTrackTintColor="#38BDF8" maximumTrackTintColor="#374151" thumbTintColor="#38BDF8" />
+
+          {/* Brightness row */}
+          <View style={[simStyles.settingRow, { marginTop: 8 }]}>
+            <Icon name="sun" size={14} color="#F59E0B" />
+            <Text style={simStyles.settingLabel}>Liwanag</Text>
+            <Text style={[simStyles.settingVal, brightness >= 75 && { color: "#10B981" }]}>{brightness}%</Text>
+          </View>
+          <Slider style={{ width: "100%", height: 28 }} value={brightness} onValueChange={onBright}
+            minimumValue={0} maximumValue={100} step={5}
+            minimumTrackTintColor="#F59E0B" maximumTrackTintColor="#374151" thumbTintColor="#F59E0B" />
+
+          <View style={simStyles.targetHint}>
+            <Icon name="info-circle" size={10} color="#64748B" />
+            <Text style={simStyles.targetHintText}>Target: 75% o mas mataas para sa dalawa</Text>
+          </View>
+        </View>
+      </PhoneShell>
+
+      <View style={simStyles.twoProgress}>
+        <View style={[simStyles.miniProgress, { backgroundColor: volume >= 75 ? "#10B981" : "#E2E8F0" }]}>
+          <Icon name="volume-up" size={10} color={volume >= 75 ? "#fff" : "#94A3B8"} />
+          <Text style={[simStyles.miniProgressText, { color: volume >= 75 ? "#fff" : "#94A3B8" }]}>Vol {volume}%</Text>
+        </View>
+        <View style={[simStyles.miniProgress, { backgroundColor: brightness >= 75 ? "#F59E0B" : "#E2E8F0" }]}>
+          <Icon name="sun" size={10} color={brightness >= 75 ? "#fff" : "#94A3B8"} />
+          <Text style={[simStyles.miniProgressText, { color: brightness >= 75 ? "#fff" : "#94A3B8" }]}>Liwanag {brightness}%</Text>
         </View>
       </View>
     </View>
   );
 };
 
-// --- Call Simulator ---
+// ─── 6. Call Simulator ────────────────────────────────────────────────────────
 const CallSimulator = ({ onSuccess }) => {
-  const [callState, setCallState] = useState("incoming");
-  const [callDuration, setCallDuration] = useState(0);
-  const durationInterval = useRef(null);
+  const [state, setState] = useState("incoming"); // incoming | answered | ended
+  const [duration, setDuration] = useState(0);
+  const [succeeded, setSucceeded] = useState(false);
+  const timerRef = useRef(null);
+  const ringAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (callState === "answered") {
-      durationInterval.current = setInterval(() => {
-        setCallDuration((prev) => prev + 1);
-      }, 1000);
+    if (state === "incoming") {
+      Animated.loop(Animated.sequence([
+        Animated.timing(ringAnim, { toValue: 1.15, duration: 600, useNativeDriver: true }),
+        Animated.timing(ringAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+      ])).start();
     } else {
-      if (durationInterval.current) clearInterval(durationInterval.current);
+      ringAnim.stopAnimation();
+      ringAnim.setValue(1);
     }
-    return () => {
-      if (durationInterval.current) clearInterval(durationInterval.current);
-    };
-  }, [callState]);
+    if (state === "answered") {
+      timerRef.current = setInterval(() => setDuration(p => p + 1), 1000);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [state]);
 
-  const handleAnswer = () => {
+  const answer = () => {
+    Vibration.vibrate(20);
+    setState("answered");
+    if (!succeeded) { setSucceeded(true); onSuccess(); }
+    TTS.speak("Sinagot ang tawag!");
+  };
+
+  const decline = () => {
+    Vibration.vibrate(20);
+    setState("ended");
+    if (!succeeded) { setSucceeded(true); onSuccess(); }
+    TTS.speak("Tinanggihan ang tawag.");
+  };
+
+  const end = () => {
+    clearInterval(timerRef.current);
     Vibration.vibrate(15);
-    setCallState("answered");
-    TTSWrapper.speak("Call answered!");
-    onSuccess();
+    setState("ended");
+    TTS.speak("Natapos na ang tawag.");
   };
 
-  const handleDecline = () => {
-    Vibration.vibrate(15);
-    setCallState("ended");
-    TTSWrapper.speak("Call declined!");
-    onSuccess();
-  };
-
-  const handleEndCall = () => {
-    Vibration.vibrate(10);
-    setCallState("ended");
-    TTSWrapper.speak("Call ended!");
-  };
-
-  const formatDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
+  const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   return (
-    <View style={styles.simulatorContainer}>
-      <Text style={styles.simulatorTitle}>
-        {callState === "incoming"
-          ? "Answer or decline the call"
-          : callState === "answered"
-          ? "You are in a call"
-          : "Call ended"}
+    <View style={simStyles.container}>
+      <Text style={simStyles.title}>
+        {state === "incoming" ? "May tumatawag! I-tap ang berdeng button para sumagot o pula para tanggihan" :
+          state === "answered" ? "Kasalukuyang nag-uusap. I-tap ang pula para tapusin ang tawag." :
+          "Natapos na ang tawag."}
       </Text>
-      <View style={styles.phoneFrame}>
-        <View style={styles.phoneBody}>
-          <View style={styles.phoneScreen}>
-            {callState === "incoming" && (
-              <View style={styles.incomingCall}>
-                <View style={styles.callerInfo}>
-                  <View style={styles.callerAvatar}>
-                    <Icon name="user" size={40} color="#fff" />
-                  </View>
-                  <Text style={styles.callerName}>Mom</Text>
-                  <Text style={styles.callerNumber}>+1 (555) 123-4567</Text>
-                  <Text style={styles.callStatus}>Incoming call...</Text>
-                </View>
-                <View style={styles.callControls}>
-                  <TouchableOpacity
-                    style={[styles.callButton, styles.declineButton]}
-                    onPress={handleDecline}
-                    accessibilityLabel="Decline"
-                  >
-                    <Icon name="phone-slash" size={24} color="#fff" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.callButton, styles.answerButton]}
-                    onPress={handleAnswer}
-                    accessibilityLabel="Answer"
-                  >
-                    <Icon name="phone" size={24} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-            {callState === "answered" && (
-              <View style={styles.activeCall}>
-                <View style={styles.callerInfo}>
-                  <View style={styles.callerAvatar}>
-                    <Icon name="user" size={40} color="#fff" />
-                  </View>
-                  <Text style={styles.callerName}>Mom</Text>
-                  <Text style={styles.callDuration}>
-                    {formatDuration(callDuration)}
-                  </Text>
-                </View>
-                <View style={styles.callControls}>
-                  <TouchableOpacity
-                    style={[styles.callButton, styles.endButton]}
-                    onPress={handleEndCall}
-                    accessibilityLabel="End Call"
-                  >
-                    <Icon name="phone-slash" size={24} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-            {callState === "ended" && (
-              <View style={styles.callEnded}>
-                <Icon name="phone" size={60} color="#64748B" />
-                <Text style={styles.callEndedText}>Call ended</Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-};
 
-// --- Message Simulator ---
-const MessageSimulator = ({ onSuccess }) => {
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([
-    { id: 1, text: "Hi! How are you?", sender: "contact", time: "9:30 AM" },
-  ]);
+      <PhoneShell onVolumeUp={() => {}} onVolumeDown={() => {}} onPowerPressIn={() => {}} onPowerPressOut={() => {}}>
+        <View style={simStyles.callScreen}>
+          <StatusBar />
+          <View style={{ flex: 1, justifyContent: "space-between", paddingBottom: 24, alignItems: "center" }}>
+            <View style={{ alignItems: "center", marginTop: 20 }}>
+              <Animated.View style={[simStyles.callerAvatar, state === "incoming" && { transform: [{ scale: ringAnim }] }]}>
+                <Text style={simStyles.callerInitial}>M</Text>
+              </Animated.View>
+              <Text style={simStyles.callerName}>Nanay</Text>
+              <Text style={simStyles.callerNum}>+63 912 345 6789</Text>
+              <Text style={simStyles.callStatus}>
+                {state === "incoming" ? "Tumatawag..." :
+                  state === "answered" ? fmt(duration) : "Natapos"}
+              </Text>
+            </View>
 
-  const handleSendMessage = () => {
-    if (message.trim().toLowerCase() === "hello") {
-      Vibration.vibrate(10);
-      const newMessage = {
-        id: Date.now(),
-        text: message,
-        sender: "user",
-        time: "9:41 AM",
-      };
-      setMessages((prev) => [...prev, newMessage]);
-      setMessage("");
-      TTSWrapper.speak("Message sent!");
-      setTimeout(() => onSuccess(), 500);
-    }
-  };
-
-  return (
-    <View style={styles.simulatorContainer}>
-      <Text style={styles.simulatorTitle}>Type "hello" and send it</Text>
-      <View style={styles.phoneFrame}>
-        <View style={styles.phoneBody}>
-          <View style={styles.phoneScreen}>
-            <View style={styles.messageApp}>
-              <View style={styles.messageHeader}>
-                <View style={styles.contactInfo}>
-                  <View style={styles.contactAvatar}>
-                    <Icon name="user" size={16} color="#fff" />
-                  </View>
-                  <Text style={styles.contactName}>John</Text>
-                </View>
-              </View>
-              <ScrollView style={styles.messagesContainer} showsVerticalScrollIndicator={false}>
-                {messages.map((msg) => (
-                  <View
-                    key={msg.id}
-                    style={[
-                      styles.messageBubble,
-                      msg.sender === "user"
-                        ? styles.userMessage
-                        : styles.contactMessage,
-                    ]}
-                  >
-                    <Text style={styles.messageText}>{msg.text}</Text>
-                    <Text style={styles.messageTime}>{msg.time}</Text>
-                  </View>
-                ))}
-              </ScrollView>
-              <View style={styles.messageInput}>
-                <TextInput
-                  style={styles.messageTextInput}
-                  value={message}
-                  onChangeText={setMessage}
-                  placeholder="Type hello..."
-                  placeholderTextColor="#94A3B8"
-                  accessibilityLabel="Message Input"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="send"
-                  onSubmitEditing={handleSendMessage}
-                />
-                <TouchableOpacity
-                  style={[
-                    styles.sendButton,
-                    message.trim().toLowerCase() === "hello" &&
-                      styles.sendButtonActive,
-                  ]}
-                  onPress={handleSendMessage}
-                  disabled={message.trim().toLowerCase() !== "hello"}
-                  accessibilityLabel="Send"
-                >
-                  <Icon name="paper-plane" size={12} color="#fff" />
+            {state === "incoming" && (
+              <View style={simStyles.callBtns}>
+                <TouchableOpacity style={simStyles.declineBtn} onPress={decline}>
+                  <Icon name="phone-slash" size={22} color="#fff" />
+                  <Text style={simStyles.callBtnLabel}>Tanggihan</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={simStyles.answerBtn} onPress={answer}>
+                  <Icon name="phone" size={22} color="#fff" />
+                  <Text style={simStyles.callBtnLabel}>Sagutin</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </View>
-        </View>
-      </View>
-      <View style={styles.instructionText}>
-  <Text style={styles.hintText}>Hint: Type exactly "hello" (lowercase)</Text>
-</View>
-    </View>
-  );
-};
+            )}
 
-// --- App Launcher Simulator ---
-const AppSimulator = ({ onSuccess }) => {
-  const [openApp, setOpenApp] = useState(null);
-
-  const apps = [
-    { id: "camera", name: "Camera", icon: "camera", color: "#10B981" },
-    { id: "phone", name: "Phone", icon: "phone", color: "#38BDF8" },
-    { id: "messages", name: "Messages", icon: "comment", color: "#EF4444" },
-    { id: "settings", name: "Settings", icon: "cog", color: "#64748B" },
-  ];
-
-  const handleAppPress = (app) => {
-    if (app.id === "camera") {
-      setOpenApp(app);
-      TTSWrapper.speak("Camera app opened!");
-      onSuccess();
-    }
-  };
-
-  return (
-    <View style={styles.simulatorContainer}>
-      <Text style={styles.simulatorTitle}>Tap the Camera app to open it</Text>
-      <View style={styles.phoneFrame}>
-        <View style={styles.phoneBody}>
-          <View style={styles.phoneScreen}>
-            {!openApp ? (
-              <View style={styles.homeScreen}>
-                <View style={styles.statusBar}>
-                  <Text style={styles.time}>9:41</Text>
-                  <View style={styles.statusIcons}>
-                    <Icon name="signal" size={12} color="#fff" />
-                    <Icon name="wifi" size={12} color="#fff" />
-                    <Icon name="battery-full" size={12} color="#fff" />
-                  </View>
-                </View>
-                <View style={styles.appGrid}>
-                  {apps.map((app) => (
-                    <TouchableOpacity
-                      key={app.id}
-                      style={styles.appIcon}
-                      onPress={() => handleAppPress(app)}
-                      accessibilityLabel={app.name}
-                    >
-                      <View
-                        style={[
-                          styles.appIconBg,
-                          { backgroundColor: app.color },
-                        ]}
-                      >
-                        <Icon name={app.icon} size={24} color="#fff" />
-                      </View>
-                      <Text style={styles.appName}>{app.name}</Text>
-                    </TouchableOpacity>
+            {state === "answered" && (
+              <View>
+                <View style={simStyles.callOptions}>
+                  {[["microphone-slash","Mute"],["volume-up","Speaker"],["pause","Hold"]].map(([ic, lb]) => (
+                    <View key={lb} style={simStyles.callOption}>
+                      <View style={simStyles.callOptIcon}><Icon name={ic} size={16} color="#fff" /></View>
+                      <Text style={simStyles.callOptLabel}>{lb}</Text>
+                    </View>
                   ))}
                 </View>
-              </View>
-            ) : (
-              <View style={styles.cameraApp}>
-                <View style={styles.cameraViewfinder}>
-                  <Icon name="camera" size={60} color="#fff" />
-                  <Text style={styles.cameraText}>Camera Ready</Text>
-                </View>
-                <TouchableOpacity style={styles.captureButton}>
-                  <View style={styles.captureInner} />
+                <TouchableOpacity style={[simStyles.declineBtn, { alignSelf: "center", marginTop: 12, flexDirection: "row" }]} onPress={end}>
+                  <Icon name="phone-slash" size={22} color="#fff" />
                 </TouchableOpacity>
+              </View>
+            )}
+
+            {state === "ended" && (
+              <View style={{ alignItems: "center" }}>
+                <Icon name="phone-slash" size={32} color="#64748B" />
+                <Text style={{ color: "#9CA3AF", marginTop: 8, fontSize: 13 }}>Tawag ay natapos</Text>
               </View>
             )}
           </View>
         </View>
+      </PhoneShell>
+    </View>
+  );
+};
+
+// ─── 7. Messages Simulator ────────────────────────────────────────────────────
+const MessageSimulator = ({ onSuccess }) => {
+  const [msgs, setMsgs] = useState([
+    { id: 1, text: "Kumusta ka na? Ligtas ka ba?", sender: "contact", time: "9:30" },
+  ]);
+  const [input, setInput] = useState("");
+  const [sent, setSent] = useState(false);
+  const scrollRef = useRef(null);
+
+  const send = () => {
+    if (!input.trim()) return;
+    const newMsg = { id: Date.now(), text: input, sender: "user", time: "9:41" };
+    const updated = [...msgs, newMsg];
+    setMsgs(updated);
+    setInput("");
+    Vibration.vibrate(12);
+    TTS.speak("Naipadala ang mensahe!");
+    if (!sent) { setSent(true); onSuccess(); }
+
+    // Auto reply after 1.2s
+    setTimeout(() => {
+      setMsgs(p => [...p, { id: Date.now() + 1, text: "Salamat! Ingat ka rin!", sender: "contact", time: "9:41" }]);
+    }, 1200);
+  };
+
+  return (
+    <View style={simStyles.container}>
+      <Text style={simStyles.title}>I-type ang kahit anong mensahe at i-tap ang "Send" para ipadala</Text>
+
+      <PhoneShell onVolumeUp={() => {}} onVolumeDown={() => {}} onPowerPressIn={() => {}} onPowerPressOut={() => {}}>
+        <View style={simStyles.msgScreen}>
+          {/* Header */}
+          <View style={simStyles.msgHeader}>
+            <Icon name="chevron-left" size={12} color="#38BDF8" />
+            <View style={simStyles.msgContact}>
+              <View style={simStyles.msgAvatar}><Text style={{ color: "#fff", fontWeight: "700", fontSize: 11 }}>N</Text></View>
+              <View>
+                <Text style={simStyles.msgName}>Nanay</Text>
+                <Text style={simStyles.msgOnline}>Online</Text>
+              </View>
+            </View>
+            <Icon name="phone" size={12} color="#38BDF8" />
+          </View>
+
+          {/* Messages */}
+          <ScrollView ref={scrollRef} style={simStyles.msgList} contentContainerStyle={{ padding: 8, paddingBottom: 4 }}
+            onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+            showsVerticalScrollIndicator={false}>
+            {msgs.map(m => (
+              <View key={m.id} style={[simStyles.bubble, m.sender === "user" ? simStyles.bubbleUser : simStyles.bubbleContact]}>
+                <Text style={simStyles.bubbleText}>{m.text}</Text>
+                <Text style={simStyles.bubbleTime}>{m.time}</Text>
+              </View>
+            ))}
+          </ScrollView>
+
+          {/* Input */}
+          <View style={simStyles.msgInput}>
+            <TextInput
+              style={simStyles.msgTextInput}
+              value={input}
+              onChangeText={setInput}
+              placeholder="Mag-type ng mensahe..."
+              placeholderTextColor="#6B7280"
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="send"
+              onSubmitEditing={send}
+            />
+            <TouchableOpacity style={[simStyles.sendBtn, input.trim() && simStyles.sendBtnActive]} onPress={send} disabled={!input.trim()}>
+              <Icon name="paper-plane" size={11} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </PhoneShell>
+
+      <View style={simStyles.hintPill}>
+        <Icon name="lightbulb" size={10} color="#F59E0B" />
+        <Text style={simStyles.hintText}>Hint: I-type ang kahit anong salita, halimbawa "Kumusta!"</Text>
       </View>
     </View>
   );
 };
 
-// --- WiFi Simulator ---
-const WiFiSimulator = ({ onSuccess }) => {
-  const [wifiState, setWifiState] = useState("scanning");
-  const [selectedNetwork, setSelectedNetwork] = useState(null);
-  const [password, setPassword] = useState("");
+// ─── 8. App Launcher ──────────────────────────────────────────────────────────
+const AppSimulator = ({ onSuccess }) => {
+  const [openApp, setOpenApp] = useState(null);
+  const [succeeded, setSucceeded] = useState(false);
 
-  const networks = [
-    { name: "Home WiFi", strength: 3, secured: true },
-    { name: "Guest Network", strength: 2, secured: false },
-    { name: "Neighbor WiFi", strength: 1, secured: true },
+  const apps = [
+    { id: "phone", label: "Telepono", icon: "phone", color: "#10B981" },
+    { id: "messages", label: "Mensahe", icon: "comment-dots", color: "#3B82F6" },
+    { id: "camera", label: "Kamera", icon: "camera", color: "#8B5CF6" },
+    { id: "gmail", label: "Gmail", icon: "envelope", color: "#EF4444" },
+    { id: "browser", label: "Browser", icon: "globe", color: "#F59E0B" },
+    { id: "maps", label: "Mapa", icon: "map-marker-alt", color: "#14B8A6" },
+    { id: "gallery", label: "Gallery", icon: "images", color: "#EC4899" },
+    { id: "settings", label: "Settings", icon: "cog", color: "#6B7280" },
   ];
 
-  useEffect(() => {
-    const timer = setTimeout(() => setWifiState("networks"), 1500);
-    return () => clearTimeout(timer);
-  }, []);
+  const open = (app) => {
+    Vibration.vibrate(12);
+    setOpenApp(app);
+    TTS.speak(`Binuksan ang ${app.label} app!`);
+    if (app.id === "camera" && !succeeded) { setSucceeded(true); setTimeout(onSuccess, 800); }
+  };
 
-  const handleNetworkSelect = (network) => {
-    if (network.name === "Home WiFi") {
-      setSelectedNetwork(network);
+  const goHome = () => setOpenApp(null);
+
+  return (
+    <View style={simStyles.container}>
+      <Text style={simStyles.title}>I-tap ang app icon para buksan ito. Subukan buksan ang Camera app!</Text>
+
+      <PhoneShell onVolumeUp={() => {}} onVolumeDown={() => {}} onPowerPressIn={() => {}} onPowerPressOut={() => {}}>
+        {!openApp ? (
+          <View style={simStyles.homeScreenFull}>
+            <StatusBar />
+            <Text style={simStyles.homeDate}>Martes, Setyembre 10</Text>
+            <View style={simStyles.homeAppGrid}>
+              {apps.map(app => (
+                <TouchableOpacity key={app.id} style={simStyles.homeApp} onPress={() => open(app)}>
+                  <View style={[simStyles.homeAppIcon, { backgroundColor: app.color }]}>
+                    <Icon name={app.icon} size={20} color="#fff" />
+                  </View>
+                  <Text style={simStyles.homeAppLabel}>{app.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        ) : openApp.id === "camera" ? (
+          <View style={simStyles.cameraApp}>
+            <StatusBar />
+            <View style={simStyles.cameraViewfinder}>
+              <View style={simStyles.cameraCornerTL} /><View style={simStyles.cameraCornerTR} />
+              <View style={simStyles.cameraCornerBL} /><View style={simStyles.cameraCornerBR} />
+              <Text style={simStyles.cameraLabel}>Camera</Text>
+            </View>
+            <View style={simStyles.cameraControls}>
+              <TouchableOpacity style={simStyles.cameraGalleryBtn}><Icon name="images" size={16} color="#fff" /></TouchableOpacity>
+              <TouchableOpacity style={simStyles.shutterBtn}><View style={simStyles.shutterInner} /></TouchableOpacity>
+              <TouchableOpacity style={simStyles.cameraSwitchBtn}><Icon name="sync" size={16} color="#fff" /></TouchableOpacity>
+            </View>
+            <TouchableOpacity style={simStyles.backFromApp} onPress={goHome}><Icon name="arrow-left" size={12} color="#fff" /></TouchableOpacity>
+          </View>
+        ) : (
+          <View style={simStyles.genericApp}>
+            <StatusBar />
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+              <View style={[simStyles.genericAppIcon, { backgroundColor: openApp.color }]}>
+                <Icon name={openApp.icon} size={36} color="#fff" />
+              </View>
+              <Text style={simStyles.genericAppName}>{openApp.label}</Text>
+              <Text style={simStyles.genericAppSub}>Naka-bukas ang app</Text>
+            </View>
+            <TouchableOpacity style={simStyles.backFromApp} onPress={goHome}><Icon name="arrow-left" size={12} color="#fff" /></TouchableOpacity>
+          </View>
+        )}
+      </PhoneShell>
+
+      <View style={simStyles.hintPill}>
+        <Icon name="star" size={10} color="#F59E0B" />
+        <Text style={simStyles.hintText}>I-tap ang Camera app para makumpleto ang lesson!</Text>
+      </View>
+    </View>
+  );
+};
+
+// ─── 9. WiFi Simulator ────────────────────────────────────────────────────────
+const WiFiSimulator = ({ onSuccess }) => {
+  const [wifiOn, setWifiOn] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [networks, setNetworks] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [pw, setPw] = useState("");
+  const [connected, setConnected] = useState(null);
+  const [succeeded, setSucceeded] = useState(false);
+  const [step, setStep] = useState("off"); // off | scanning | list | password | connected
+
+  const nets = [
+    { name: "Home WiFi", bars: 3, secured: true },
+    { name: "Globe_Guest", bars: 2, secured: false },
+    { name: "PLDT_5G", bars: 1, secured: true },
+  ];
+
+  const toggleWifi = () => {
+    if (step === "off") {
+      Vibration.vibrate(10);
+      setStep("scanning");
+      TTS.speak("Naghahanap ng WiFi networks...");
+      setTimeout(() => { setStep("list"); setNetworks(nets); }, 1800);
     } else {
-      TTSWrapper.speak("Please select Home WiFi network");
+      setStep("off");
+      setSelected(null);
+      setPw("");
+      setConnected(null);
     }
   };
 
-  const handleConnect = () => {
-    if (!selectedNetwork || selectedNetwork.name !== "Home WiFi") {
-      TTSWrapper.speak("Please select Home WiFi first");
-      return;
+  const selectNet = (net) => {
+    if (net.secured) { setSelected(net); setStep("password"); }
+    else {
+      setConnected(net);
+      setStep("connected");
+      TTS.speak(`Nakakonekta sa ${net.name}!`);
+      if (!succeeded) { setSucceeded(true); setTimeout(onSuccess, 800); }
     }
-    if (password.trim() === "password123") {
-      setWifiState("connected");
-      TTSWrapper.speak("Connected to Home WiFi!");
-      setTimeout(() => onSuccess(), 500);
+  };
+
+  const connect = () => {
+    if (pw === "password123") {
+      setConnected(selected);
+      setStep("connected");
+      Vibration.vibrate(20);
+      TTS.speak(`Nakakonekta sa ${selected.name}!`);
+      if (!succeeded) { setSucceeded(true); setTimeout(onSuccess, 800); }
     } else {
-      TTSWrapper.speak("Incorrect password. Try password123");
+      TTS.speak("Maling password. Subukan ulit. Ang password ay password123");
+      setPw("");
     }
   };
 
   return (
-    <View style={styles.simulatorContainer}>
-      <Text style={styles.simulatorTitle}>
-  Connect to "Home WiFi" with password "password123"
-</Text>
-      <View style={styles.phoneFrame}>
-        <View style={styles.phoneBody}>
-          <View style={styles.phoneScreen}>
-            <View style={styles.wifiSettings}>
-              <View style={styles.settingsHeader}>
-              <Text style={styles.wifiSettingsTitle}>WiFi Settings</Text>
-              </View>
-              {wifiState === "scanning" && (
-                <View style={styles.scanningView}>
-                  <Icon name="wifi" size={30} color="#38BDF8" />
-                  <Text style={styles.scanningText}>Scanning for networks...</Text>
-                </View>
-              )}
-              {wifiState === "networks" && (
-                <>
-                  <ScrollView style={styles.networksList} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                    {networks.map((network, idx) => (
-                      <TouchableOpacity
-                        key={idx}
-                        style={[
-                          styles.networkItem,
-                          selectedNetwork?.name === network.name && styles.networkItemSelected
-                        ]}
-                        onPress={() => handleNetworkSelect(network)}
-                        accessibilityLabel={network.name}
-                      >
-                        <Icon name="wifi" size={14} color="#38BDF8" />
-                        <Text style={styles.networkName}>{network.name}</Text>
-                        <View style={styles.networkInfo}>
-                          {network.secured && (
-                            <Icon name="lock" size={10} color="#64748B" />
-                          )}
-                          <View style={styles.signalStrength}>
-                            {[1, 2, 3].map((bar) => (
-                              <View
-                                key={bar}
-                                style={[
-                                  styles.signalBar,
-                                  bar <= network.strength && styles.signalBarActive,
-                                ]}
-                              />
-                            ))}
-                          </View>
-                        </View>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                  {selectedNetwork && (
-                    <View style={styles.passwordDialog}>
-                      <Text style={styles.passwordLabel}>
-                        Password for {selectedNetwork.name}:
-                      </Text>
-                      <TextInput
-                        style={styles.passwordInput}
-                        value={password}
-                        onChangeText={setPassword}
-                        placeholder="password123"
-                        secureTextEntry
-                        placeholderTextColor="#94A3B8"
-                        accessibilityLabel="WiFi Password"
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        returnKeyType="done"
-                        onSubmitEditing={handleConnect}
-                      />
-                      <TouchableOpacity
-                        style={[
-                          styles.connectButton,
-                          password.length > 0 && styles.connectButtonActive,
-                        ]}
-                        onPress={handleConnect}
-                        accessibilityLabel="Connect"
-                      >
-                        <Text style={styles.connectButtonText}>Connect</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </>
-              )}
-              {wifiState === "connected" && (
-                <View style={styles.connectedView}>
-                  <Icon name="check-circle" size={30} color="#10B981" />
-                  <Text style={styles.connectedText}>
-                    Connected to Home WiFi
-                  </Text>
-                  <View style={styles.connectionDetails}>
-                    <Icon name="wifi" size={14} color="#10B981" />
-                    <Text style={styles.ipAddress}>192.168.1.105</Text>
-                  </View>
-                </View>
-              )}
-            </View>
+    <View style={simStyles.container}>
+      <Text style={simStyles.title}>I-on ang WiFi at kumonekta sa "Home WiFi" gamit ang password na "password123"</Text>
+
+      <PhoneShell onVolumeUp={() => {}} onVolumeDown={() => {}} onPowerPressIn={() => {}} onPowerPressOut={() => {}}>
+        <View style={simStyles.wifiScreen}>
+          <StatusBar />
+          <View style={simStyles.wifiHeader}>
+            <Text style={simStyles.wifiTitle}>WiFi</Text>
+            <TouchableOpacity
+              style={[simStyles.wifiToggle, step !== "off" && simStyles.wifiToggleOn]}
+              onPress={toggleWifi}
+            >
+              <View style={[simStyles.wifiToggleThumb, step !== "off" && simStyles.wifiToggleThumbOn]} />
+            </TouchableOpacity>
           </View>
+
+          {step === "off" && (
+            <View style={simStyles.wifiOffState}>
+              <Icon name="wifi" size={28} color="#374151" />
+              <Text style={simStyles.wifiOffText}>WiFi ay naka-off</Text>
+              <Text style={simStyles.wifiOffSub}>I-tap ang switch para i-on</Text>
+            </View>
+          )}
+
+          {step === "scanning" && (
+            <View style={simStyles.wifiOffState}>
+              <Icon name="wifi" size={28} color="#38BDF8" />
+              <Text style={[simStyles.wifiOffText, { color: "#38BDF8" }]}>Naghahanap...</Text>
+            </View>
+          )}
+
+          {step === "list" && (
+            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <Text style={simStyles.wifiAvail}>Available Networks</Text>
+              {nets.map((n, i) => (
+                <TouchableOpacity key={i} style={[simStyles.netRow, selected?.name === n.name && simStyles.netRowSelected]} onPress={() => selectNet(n)}>
+                  <Icon name="wifi" size={12} color={n.bars === 3 ? "#10B981" : n.bars === 2 ? "#F59E0B" : "#EF4444"} />
+                  <Text style={simStyles.netName}>{n.name}</Text>
+                  <View style={simStyles.netRight}>
+                    {n.secured && <Icon name="lock" size={10} color="#6B7280" />}
+                    <View style={simStyles.bars}>
+                      {[1,2,3].map(b => <View key={b} style={[simStyles.bar, { height: b * 4, backgroundColor: b <= n.bars ? "#38BDF8" : "#374151" }]} />)}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+
+          {step === "password" && (
+            <View style={simStyles.pwDialog}>
+              <Icon name="lock" size={20} color="#38BDF8" />
+              <Text style={simStyles.pwTitle}>{selected?.name}</Text>
+              <Text style={simStyles.pwLabel}>Password:</Text>
+              <TextInput
+                style={simStyles.pwInput}
+                value={pw}
+                onChangeText={setPw}
+                placeholder="I-type ang password..."
+                placeholderTextColor="#6B7280"
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="done"
+                onSubmitEditing={connect}
+              />
+              <View style={simStyles.pwActions}>
+                <TouchableOpacity style={simStyles.pwCancel} onPress={() => { setStep("list"); setSelected(null); setPw(""); }}>
+                  <Text style={simStyles.pwCancelText}>Kanselahin</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[simStyles.pwConnect, pw.length > 0 && simStyles.pwConnectActive]} onPress={connect}>
+                  <Text style={simStyles.pwConnectText}>Kumonekta</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {step === "connected" && (
+            <View style={simStyles.wifiConnected}>
+              <Icon name="check-circle" size={32} color="#10B981" />
+              <Text style={simStyles.connectedName}>{connected?.name}</Text>
+              <Text style={simStyles.connectedLabel}>Nakakonekta</Text>
+              <View style={simStyles.connectedDetail}>
+                <Icon name="wifi" size={10} color="#10B981" />
+                <Text style={simStyles.connectedIP}>192.168.1.105</Text>
+              </View>
+            </View>
+          )}
         </View>
-      </View>
-      {selectedNetwork && wifiState === "networks" && (
-        <View style={styles.instructionText}>
-          <Text style={styles.hintText}>Password: password123</Text>
+      </PhoneShell>
+
+      {step === "password" && (
+        <View style={simStyles.hintPill}>
+          <Icon name="key" size={10} color="#F59E0B" />
+          <Text style={simStyles.hintText}>Hint: Ang password ay "password123"</Text>
         </View>
       )}
     </View>
   );
 };
 
-// --- Charging Simulator ---
-const ChargingSimulator = ({ onSuccess }) => {
-  const [batteryLevel, setBatteryLevel] = useState(25);
-  const [isCharging, setIsCharging] = useState(false);
-  const chargingInterval = useRef(null);
-
-  const handlePlugCharger = () => {
-    setIsCharging(true);
-    Vibration.vibrate(20);
-    TTSWrapper.speak("Phone is charging!");
-    onSuccess();
-    chargingInterval.current = setInterval(() => {
-      setBatteryLevel((prev) => {
-        if (prev >= 100) {
-          if (chargingInterval.current) {
-            clearInterval(chargingInterval.current);
-          }
-          return 100;
-        }
-        return prev + 1;
-      });
-    }, 60);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (chargingInterval.current) clearInterval(chargingInterval.current);
-    };
-  }, []);
-
-  return (
-    <View style={styles.simulatorContainer}>
-      <Text style={styles.simulatorTitle}>Plug in the charger</Text>
-      <View style={styles.phoneFrame}>
-        <View style={styles.phoneBody}>
-          <View style={styles.phoneScreen}>
-            <View style={styles.chargingScreen}>
-              <View style={styles.statusBar}>
-                <Text style={styles.time}>9:41</Text>
-                <View style={styles.statusIcons}>
-                  <Icon name="signal" size={12} color="#fff" />
-                  <Icon name="wifi" size={12} color="#fff" />
-                  <Icon
-                    name={isCharging ? "plug" : "battery-quarter"}
-                    size={12}
-                    color={isCharging ? "#10B981" : "#fff"}
-                  />
-                </View>
-              </View>
-              <View style={styles.batteryDisplay}>
-                <View style={styles.batteryIcon}>
-                  <View style={styles.batteryBody}>
-                    <View
-                      style={[
-                        styles.batteryFill,
-                        {
-                          width: `${batteryLevel}%`,
-                          backgroundColor:
-                            batteryLevel < 20
-                              ? "#EF4444"
-                              : batteryLevel < 50
-                              ? "#F59E0B"
-                              : "#10B981",
-                        },
-                      ]}
-                    />
-                  </View>
-                  <View style={styles.batteryTip} />
-                  {isCharging && (
-                    <View style={styles.chargingBolt}>
-                      <Icon name="bolt" size={24} color="#10B981" />
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.batteryPercentage}>{batteryLevel}%</Text>
-                <Text style={styles.batteryStatus}>
-                  {isCharging ? "Charging..." : "Battery Low"}
-                </Text>
-              </View>
-              {!isCharging && (
-               <TouchableOpacity
-  style={styles.chargerButton}
-  onPress={handlePlugCharger}
-  accessibilityLabel="Plug Charger"
->
-  <Icon name="plug" size={24} color="#fff" />
-  <Text style={styles.chargerButtonText}>Plug Charger</Text>
-</TouchableOpacity>
-              )}
-            </View>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-};
-
+// ─── Lessons data ─────────────────────────────────────────────────────────────
 const lessons = [
   {
-    title: "Getting to Know the Phone",
-    content:
-      "Alamin ang mga bahagi ng iyong smartphone: power button, volume, baterya, at signal.",
+    title: "Mga Bahagi ng Phone",
+    content: "Alamin ang bawat bahagi ng iyong smartphone: ang screen, power button, volume buttons, camera, at speaker. Mahalaga na malaman mo ang bawat isa para mas madaling gamitin ang phone.",
     simulator: PhoneAnatomySimulator,
     icon: "mobile-alt",
+    color: "#3B82F6",
+    duration: "5 min",
   },
   {
-    title: "Turning the Phone On and Off",
-    content: "Pindutin at hawakan ang power button para i-on o i-off ang iyong phone.",
+    title: "Pag-on at Pag-off ng Phone",
+    content: "Para i-on ang phone, pindutin at hawakan ang Power Button sa loob ng 2 segundo. Para naman i-off, pindutin ang Power Button at piliin ang 'Power off' sa screen.",
     simulator: PowerSimulator,
     icon: "power-off",
+    color: "#EF4444",
+    duration: "3 min",
   },
   {
-    title: "Unlocking the Phone",
-    content: "I-swipe ang screen o mag-enter ng PIN para ma-unlock ang iyong phone.",
+    title: "Pag-unlock ng Phone",
+    content: "Para buksan ang iyong phone mula sa lock screen, maaari kang mag-swipe sa screen o mag-enter ng iyong PIN code. Ang PIN ay isang lihim na numero para protektahan ang iyong phone.",
     simulator: UnlockSimulator,
-    icon: "unlock-alt",
+    icon: "lock-open",
+    color: "#8B5CF6",
+    duration: "4 min",
   },
   {
-    title: "Using the Touchscreen",
-    content: "Mag-tap, mag-swipe, at mag-pinch para gamitin ang iyong phone.",
+    title: "Paggamit ng Touchscreen",
+    content: "Ang touchscreen ay ang malaking glass sa harap ng phone. Matuto ng tatlong paraan: Tap (isang pindutin), Swipe (mag-slide ng daliri), at Pinch/Zoom (palapit o palayo ang dalawang daliri).",
     simulator: TouchSimulator,
     icon: "hand-point-up",
+    color: "#10B981",
+    duration: "5 min",
   },
   {
-    title: "Adjusting Volume & Brightness",
-    content: "Gamitin ang volume buttons at brightness slider para ayusin ang mga settings.",
+    title: "Volume at Liwanag",
+    content: "Maaari mong ayusin ang lakas ng tunog gamit ang Volume Buttons sa gilid ng phone, o ang slider sa Settings. Ang Liwanag naman ay ang liwanag ng screen para mas madaling makita.",
     simulator: VolumeSimulator,
     icon: "volume-up",
+    color: "#F59E0B",
+    duration: "3 min",
   },
   {
-    title: "Making and Receiving Calls",
-    content: "Mag-dial ng number para tumawag. I-tap ang green para sagutin, red para tanggihan.",
+    title: "Pagtawag at Pagtanggap ng Tawag",
+    content: "Para tumawag, buksan ang Telepono app at i-dial ang numero. Kapag may tumatawag sa iyo, i-tap ang berdeng button para sagutin, o pula para tanggihan. Maaari mo ring gamitin ang speaker para mas malinaw marinig.",
     simulator: CallSimulator,
     icon: "phone",
+    color: "#10B981",
+    duration: "5 min",
   },
   {
-    title: "Sending and Reading Text Messages",
-    content: "Gamitin ang Messages app para mag-type at magbasa ng SMS.",
+    title: "Pagpapadala ng SMS / Mensahe",
+    content: "Gamitin ang Messages app para mag-text. I-tap ang pangalan ng taong gusto mong kausapin, i-type ang iyong mensahe sa kahon sa ibaba, at i-tap ang Send button para ipadala. Libre ang SMS sa karamihan ng plano.",
     simulator: MessageSimulator,
-    icon: "comment",
+    icon: "comment-dots",
+    color: "#3B82F6",
+    duration: "5 min",
   },
   {
-    title: "Opening Apps",
-    content: "I-tap ang icon ng app para buksan ito, tulad ng Camera app.",
+    title: "Pagbubukas ng Apps",
+    content: "Ang mga app ay mga programa sa iyong phone. I-tap ang icon nito sa Home Screen para buksan. Kapag tapos na, i-tap ang Home button o mag-swipe pataas para bumalik sa Home Screen.",
     simulator: AppSimulator,
-    icon: "camera",
+    icon: "th",
+    color: "#EC4899",
+    duration: "4 min",
   },
   {
-    title: "Connecting to WiFi",
-    content: "Ang WiFi ay nagbibigay-daan sa iyo na kumonekta sa internet nang walang mobile data.",
+    title: "Pagkonekta sa WiFi",
+    content: "Ang WiFi ay nagbibigay ng libreng internet kapag naka-konekta ka sa bahay o sa coffee shop. Pumunta sa Settings, i-tap ang WiFi, piliin ang iyong network, at i-enter ang password.",
     simulator: WiFiSimulator,
     icon: "wifi",
-  },
-  {
-    title: "Charging the Phone",
-    content: "I-plug ang iyong charger para ma-recharge ang phone nang maayos.",
-    simulator: ChargingSimulator,
-    icon: "battery-three-quarters",
+    color: "#14B8A6",
+    duration: "5 min",
   },
 ];
 
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function SmartPhoneBasicsScreen() {
   const navigation = useNavigation();
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isReading, setIsReading] = useState(false);
   const [textSize, setTextSize] = useState("medium");
-  const [practiceCompleted, setPracticeCompleted] = useState({});
+  const [completed, setCompleted] = useState({});
 
-  // Animations for header
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-
-  // Animations for background
-  const pulseValue = useRef(new Animated.Value(0)).current;
-  const floatValue1 = useRef(new Animated.Value(0)).current;
-  const floatValue2 = useRef(new Animated.Value(0)).current;
-  const particle1 = useRef(new Animated.Value(0)).current;
-  const particle2 = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(40)).current;
 
   useEffect(() => {
-    // Animate header
     Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 700, useNativeDriver: true }),
     ]).start();
+    return () => TTS.stop();
+  }, []);
 
-    // Background animations
-    const startBackgroundAnimations = () => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseValue, {
-            toValue: 1,
-            duration: 4000,
-            useNativeDriver: false,
-          }),
-          Animated.timing(pulseValue, {
-            toValue: 0,
-            duration: 4000,
-            useNativeDriver: false,
-          }),
-        ])
-      ).start();
+  const tSize = textSize === "small" ? 14 : textSize === "large" ? 20 : 16;
+  const tLine = tSize * 1.55;
+  const ttSize = textSize === "small" ? 18 : textSize === "large" ? 24 : 20;
 
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(floatValue1, {
-            toValue: 1,
-            duration: 6000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(floatValue1, {
-            toValue: 0,
-            duration: 6000,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(floatValue2, {
-            toValue: 1,
-            duration: 4000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(floatValue2, {
-            toValue: 0,
-            duration: 4000,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-
-      [particle1, particle2].forEach((particle, idx) => {
-        Animated.loop(
-          Animated.timing(particle, {
-            toValue: 1,
-            duration: 8000 + idx * 2000,
-            useNativeDriver: true,
-          })
-        ).start();
-      });
-    };
-
-    startBackgroundAnimations();
-
-    return () => {
-      TTSWrapper.stop();
-    };
-  }, [fadeAnim, slideAnim, pulseValue, floatValue1, floatValue2, particle1, particle2]);
-
-  // Interpolations for background
-  const pulseOpacity = pulseValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.02, 0.06],
-  });
-
-  const float1Y = floatValue1.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, -30],
-  });
-
-  const float2Y = floatValue2.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 25],
-  });
-
-  const particle1Y = particle1.interpolate({
-    inputRange: [0, 1],
-    outputRange: [height, -100],
-  });
-
-  const particle2Y = particle2.interpolate({
-    inputRange: [0, 1],
-    outputRange: [height, -100],
-  });
-
-  // Text size helpers
-  const getTextSizeStyle = () => {
-    switch (textSize) {
-      case "small":
-        return { fontSize: 14, lineHeight: 20 };
-      case "large":
-        return { fontSize: 20, lineHeight: 28 };
-      default:
-        return { fontSize: 16, lineHeight: 24 };
-    }
-  };
-
-  const getTitleSizeStyle = () => {
-    switch (textSize) {
-      case "small":
-        return { fontSize: 18, lineHeight: 24 };
-      case "large":
-        return { fontSize: 24, lineHeight: 32 };
-      default:
-        return { fontSize: 20, lineHeight: 28 };
-    }
-  };
-
-  // TTS functionality
-  const handleReadLesson = (lesson) => {
-    if (isReading) {
-      TTSWrapper.stop();
-      setIsReading(false);
-      return;
-    }
-    TTSWrapper.speak(`${lesson.title}. ${lesson.content}`, {
+  const readLesson = (lesson) => {
+    if (isReading) { TTS.stop(); setIsReading(false); return; }
+    TTS.speak(`${lesson.title}. ${lesson.content}`, {
       onStart: () => setIsReading(true),
       onDone: () => setIsReading(false),
-      onStopped: () => setIsReading(false),
       onError: () => setIsReading(false),
     });
   };
 
-  // Modal controls
-  const openLessonModal = (lesson) => {
-    setSelectedLesson(lesson);
-    setIsModalVisible(true);
-  };
+  const openLesson = (lesson) => { setSelectedLesson(lesson); setIsModalVisible(true); };
 
   const closeModal = () => {
-    if (isReading) {
-      TTSWrapper.stop();
-      setIsReading(false);
-    }
+    if (isReading) { TTS.stop(); setIsReading(false); }
     setIsModalVisible(false);
     setSelectedLesson(null);
   };
 
-  const handlePracticeSuccess = (lessonTitle) => {
-  setPracticeCompleted((prev) => ({
-    ...prev,
-    [lessonTitle]: true,
-  }));
-  Alert.alert("Well done!", "You completed the practice!", [
-    { text: "Continue", style: "default" },
-  ]);
-};
+  const onSuccess = (title) => {
+    setCompleted(p => ({ ...p, [title]: true }));
+    Alert.alert("🎉 Magaling!", "Natapos mo ang pagsasanay sa araling ito!", [{ text: "Tuloy-tuloy!", style: "default" }]);
+  };
+
+  const completedCount = Object.values(completed).filter(Boolean).length;
 
   return (
-    <View style={styles.container}>
-      {/* Enhanced Gradient Background */}
-      <LinearGradient
-        colors={[
-          "#F0F9FF",
-          "#E0F2FE",
-          "#BAE6FD",
-          "#7DD3FC",
-          "#38BDF8",
-          "#0EA5E9",
-        ]}
-        locations={[0, 0.15, 0.35, 0.55, 0.75, 1]}
-        style={styles.gradientBackground}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
+    <View style={mainStyles.container}>
+      <LinearGradient colors={['#F0F9FF','#E0F2FE','#BAE6FD','#7DD3FC','#38BDF8','#0EA5E9']} locations={[0,0.15,0.35,0.55,0.75,1]} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
 
-      {/* Subtle animated overlay */}
-      <Animated.View
-        style={[styles.backgroundOverlay, { opacity: pulseOpacity }]}
-      />
-
-      {/* Enhanced floating background elements */}
-      <View style={styles.backgroundElements}>
-        <Animated.View
-          style={[
-            styles.floatingElement1,
-            { transform: [{ translateY: float1Y }] },
-          ]}
-        >
-          <Icon name="heart" size={28} color="rgba(255, 255, 255, 0.12)" />
-        </Animated.View>
-        <Animated.View
-          style={[
-            styles.floatingElement2,
-            { transform: [{ translateY: float2Y }] },
-          ]}
-        >
-          <Icon name="mobile-alt" size={32} color="rgba(255, 255, 255, 0.12)" />
-        </Animated.View>
-        <Animated.View
-          style={[
-            styles.particle,
-            styles.particle1,
-            { transform: [{ translateY: particle1Y }] },
-          ]}
-        />
-        <Animated.View
-          style={[
-            styles.particle,
-            styles.particle2,
-            { transform: [{ translateY: particle2Y }] },
-          ]}
-        />
-      </View>
-
-      {/* Enhanced Header */}
-      <Animated.View
-  style={[
-    styles.header,
-    { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
-  ]}
->
-  <View style={styles.headerIconContainer}>
-    <Icon name="mobile-alt" size={32} color="#0F172A" />
-  </View>
-  <Text style={styles.headerTitle}>
-    Smartphone Basics
-  </Text>
-  <Text style={styles.headerSubtitle}>
-    Interactive lessons for seniors
-  </Text>
-  <View style={styles.headerDivider} />
-</Animated.View>
-
-      {/* Enhanced Lessons List */}
-      <ScrollView
-        style={styles.lessonScroll}
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-      >
-       {lessons.map((lesson, idx) => (
-  <TouchableOpacity
-    key={idx}
-    style={[
-      styles.lessonCard,
-      practiceCompleted[lesson.title] && styles.lessonCardCompleted,
-    ]}
-    onPress={() => openLessonModal(lesson)}
-    activeOpacity={0.92}
-    accessibilityLabel={lesson.title}
-  >
-    <View style={styles.lessonImageContainer}>
-      <View style={styles.lessonIconBg}>
-        <Icon name={lesson.icon} size={32} color="#38BDF8" />
-      </View>
-      {practiceCompleted[lesson.title] && (
-        <View style={styles.completedBadge}>
-          <Icon name="check" size={12} color="#fff" />
+      {/* Header */}
+      <Animated.View style={[mainStyles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <View style={mainStyles.headerTop}>
+          <TouchableOpacity style={mainStyles.backBtn} onPress={() => navigation.goBack()}>
+            <Icon name="arrow-left" size={16} color="#0F172A" />
+            <Text style={mainStyles.backBtnText}>Back</Text>
+          </TouchableOpacity>
+          <View style={mainStyles.headerBadge}>
+            <Icon name="mobile-alt" size={18} color="#38BDF8" />
+            <Text style={mainStyles.headerBadgeText}>Smartphone Basics</Text>
+          </View>
+          <View style={{ width: 40 }} />
         </View>
-      )}
-    </View>
-    <View style={styles.lessonContent}>
-      <Text style={[styles.lessonTitle, getTitleSizeStyle()]}>
-        {lesson.title}
-      </Text>
-      <Text
-        style={[styles.lessonSummary, getTextSizeStyle()]}
-        numberOfLines={2}
-      >
-        {lesson.content}
-      </Text>
-      <View style={styles.lessonProgress}>
-        <Text style={styles.progressText}>
-          {practiceCompleted[lesson.title] ? "Completed" : "Ready to learn"}
-        </Text>
-      </View>
-    </View>
-    <View style={styles.arrowIcon}>
-      <Icon name="chevron-right" size={18} color="#38BDF8" />
-    </View>
-  </TouchableOpacity>
-))}
+        <Text style={mainStyles.headerTitle}>Matuto Gumamit ng{"\n"}Smartphone</Text>
+        <View style={mainStyles.progressBar}>
+          <View style={[mainStyles.progressFill, { width: `${(completedCount / lessons.length) * 100}%` }]} />
+        </View>
+        <Text style={mainStyles.progressLabel}>{completedCount}/{lessons.length} aralin na natapos</Text>
+      </Animated.View>
+
+      {/* Lesson List */}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={mainStyles.listContainer} showsVerticalScrollIndicator={false}>
+        {lessons.map((lesson, idx) => (
+          <TouchableOpacity key={idx} style={mainStyles.card} onPress={() => openLesson(lesson)} activeOpacity={0.88}>
+            <View style={[mainStyles.cardIcon, { backgroundColor: lesson.color + "22" }]}>
+              <Icon name={lesson.icon} size={26} color={lesson.color} />
+              {completed[lesson.title] && (
+                <View style={mainStyles.checkBadge}>
+                  <Icon name="check" size={10} color="#fff" />
+                </View>
+              )}
+            </View>
+            <View style={mainStyles.cardBody}>
+              <View style={mainStyles.cardTopRow}>
+                <Text style={mainStyles.cardNum}>Aralin {idx + 1}</Text>
+                <View style={mainStyles.durationTag}>
+                  <Icon name="clock" size={9} color="#94A3B8" />
+                  <Text style={mainStyles.durationText}>{lesson.duration}</Text>
+                </View>
+              </View>
+              <Text style={mainStyles.cardTitle}>{lesson.title}</Text>
+              <Text style={mainStyles.cardSub} numberOfLines={2}>{lesson.content}</Text>
+              <View style={mainStyles.cardStatus}>
+                <View style={[mainStyles.statusDot, { backgroundColor: completed[lesson.title] ? "#10B981" : "#38BDF8" }]} />
+                <Text style={[mainStyles.statusText, { color: completed[lesson.title] ? "#10B981" : "#94A3B8" }]}>
+                  {completed[lesson.title] ? "✓ Tapos na" : "Simulan ang aralin"}
+                </Text>
+              </View>
+            </View>
+            <Icon name="chevron-right" size={14} color="#38BDF8" style={{ marginLeft: 8 }} />
+          </TouchableOpacity>
+        ))}
+        <View style={{ height: 32 }} />
       </ScrollView>
 
-      {/* Enhanced Lesson Modal */}
-      
+      {/* Modal */}
+      <Modal visible={isModalVisible} animationType="slide" transparent onRequestClose={closeModal} statusBarTranslucent>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <View style={modalStyles.overlay}>
+            <View style={modalStyles.sheet}>
+              {selectedLesson && (
+                <>
+                  {/* Modal header */}
+                  <View style={modalStyles.header}>
+                    <View style={[modalStyles.lessonIcon, { backgroundColor: selectedLesson.color + "22" }]}>
+                      <Icon name={selectedLesson.icon} size={28} color={selectedLesson.color} />
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 12 }}>
+                      <Text style={modalStyles.lessonNum}>
+                        Aralin {lessons.findIndex(l => l.title === selectedLesson.title) + 1}
+                      </Text>
+                      <Text style={modalStyles.lessonTitle} numberOfLines={2}>{selectedLesson.title}</Text>
+                    </View>
+                    <TouchableOpacity style={modalStyles.closeBtn} onPress={closeModal}>
+                      <Icon name="times" size={16} color="#94A3B8" />
+                    </TouchableOpacity>
+                  </View>
 
-<Modal
-  visible={isModalVisible}
-  animationType="slide"
-  transparent
-  onRequestClose={closeModal}
-  statusBarTranslucent
->
-  <KeyboardAvoidingView
-    style={{ flex: 1 }}
-    behavior={Platform.OS === "ios" ? "padding" : undefined}
-  >
-    <View style={styles.modalOverlay}>
-      <View style={styles.modalContent}>
-        {selectedLesson && (
-          <>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalIconContainer}>
-                <Icon
-                  name={selectedLesson.icon}
-                  size={40}
-                  color="#38BDF8"
-                />
-              </View>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={closeModal}
-                accessibilityLabel="Close"
-              >
-                <Icon name="times" size={20} color="#64748B" />
-              </TouchableOpacity>
-            </View>
+                  <ScrollView style={{ flex: 1 }} contentContainerStyle={modalStyles.scrollContent}
+                    showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
-            <ScrollView
-              style={styles.modalScrollView}
-              contentContainerStyle={styles.modalScrollContainer}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              bounces={true}
-            >
-              <Text
-                style={[styles.modalHeadline, getTitleSizeStyle()]}
-                accessibilityRole="header"
-              >
-                {selectedLesson.title}
-              </Text>
-              <Text style={[styles.modalBody, getTextSizeStyle()]}>
-                {selectedLesson.content}
-              </Text>
+                    {/* Content */}
+                    <View style={modalStyles.contentBox}>
+                      <Text style={[modalStyles.bodyText, { fontSize: tSize, lineHeight: tLine }]}>
+                        {selectedLesson.content}
+                      </Text>
+                    </View>
 
-              {/* Enhanced Controls Section */}
-              <View style={styles.controlsSection}>
-                {/* TTS and Text Size Controls */}
-                <View style={styles.primaryControls}>
-                  <TouchableOpacity
-                    style={[
-                      styles.ttsButton,
-                      isReading && styles.ttsButtonActive,
-                    ]}
-                    onPress={() => handleReadLesson(selectedLesson)}
-                    activeOpacity={0.8}
-                    accessibilityLabel={
-                      isReading ? "Stop Reading" : "Read Aloud"
-                    }
-                  >
-                    <Icon
-                      name={isReading ? "stop" : "volume-up"}
-                      size={18}
-                      color={isReading ? "#fff" : "#38BDF8"}
-                    />
-                    <Text
-                      style={[
-                        styles.ttsButtonText,
-                        isReading && styles.ttsButtonTextActive,
-                      ]}
-                    >
-                      {isReading ? "Stop" : "Read"}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* Text Size Controls */}
-                  <View style={styles.textSizeControls}>
-                    <Text style={styles.textSizeLabel}>Text:</Text>
-                    {["small", "medium", "large"].map((size, idx) => (
-                      <TouchableOpacity
-                        key={size}
-                        style={[
-                          styles.textSizeButton,
-                          textSize === size && styles.textSizeButtonActive,
-                        ]}
-                        onPress={() => setTextSize(size)}
-                        activeOpacity={0.7}
-                        accessibilityLabel={`Text size ${size}`}
-                      >
-                        <Text
-                          style={[
-                            styles.textSizeButtonText,
-                            textSize === size &&
-                              styles.textSizeButtonTextActive,
-                          ]}
-                        >
-                          {["A-", "A", "A+"][idx]}
+                    {/* Controls */}
+                    <View style={modalStyles.controls}>
+                      <TouchableOpacity style={[modalStyles.ttsBtn, isReading && modalStyles.ttsBtnActive]} onPress={() => readLesson(selectedLesson)}>
+                        <Icon name={isReading ? "stop" : "volume-up"} size={16} color={isReading ? "#fff" : "#38BDF8"} />
+                        <Text style={[modalStyles.ttsBtnText, isReading && { color: "#fff" }]}>
+                          {isReading ? "Ihinto" : "Basahin"}
                         </Text>
                       </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              </View>
+                      <View style={modalStyles.sizeControls}>
+                        <Text style={modalStyles.sizeLabel}>Laki:</Text>
+                        {["small", "medium", "large"].map((s, i) => (
+                          <TouchableOpacity key={s} style={[modalStyles.sizeBtn, textSize === s && modalStyles.sizeBtnActive]} onPress={() => setTextSize(s)}>
+                            <Text style={[modalStyles.sizeBtnText, textSize === s && { color: "#fff" }]}>
+                              {["A-", "A", "A+"][i]}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
 
-              {/* Interactive Simulator Section */}
-              <View style={styles.practiceSection}>
-                <Text style={styles.practiceSectionTitle}>
-                  Interactive Practice
-                  </Text>
-                <View style={styles.practiceContent}>
-                  {React.createElement(selectedLesson.simulator, {
-                    onSuccess: () =>
-                      handlePracticeSuccess(selectedLesson.title),
-                  })}
-                </View>
-              </View>
-            </ScrollView>
-          </>
-        )}
-      </View>
-    </View>
-  </KeyboardAvoidingView>
-</Modal>
-
-      {/* Enhanced Back Button */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-        activeOpacity={0.8}
-        accessibilityLabel="Back"
-      >
-        <Icon name="arrow-left" size={18} color="#0F172A" />
-        <Text style={styles.backButtonText}>Back</Text>
-      </TouchableOpacity>
+                    {/* Practice */}
+                    <View style={modalStyles.practiceBox}>
+                      <View style={modalStyles.practiceHeader}>
+                        <Icon name="gamepad" size={16} color="#38BDF8" />
+                        <Text style={modalStyles.practiceTitle}>Pagsasanay</Text>
+                        {completed[selectedLesson.title] && (
+                          <View style={modalStyles.completedTag}>
+                            <Icon name="check" size={10} color="#fff" />
+                            <Text style={modalStyles.completedTagText}>Tapos na</Text>
+                          </View>
+                        )}
+                      </View>
+                      {React.createElement(selectedLesson.simulator, {
+                        onSuccess: () => onSuccess(selectedLesson.title),
+                      })}
+                    </View>
+                  </ScrollView>
+                </>
+              )}
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
 
-// Add the required StyleSheet
-const styles = StyleSheet.create({
-  // Add these new styles to your StyleSheet:
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
-// Helper text and instructions
-instructionText: {
-  marginTop: 12,
-  paddingHorizontal: 20,
-  alignItems: 'center',
-},
-hintText: {
-  fontSize: 12,
-  color: '#64748B',
-  fontStyle: 'italic',
-  textAlign: 'center',
-},
-
-// Enhanced message app styles
-messageApp: {
-  flex: 1,
-  backgroundColor: '#1F2937',
-},
-messageHeader: {
-  backgroundColor: '#374151',
-  paddingHorizontal: 12,
-  paddingVertical: 8,
-},
-contactInfo: {
-  flexDirection: 'row',
-  alignItems: 'center',
-},
-contactAvatar: {
-  width: 24,
-  height: 24,
-  borderRadius: 12,
-  backgroundColor: '#6B7280',
-  justifyContent: 'center',
-  alignItems: 'center',
-  marginRight: 8,
-},
-contactName: {
-  color: '#fff',
-  fontSize: 12,
-  fontWeight: '600',
-},
-messagesContainer: {
-  flex: 1,
-  paddingHorizontal: 12,
-  paddingVertical: 8,
-},
-messageBubble: {
-  maxWidth: '75%',
-  padding: 8,
-  borderRadius: 12,
-  marginBottom: 6,
-},
-contactMessage: {
-  backgroundColor: '#374151',
-  alignSelf: 'flex-start',
-},
-userMessage: {
-  backgroundColor: '#38BDF8',
-  alignSelf: 'flex-end',
-},
-messageText: {
-  color: '#fff',
-  fontSize: 13,
-},
-messageTime: {
-  color: '#9CA3AF',
-  fontSize: 8,
-  marginTop: 2,
-},
-messageInput: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingHorizontal: 12,
-  paddingVertical: 8,
-  backgroundColor: '#374151',
-},
-messageTextInput: {
-  flex: 1,
-  backgroundColor: '#1F2937',
-  borderRadius: 16,
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  color: '#fff',
-  fontSize: 11,
-  marginRight: 8,
-  minHeight: 28,
-},
-sendButton: {
-  width: 28,
-  height: 28,
-  borderRadius: 14,
-  backgroundColor: '#6B7280',
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-sendButtonActive: {
-  backgroundColor: '#38BDF8',
-},
-
-// Enhanced WiFi styles
-wifiSettings: {
-  flex: 1,
-  backgroundColor: '#1F2937',
-  paddingHorizontal: 12,
-},
-settingsHeader: {
-  paddingVertical: 12,
-  borderBottomWidth: 1,
-  borderBottomColor: '#374151',
-},
-settingsTitle: {
-  color: '#fff',
-  fontSize: 14,
-  fontWeight: '600',
-  textAlign: 'center',
-},
-scanningView: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-scanningText: {
-  color: '#9CA3AF',
-  fontSize: 12,
-  marginTop: 12,
-},
-networksList: {
-  flex: 1,
-  paddingTop: 8,
-},
-networkItem: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingVertical: 12,
-  paddingHorizontal: 8,
-  borderBottomWidth: 1,
-  borderBottomColor: '#374151',
-  borderRadius: 8,
-  marginBottom: 2,
-},
-networkItemSelected: {
-  backgroundColor: 'rgba(56, 189, 248, 0.1)',
-  borderColor: '#38BDF8',
-},
-networkName: {
-  color: '#fff',
-  fontSize: 12,
-  marginLeft: 8,
-  flex: 1,
-},
-networkInfo: {
-  flexDirection: 'row',
-  alignItems: 'center',
-},
-signalStrength: {
-  flexDirection: 'row',
-  marginLeft: 6,
-},
-signalBar: {
-  width: 3,
-  height: 6,
-  backgroundColor: '#6B7280',
-  marginLeft: 1,
-  borderRadius: 1,
-},
-signalBarActive: {
-  backgroundColor: '#38BDF8',
-},
-passwordDialog: {
-  backgroundColor: '#374151',
-  borderRadius: 8,
-  padding: 12,
-  marginTop: 8,
-  marginHorizontal: 4,
-},
-passwordLabel: {
-  color: '#fff',
-  fontSize: 11,
-  marginBottom: 8,
-},
-passwordInput: {
-  backgroundColor: '#1F2937',
-  borderRadius: 6,
-  paddingHorizontal: 8,
-  paddingVertical: 6,
-  color: '#fff',
-  fontSize: 11,
-  marginBottom: 12,
-  minHeight: 28,
-},
-connectButton: {
-  backgroundColor: '#6B7280',
-  borderRadius: 6,
-  paddingVertical: 8,
-  alignItems: 'center',
-},
-connectButtonActive: {
-  backgroundColor: '#38BDF8',
-},
-connectButtonText: {
-  color: '#fff',
-  fontSize: 11,
-  fontWeight: '600',
-},
-connectedView: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-  paddingHorizontal: 20,
-},
-connectedText: {
-  color: '#10B981',
-  fontSize: 14,
-  fontWeight: '600',
-  marginTop: 12,
-  textAlign: 'center',
-},
-connectionDetails: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginTop: 8,
-},
-ipAddress: {
-  color: '#9CA3AF',
-  fontSize: 10,
-  marginLeft: 6,
-},
-  container: {
-    flex: 1,
-    backgroundColor: '#F0F9FF',
+const phoneStyles = StyleSheet.create({
+  shell: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    alignSelf: "center",
   },
-  gradientBackground: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
+  leftSide: {
+    marginRight: 2,
+    paddingTop: 50,
+    gap: 6,
   },
-  backgroundOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    backgroundColor: '#38BDF8',
+  rightSide: {
+    marginLeft: 2,
+    paddingTop: 65,
   },
-  backgroundElements: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
+  volBtn: {
+    width: 5,
+    height: 29,
+    backgroundColor: "#374151",
+    borderRadius: 3,
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
   },
-  floatingElement1: {
-    position: 'absolute',
-    top: 100,
-    left: 50,
-  },
-  floatingElement2: {
-    position: 'absolute',
-    top: 200,
-    right: 80,
-  },
-  particle: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  volBtnInner: {
+    width: 3,
+    height: 16,
+    backgroundColor: "#4B5563",
     borderRadius: 2,
   },
-  particle1: {
-    left: '20%',
+  powerBtn: {
+    width: 5,
+    height: 44,
+    backgroundColor: "#374151",
+    borderRadius: 3,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  particle2: {
-    left: '80%',
+  powerBtnActive: {
+    backgroundColor: "#38BDF8",
   },
-  header: {
-    alignItems: 'center',
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 30,
-    paddingHorizontal: 20,
-  },
-  headerIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#0F172A',
-    marginBottom: 5,
-    textAlign: 'center',
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#64748B',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  headerDivider: {
-    width: 60,
-    height: 4,
-    backgroundColor: '#38BDF8',
+  powerBtnInner: {
+    width: 3,
+    height: 26,
+    backgroundColor: "#4B5563",
     borderRadius: 2,
   },
-  lessonScroll: {
-    flex: 1,
-  },
-  scrollContainer: {
-    padding: 20,
-    paddingTop: 10,
-  },
-  lessonCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  lessonCardCompleted: {
-    borderColor: '#10B981',
+  body: {
+    width: PHONE_W,
+    height: PHONE_H,
+    backgroundColor: "#111827",
+    borderRadius: 36,
     borderWidth: 2,
+    borderColor: "#374151",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 12,
+    overflow: "hidden",
   },
-  lessonImageContainer: {
-    position: 'relative',
-    marginRight: 16,
+  notch: {
+    height: 28,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#111827",
+    zIndex: 10,
   },
-  lessonIconBg: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#F0F9FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  completedBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#10B981',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  lessonContent: {
-    flex: 1,
-  },
-  lessonTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#0F172A',
-    marginBottom: 4,
-  },
-  lessonSummary: {
-    fontSize: 14,
-    color: '#64748B',
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  lessonProgress: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  progressText: {
-    fontSize: 12,
-    color: '#10B981',
-    fontWeight: '500',
-  },
-  simProgressText: {
-    fontSize: 12,
-    color: '#10B981',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  arrowIcon: {
-    marginLeft: 12,
-  },
-  modalOverlay: {
-  flex: 1,
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  justifyContent: 'flex-end',
-},
-modalScrollView: {
-  flex: 1,
-},
-  modalScrollContainer: {
-  padding: 24,
-  paddingTop: 0,
-  paddingBottom: 40,
-},
-  modalContent: {
-  backgroundColor: '#fff',
-  borderTopLeftRadius: 24,
-  borderTopRightRadius: 24,
-  height: '92%',
-  maxHeight: height * 0.92,
-  flexDirection: 'column',
-},
-  modalHeader: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: 24,
-  paddingBottom: 0,
-  borderBottomWidth: 1,
-  borderBottomColor: '#F1F5F9',
-},
-  modalIconContainer: {
-  width: 60,
-  height: 60,
-  borderRadius: 30,
-  backgroundColor: '#F0F9FF',
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-  modalCloseButton: {
-  width: 40,
-  height: 40,
-  borderRadius: 20,
-  backgroundColor: '#F1F5F9',
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-  modalHeadline: {
-  fontSize: 24,
-  fontWeight: 'bold',
-  color: '#0F172A',
-  marginBottom: 16,
-  lineHeight: 32,
-  marginTop: 20,
-},
-  modalBody: {
-  fontSize: 16,
-  color: '#475569',
-  lineHeight: 24,
-  marginBottom: 24,
-},
-  controlsSection: {
-    marginBottom: 24,
-  },
-  primaryControls: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginBottom: 16,
-  flexWrap: 'wrap',
-},
-  ttsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0F9FF',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#38BDF8',
-  },
-  ttsButtonActive: {
-    backgroundColor: '#38BDF8',
-  },
-  ttsButtonText: {
-    marginLeft: 8,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#38BDF8',
-  },
-  ttsButtonTextActive: {
-    color: '#fff',
-  },
-  textSizeControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  textSizeLabel: {
-    fontSize: 14,
-    color: '#64748B',
-    marginRight: 8,
-  },
-  textSizeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F1F5F9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 4,
-  },
-  textSizeButtonActive: {
-    backgroundColor: '#38BDF8',
-  },
-  textSizeButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  textSizeButtonTextActive: {
-    color: '#fff',
-  },
-   practiceSectionScrollable: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    padding: 20,
-    maxHeight: 340,
-    marginBottom: 10,
-    flex: 1,
-    width: '100%',
-  },
-  practiceSection: {
-  backgroundColor: '#F8FAFC',
-  borderRadius: 16,
-  padding: 20,
-  marginBottom: 20,
-},
-  practiceSectionTitle: {
-  fontSize: 18,
-  fontWeight: '600',
-  color: '#0F172A',
-  marginBottom: 16,
-  textAlign: 'center',
-},
-  practiceContent: {
-    alignItems: 'center',
-  },
-  backButton: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 50 : 30,
-    left: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  backButtonText: {
-    marginLeft: 8,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0F172A',
-  },
-  // Simulator styles
-  simulatorContainer: {
-  alignItems: 'center',
-  paddingVertical: 10,
-  width: '100%',
-},
-  simulatorTitle: {
-  fontSize: 18,
-  fontWeight: '600',
-  color: '#0F172A',
-  marginBottom: 20,
-  textAlign: 'center',
-  paddingHorizontal: 20,
-},
-  phoneFrame: {
-  padding: 6,
-  backgroundColor: '#1F2937',
-  borderRadius: 20,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.3,
-  shadowRadius: 8,
-  elevation: 8,
-  alignSelf: 'center',
-  maxWidth: '100%',
-  transform: [{ scale: SCREEN_SCALE }],
-},
-  phoneBody: {
-  width: SIM_PHONE_WIDTH,
-  height: SIM_PHONE_HEIGHT,
-  backgroundColor: '#374151',
-  borderRadius: 16,
-  position: 'relative',
-},
- phoneScreen: {
-  position: 'absolute',
-  top: 16,
-  left: 10,
-  right: 10,
-  bottom: 16,
-  backgroundColor: '#000',
-  borderRadius: 12,
-  overflow: 'hidden',
-  maxWidth: '100%',
-},
-  powerButton: {
-    position: 'absolute',
-    right: -4,
-    top: 60,
-    width: 8,
-    height: 40,
-    backgroundColor: '#6B7280',
-    borderRadius: 4,
-  },
-  volumeButtons: {
-    position: 'absolute',
-    left: -4,
-    top: 50,
-  },
-  volumeUp: {
-    width: 8,
-    height: 30,
-    backgroundColor: '#6B7280',
-    borderRadius: 4,
-    marginBottom: 8,
-  },
-  volumeDown: {
-    width: 8,
-    height: 30,
-    backgroundColor: '#6B7280',
-    borderRadius: 4,
+  camera: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#1F2937",
+    borderWidth: 1.5,
+    borderColor: "#374151",
   },
   speaker: {
-    position: 'absolute',
-    top: 8,
-    left: '50%',
-    marginLeft: -20,
-    width: 40,
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#1F2937",
+  },
+  screen: {
+    flex: 1,
+    backgroundColor: "#000",
+    marginHorizontal: 2,
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  homeIndicatorWrap: {
+    width: "100%",
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
+    backgroundColor: "#111827",
+  },
+  homeIndicator: {
+    width: 100,
     height: 4,
-    backgroundColor: '#6B7280',
     borderRadius: 2,
+    backgroundColor: "#374151",
   },
-  homeButton: {
-    position: 'absolute',
-    bottom: 4,
-    left: '50%',
-    marginLeft: -15,
-    width: 30,
-    height: 30,
-    backgroundColor: '#6B7280',
-    borderRadius: 15,
-    borderWidth: 2,
-    borderColor: '#4B5563',
+});
+
+const simStyles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    width: "100%",
+    paddingVertical: 8,
   },
-  highlighted: {
-    backgroundColor: '#F59E0B',
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 8,
-    elevation: 8,
+  title: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#0F172A",
+    textAlign: "center",
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    lineHeight: 22,
   },
-  pressing: {
-    backgroundColor: '#38BDF8',
+  // Status bar
+  statusBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    backgroundColor: "transparent",
   },
-  screenOff: {
-    backgroundColor: '#000',
+  statusBarDark: {
+    backgroundColor: "transparent",
   },
-  screenBooting: {
-    backgroundColor: '#1F2937',
+  statusTime: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  statusRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+  batteryContainer: {
+    width: 18,
+    height: 9,
+    borderRadius: 2,
+    borderWidth: 1,
+    borderColor: "#fff",
+    padding: 1,
+  },
+  batteryFillSmall: {
+    height: "100%",
+    borderRadius: 1,
+  },
+  // Screens
+  lockBg: {
+    flex: 1,
+    backgroundColor: "#0F172A",
+    justifyContent: "space-between",
+  },
+  clockCenter: {
+    alignItems: "center",
+    flex: 1,
+    justifyContent: "center",
+  },
+  bigClock: {
+    fontSize: 52,
+    fontWeight: "200",
+    color: "#fff",
+    letterSpacing: -2,
+  },
+  clockSub: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.6)",
+    marginTop: 4,
+  },
+  slideUp: {
+    alignItems: "center",
+    paddingBottom: 20,
+  },
+  slideUpText: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 11,
+    marginTop: 2,
   },
   blackScreen: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+  },
+  offText: {
+    color: "rgba(255,255,255,0.3)",
+    fontSize: 11,
+    textAlign: "center",
+    paddingHorizontal: 20,
   },
   bootScreen: {
     flex: 1,
-    backgroundColor: '#1F2937',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  bootText: {
-    color: '#fff',
-    marginTop: 10,
-    fontSize: 14,
-  },
-  homeScreen: {
-    flex: 1,
-    backgroundColor: '#1F2937',
-  },
-  statusBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  time: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  statusIcons: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-  welcomeText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 60,
-  },
-  progressIndicator: {
-  backgroundColor: 'rgba(56, 189, 248, 0.1)',
-  borderRadius: 20,
-  paddingHorizontal: 16,
-  paddingVertical: 8,
-  marginTop: 15,
-  alignSelf: 'center',
-},
-  pressIndicator: {
-    marginTop: 16,
-    alignItems: 'center',
-    width: '100%',
-  },
-  pressBar: {
-    height: 4,
-    backgroundColor: '#38BDF8',
-    borderRadius: 2,
-    marginBottom: 8,
-  },
-  pressText: {
-    fontSize: 12,
-    color: '#64748B',
-  },
-  lockScreen: {
-    flex: 1,
-    backgroundColor: '#1F2937',
-    justifyContent: 'space-between',
-    paddingVertical: 20,
-  },
-  clockDisplay: {
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  clockTime: {
-    color: '#fff',
-    fontSize: 36,
-    fontWeight: '200',
-  },
-  clockDate: {
-    color: '#9CA3AF',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  swipeArea: {
-    alignSelf: 'center',
-    marginBottom: 20,
-    maxWidth: '90%',
-  },
-  swipeIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#374151',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 16,
-  },
-  swipeText: {
-    color: '#fff',
-    marginLeft: 6,
-    fontSize: 12,
-  },
-  appGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    paddingTop: 24,
+    backgroundColor: "#0F172A",
+    justifyContent: "center",
+    alignItems: "center",
     gap: 12,
   },
-  appIcon: {
-    alignItems: 'center',
-    width: 48,
-  },
-  appIconBg: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  appName: {
-    color: '#fff',
-    fontSize: 9,
-    textAlign: 'center',
-  },
-  gestureArea: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  gestureButton: {
-    width: 90,
-    height: 68,
-    backgroundColor: '#374151',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  gestureActive: {
-    backgroundColor: '#38BDF8',
-    transform: [{ scale: 1.1 }],
-  },
-  gestureCompleted: {
-    backgroundColor: '#10B981',
-  },
-  gestureLabel: {
-    color: '#fff',
-    fontSize: 11,
-    marginTop: 4,
-    fontWeight: '500',
-  },
-  settingsScreen: {
-    flex: 1,
-    backgroundColor: '#1F2937',
-    paddingHorizontal: 12,
-  },
-  settingsTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginVertical: 12,
-  },
-  wifiSettingsTitle: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  settingItem: {
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#374151',
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  settingLabel: {
-    color: '#fff',
-    fontSize: 12,
-    marginLeft: 10,
-    flex: 1,
-  },
-  settingSlider: {
-    width: '100%',
-    height: 24,
-    marginTop: 8,
-  },
-  settingValue: {
-    color: '#9CA3AF',
-    fontSize: 10,
-    width: 28,
-    textAlign: 'right',
-  },
-  volumeOverlay: {
-    position: 'absolute',
-    top: 46,
-    left: 16,
-    right: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 8,
-    padding: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  volumeBar: {
-    flex: 1,
-    height: 3,
-    backgroundColor: '#374151',
-    borderRadius: 2,
-    marginHorizontal: 10,
-  },
-  volumeFill: {
-    height: '100%',
-    backgroundColor: '#38BDF8',
-    borderRadius: 2,
-  },
-  volumeText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  incomingCall: {
-    flex: 1,
-    backgroundColor: '#1F2937',
-    justifyContent: 'space-between',
-    paddingVertical: 28,
-    alignItems: 'center',
-  },
-  callerInfo: {
-    alignItems: 'center',
-  },
-  callerAvatar: {
+  brandLogo: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#374151',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#1E3A5F",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  brandText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    letterSpacing: 1,
+  },
+  bootLoader: {
+    width: 80,
+    height: 3,
+    backgroundColor: "#1E3A5F",
+    borderRadius: 2,
+    marginTop: 16,
+    overflow: "hidden",
+  },
+  bootLoaderFill: {
+    width: "60%",
+    height: "100%",
+    backgroundColor: "#38BDF8",
+    borderRadius: 2,
+  },
+  // Hold bar
+  holdBar: {
+    width: "70%",
+    marginTop: 16,
+    alignItems: "center",
+  },
+  holdBarFill: {
+    width: "100%",
+    height: 4,
+    backgroundColor: "#38BDF8",
+    borderRadius: 2,
+    marginBottom: 6,
+  },
+  holdText: {
+    fontSize: 11,
+    color: "#64748B",
+  },
+  // Home screen
+  homeScreenFull: {
+    flex: 1,
+    backgroundColor: "#0F172A",
+  },
+  homeDate: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 10,
+    textAlign: "center",
+    marginTop: 4,
     marginBottom: 12,
   },
-  callerName: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 2,
+  homeAppGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: 16,
+    gap: 16,
+    justifyContent: "center",
   },
-  callerNumber: {
-    color: '#9CA3AF',
+  homeApp: {
+    alignItems: "center",
+    width: 52,
+  },
+  homeAppIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  homeAppLabel: {
+    color: "#fff",
+    fontSize: 9,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  // Anatomy
+  identifiedBtn: { backgroundColor: "#10B981" },
+  highlightedBtn: { backgroundColor: "#F59E0B" },
+  identifiedNotch: { backgroundColor: "#10B981" },
+  highlightedNotch: { backgroundColor: "#F59E0B" },
+  identifiedHome: {},
+  highlightedHome: {},
+  progressPill: {
+    backgroundColor: "rgba(16,185,129,0.1)",
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "rgba(16,185,129,0.2)",
+  },
+  progressText: {
     fontSize: 12,
+    fontWeight: "600",
+    color: "#10B981",
+  },
+  labelGuide: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 12,
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  labelText: {
+    fontSize: 11,
+    color: "#94A3B8",
+  },
+  // Unlock
+  swipeZone: {
+    alignSelf: "center",
+    marginBottom: 20,
+    paddingHorizontal: 16,
+    width: "85%",
+  },
+  swipeHandle: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.15)",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.25)",
+    gap: 8,
+  },
+  swipeHandleText: {
+    color: "#fff",
+    fontSize: 12,
+  },
+  pinDisplay: {
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  pinDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.5)",
+  },
+  pinDotFilled: {
+    backgroundColor: "#fff",
+    borderColor: "#fff",
+  },
+  modeToggle: {
+    alignSelf: "center",
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  modeToggleText: {
+    color: "#38BDF8",
+    fontSize: 11,
+    textDecorationLine: "underline",
+  },
+  pinPad: {
+    marginTop: 12,
+    gap: 8,
+  },
+  pinRow: {
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "center",
+  },
+  pinKey: {
+    width: 52,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: "#1E293B",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#334155",
+  },
+  pinKeyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#fff",
+  },
+  // Gestures
+  gestureScreen: {
+    flex: 1,
+    backgroundColor: "#0F172A",
+  },
+  gestureTile: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1E293B",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#334155",
+  },
+  gestureTileActive: {
+    backgroundColor: "#1E3A5F",
+    borderColor: "#38BDF8",
+  },
+  gestureTileDone: {
+    backgroundColor: "#064E3B",
+    borderColor: "#10B981",
+  },
+  gestureName: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  gestureSub: {
+    color: "#64748B",
+    fontSize: 10,
+    marginTop: 1,
+  },
+  // Settings / Volume
+  settingsScreen: {
+    flex: 1,
+    backgroundColor: "#0F172A",
+    padding: 12,
+  },
+  settingTitle: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    marginVertical: 12,
+    textAlign: "center",
+  },
+  settingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  settingLabel: {
+    flex: 1,
+    color: "#CBD5E1",
+    fontSize: 12,
+  },
+  settingVal: {
+    color: "#94A3B8",
+    fontSize: 12,
+    fontWeight: "600",
+    width: 36,
+    textAlign: "right",
+  },
+  targetHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 8,
+    opacity: 0.7,
+  },
+  targetHintText: {
+    fontSize: 9,
+    color: "#64748B",
+  },
+  volOSD: {
+    position: "absolute",
+    top: 32,
+    left: 12,
+    right: 12,
+    backgroundColor: "rgba(0,0,0,0.85)",
+    borderRadius: 8,
+    padding: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    zIndex: 20,
+  },
+  volOSDBar: {
+    flex: 1,
+    height: 4,
+    backgroundColor: "#374151",
+    borderRadius: 2,
+  },
+  volOSDFill: {
+    height: "100%",
+    backgroundColor: "#38BDF8",
+    borderRadius: 2,
+  },
+  volOSDText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "700",
+    width: 24,
+    textAlign: "right",
+  },
+  twoProgress: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 12,
+  },
+  miniProgress: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  miniProgressText: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  // Call
+  callScreen: {
+    flex: 1,
+    backgroundColor: "#0F172A",
+  },
+  callerAvatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#1E3A5F",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+    borderWidth: 2,
+    borderColor: "#38BDF8",
+  },
+  callerInitial: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: "#38BDF8",
+  },
+  callerName: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: 4,
+  },
+  callerNum: {
+    fontSize: 12,
+    color: "#94A3B8",
     marginBottom: 6,
   },
   callStatus: {
-    color: '#38BDF8',
     fontSize: 12,
+    color: "#38BDF8",
   },
-  callDuration: {
-    color: '#38BDF8',
-    fontSize: 14,
-    fontWeight: '600',
+  callBtns: {
+    flexDirection: "row",
+    gap: 40,
+    justifyContent: "center",
   },
-  callControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '70%',
+  declineBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#EF4444",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  callButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+  answerBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#10B981",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  answerButton: {
-    backgroundColor: '#10B981',
+  callBtnLabel: {
+    color: "#fff",
+    fontSize: 10,
+    marginTop: 4,
+    textAlign: "center",
+    position: "absolute",
+    bottom: -18,
+    width: 60,
+    left: -2,
   },
-  declineButton: {
-    backgroundColor: '#EF4444',
+  callOptions: {
+    flexDirection: "row",
+    gap: 20,
+    justifyContent: "center",
   },
-  endButton: {
-    backgroundColor: '#EF4444',
+  callOption: {
+    alignItems: "center",
+    gap: 4,
   },
-  activeCall: {
+  callOptIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#1E293B",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  callOptLabel: {
+    color: "#94A3B8",
+    fontSize: 10,
+  },
+  // Messages
+  msgScreen: {
     flex: 1,
-    backgroundColor: '#1F2937',
-    justifyContent: 'space-between',
-    paddingVertical: 40,
-    alignItems: 'center',
+    backgroundColor: "#0F172A",
   },
-  callEnded: {
+  msgHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "#111827",
+    borderBottomWidth: 1,
+    borderBottomColor: "#1E293B",
+  },
+  msgContact: {
     flex: 1,
-    backgroundColor: '#1F2937',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginLeft: 8,
   },
-  callEndedText: {
-    color: '#9CA3AF',
-    fontSize: 18,
-    marginTop: 16,
+  msgAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#3B82F6",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  
-  chargingScreen: {
+  msgName: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  msgOnline: {
+    color: "#10B981",
+    fontSize: 9,
+  },
+  msgList: {
     flex: 1,
-    backgroundColor: '#1F2937',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  batteryDisplay: {
-    alignItems: 'center',
-    marginTop: 28,
+  bubble: {
+    maxWidth: "78%",
+    padding: 8,
+    borderRadius: 14,
+    marginBottom: 6,
   },
-  batteryIcon: {
-    position: 'relative',
-    alignItems: 'center',
+  bubbleContact: {
+    backgroundColor: "#1E293B",
+    alignSelf: "flex-start",
+    borderBottomLeftRadius: 4,
   },
-  batteryBody: {
-    width: 64,
+  bubbleUser: {
+    backgroundColor: "#1D4ED8",
+    alignSelf: "flex-end",
+    borderBottomRightRadius: 4,
+  },
+  bubbleText: {
+    color: "#fff",
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  bubbleTime: {
+    color: "rgba(255,255,255,0.4)",
+    fontSize: 9,
+    marginTop: 2,
+    alignSelf: "flex-end",
+  },
+  msgInput: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: "#111827",
+    borderTopWidth: 1,
+    borderTopColor: "#1E293B",
+    gap: 8,
+  },
+  msgTextInput: {
+    flex: 1,
+    backgroundColor: "#1E293B",
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    color: "#fff",
+    fontSize: 12,
+    minHeight: 32,
+  },
+  sendBtn: {
+    width: 32,
     height: 32,
-    borderWidth: 2,
-    borderColor: '#6B7280',
-    borderRadius: 6,
-    backgroundColor: '#374151',
-    position: 'relative',
+    borderRadius: 16,
+    backgroundColor: "#374151",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  batteryFill: {
-    height: '100%',
-    borderRadius: 4,
-    position: 'absolute',
-    left: 0,
-    top: 0,
+  sendBtnActive: {
+    backgroundColor: "#3B82F6",
   },
-  batteryTip: {
-    position: 'absolute',
-    right: -6,
-    top: 9,
-    width: 5,
-    height: 12,
-    backgroundColor: '#6B7280',
-    borderRadius: 2,
+  // Camera
+  cameraApp: {
+    flex: 1,
+    backgroundColor: "#000",
   },
-  chargingBolt: {
-    position: 'absolute',
-    top: 6,
-    left: 22,
+  cameraViewfinder: {
+    flex: 1,
+    margin: 16,
+    borderRadius: 12,
+    backgroundColor: "#111",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
   },
-  batteryPercentage: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: '600',
-    marginTop: 12,
+  cameraCornerTL: { position: "absolute", top: 8, left: 8, width: 20, height: 20, borderTopWidth: 2, borderLeftWidth: 2, borderColor: "#fff" },
+  cameraCornerTR: { position: "absolute", top: 8, right: 8, width: 20, height: 20, borderTopWidth: 2, borderRightWidth: 2, borderColor: "#fff" },
+  cameraCornerBL: { position: "absolute", bottom: 8, left: 8, width: 20, height: 20, borderBottomWidth: 2, borderLeftWidth: 2, borderColor: "#fff" },
+  cameraCornerBR: { position: "absolute", bottom: 8, right: 8, width: 20, height: 20, borderBottomWidth: 2, borderRightWidth: 2, borderColor: "#fff" },
+  cameraLabel: { color: "rgba(255,255,255,0.3)", fontSize: 11 },
+  cameraControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 28,
+    paddingBottom: 16,
   },
-  batteryStatus: {
-    color: '#9CA3AF',
+  cameraGalleryBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: "#1F2937",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  shutterBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 3,
+    borderColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  shutterInner: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#fff",
+  },
+  cameraSwitchBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#1F2937",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  backFromApp: {
+    position: "absolute",
+    top: 36,
+    left: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  genericApp: {
+    flex: 1,
+    backgroundColor: "#0F172A",
+  },
+  genericAppIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  genericAppName: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  genericAppSub: {
+    color: "#64748B",
     fontSize: 12,
     marginTop: 4,
   },
-  chargerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#38BDF8',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 20,
-    marginTop: 40,
+  // WiFi
+  wifiScreen: {
+    flex: 1,
+    backgroundColor: "#0F172A",
+    padding: 12,
   },
-  chargerButtonText: {
-    color: '#fff',
+  wifiHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1E293B",
+  },
+  wifiTitle: {
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
+    fontWeight: "700",
   },
-  
+  wifiToggle: {
+    width: 40,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#374151",
+    padding: 2,
+    justifyContent: "center",
+  },
+  wifiToggleOn: {
+    backgroundColor: "#38BDF8",
+  },
+  wifiToggleThumb: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#fff",
+  },
+  wifiToggleThumbOn: {
+    alignSelf: "flex-end",
+  },
+  wifiOffState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  wifiOffText: {
+    color: "#94A3B8",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  wifiOffSub: {
+    color: "#64748B",
+    fontSize: 11,
+  },
+  wifiAvail: {
+    color: "#64748B",
+    fontSize: 10,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  netRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    marginBottom: 2,
+    borderWidth: 1,
+    borderColor: "transparent",
+    gap: 8,
+  },
+  netRowSelected: {
+    backgroundColor: "rgba(56,189,248,0.1)",
+    borderColor: "#38BDF8",
+  },
+  netName: {
+    flex: 1,
+    color: "#fff",
+    fontSize: 12,
+  },
+  netRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  bars: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 2,
+  },
+  bar: {
+    width: 4,
+    borderRadius: 1,
+  },
+  pwDialog: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 8,
+  },
+  pwTitle: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  pwLabel: {
+    color: "#94A3B8",
+    fontSize: 11,
+    alignSelf: "flex-start",
+  },
+  pwInput: {
+    backgroundColor: "#1E293B",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    color: "#fff",
+    fontSize: 12,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#334155",
+  },
+  pwActions: {
+    flexDirection: "row",
+    gap: 8,
+    width: "100%",
+  },
+  pwCancel: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "#1E293B",
+    alignItems: "center",
+  },
+  pwCancelText: {
+    color: "#94A3B8",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  pwConnect: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "#374151",
+    alignItems: "center",
+  },
+  pwConnectActive: {
+    backgroundColor: "#38BDF8",
+  },
+  pwConnectText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  wifiConnected: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+  },
+  connectedName: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  connectedLabel: {
+    color: "#10B981",
+    fontSize: 12,
+  },
+  connectedDetail: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 4,
+  },
+  connectedIP: {
+    color: "#64748B",
+    fontSize: 10,
+  },
+  hintPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(245,158,11,0.08)",
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "rgba(245,158,11,0.2)",
+  },
+  hintText: {
+    fontSize: 11,
+    color: "#92400E",
+    fontStyle: "italic",
+  },
+});
+
+const mainStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    paddingTop: Platform.OS === "ios" ? 56 : 36,
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+  },
+  headerTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  backBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.95)",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+  },
+  backBtnText: {
+    marginLeft: 6,
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#0F172A",
+  },
+  headerBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(56,189,248,0.1)",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#38BDF8",
+  },
+  headerBadgeText: {
+    color: "#38BDF8",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#0F172A",
+    lineHeight: 36,
+    marginBottom: 6,
+  },
+  headerSub: {
+    fontSize: 13,
+    color: "#64748B",
+    marginBottom: 16,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: "#E2E8F0",
+    borderRadius: 2,
+    marginBottom: 6,
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#38BDF8",
+    borderRadius: 2,
+  },
+  progressLabel: {
+    fontSize: 11,
+    color: "#64748B",
+  },
+  listContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.95)",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+  },
+  cardIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
+    position: "relative",
+  },
+  checkBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#10B981",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cardBody: {
+    flex: 1,
+  },
+  cardTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
+  cardNum: {
+    fontSize: 10,
+    color: "#64748B",
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  durationTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+  durationText: {
+    fontSize: 10,
+    color: "#64748B",
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 4,
+  },
+  cardSub: {
+    fontSize: 12,
+    color: "#64748B",
+    lineHeight: 17,
+    marginBottom: 6,
+  },
+  cardStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: "500",
+  },
+});
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "flex-end",
+  },
+  sheet: {
+    backgroundColor: "#F8FAFC",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    height: "94%",
+    overflow: "hidden",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
+    backgroundColor: "#fff",
+  },
+  lessonIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  lessonNum: {
+    fontSize: 11,
+    color: "#94A3B8",
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  lessonTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#0F172A",
+    lineHeight: 24,
+  },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  contentBox: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  bodyText: {
+    color: "#334155",
+    lineHeight: 24,
+  },
+  controls: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  ttsBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#fff",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#38BDF8",
+  },
+  ttsBtnActive: {
+    backgroundColor: "#38BDF8",
+  },
+  ttsBtnText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#38BDF8",
+  },
+  sizeControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  sizeLabel: {
+    fontSize: 12,
+    color: "#94A3B8",
+    marginRight: 2,
+  },
+  sizeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  sizeBtnActive: {
+    backgroundColor: "#38BDF8",
+  },
+  sizeBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#64748B",
+  },
+  practiceBox: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  practiceHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+  practiceTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0F172A",
+    flex: 1,
+  },
+  completedTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#10B981",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  completedTagText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "600",
+  },
 });

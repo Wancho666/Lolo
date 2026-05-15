@@ -22,10 +22,10 @@ const MiniGamesScreen = () => {
   const [currentGame, setCurrentGame] = useState(null);
 
   const games = [
-    { id: 'color-match',   name: 'Color Match',   icon: 'palette',      color: '#3B82F6', description: 'Itugma ang mga kulay sa kanilang mga pangalan' },
-    { id: 'word-scramble', name: 'Bugtong',        icon: 'question',     color: '#EC4899', description: 'Hulaan ang sagot sa bugtong' },
-    { id: 'pair-match',    name: 'Pair Match',     icon: 'clone',        color: '#10B981', description: 'Baliktarin ang mga card at hanapin ang magkapares' },
-    { id: 'true-or-false', name: 'Tama o Mali',    icon: 'check-circle', color: '#F59E0B', description: 'Subukan ang inyong kaalaman sa mga katotohanan tungkol sa Pilipinas' },
+    { id: 'color-match',   name: 'Color Match',   icon: 'palette',      color: '#3B82F6', description: 'I-match ang kulay ng tinta, hindi ang salita' },
+    { id: 'word-scramble', name: 'Bugtong',        icon: 'question',     color: '#EC4899', description: 'Solusyunan ang mga klasikong Filipino riddles' },
+    { id: 'pair-match',    name: 'Pair Match',     icon: 'clone',        color: '#10B981', description: 'Maghanap ng pares at palakasin ang memorya' },
+    { id: 'true-or-false', name: 'Tama o Mali',    icon: 'check-circle', color: '#F59E0B', description: 'Suriin kung tama o mali ang mga pahayag' },
   ];
 
   // ─── Shared Gradient Background ──────────────────────────────────────────────
@@ -45,7 +45,7 @@ const MiniGamesScreen = () => {
       <View style={styles.container}>
         <GradientBg />
 
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('HomeScreen')} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.8}>
           <Icon name="arrow-left" size={18} color="#0F172A" />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
@@ -146,12 +146,16 @@ const MiniGamesScreen = () => {
   // ═══════════════════════════════════════════════════════════════════════════════
   const ColorMatch = () => {
     const colorData = [
-      { name: 'Red',    hex: '#EF4444' },
-      { name: 'Blue',   hex: '#3B82F6' },
-      { name: 'Green',  hex: '#10B981' },
-      { name: 'Yellow', hex: '#EAB308' },
-      { name: 'Purple', hex: '#8B5CF6' },
-      { name: 'Orange', hex: '#F97316' },
+      { name: 'Red',      hex: '#EF4444' },
+      { name: 'Blue',     hex: '#3B82F6' },
+      { name: 'Green',    hex: '#10B981' },
+      { name: 'Yellow',   hex: '#EAB308' },
+      { name: 'Purple',   hex: '#8B5CF6' },
+      { name: 'Orange',   hex: '#F97316' },
+      { name: 'Teal',     hex: '#14B8A6' },
+      { name: 'Pink',     hex: '#EC4899' },
+      { name: 'Brown',    hex: '#A16207' },
+      { name: 'Gray',     hex: '#6B7280' },
     ];
 
     const [score, setScore]       = useState(0);
@@ -232,9 +236,9 @@ const MiniGamesScreen = () => {
         )}
 
         {round && (
-          <Animated.View style={[styles.gameContentCard, { opacity: fadeAnim }]}>
-            <Text style={[styles.colorWord, { color: round.inkColor.hex }]}>{round.word.name}</Text>
-            <Text style={styles.colorHint}>What color is the ink?</Text>
+          <Animated.View style={[styles.colorMatchQuestionContainer, { opacity: fadeAnim }]}>
+            <Text style={styles.colorMatchHint}>What color is the ink?</Text>
+            <Text style={[styles.colorMatchWord, { color: round.inkColor.hex }]}>{round.word.name}</Text>
           </Animated.View>
         )}
 
@@ -263,16 +267,24 @@ const MiniGamesScreen = () => {
   // ═══════════════════════════════════════════════════════════════════════════════
   const Bugtong = () => {
     const bugtongList = [
-      { riddle: 'Ano ang puno na walang dahon?',                           answer: 'Saging',           options: ['Saging', 'Mangga', 'Bayabas', 'Kalabasa'] },
-      { riddle: 'Ano ang bahay na walang pintuan?',                        answer: 'Itlog',            options: ['Itlog', 'Bahay', 'Silo', 'Kubo'] },
-      { riddle: 'Ano ang puno na nagiging bato?',                          answer: 'Bato',             options: ['Bato', 'Puno', 'Lupa', 'Dagat'] },
-      { riddle: 'Ano ang ilog na hindi tumatakbo?',                        answer: 'Pasig',            options: ['Pasig', 'Cagayan', 'Pampanga', 'Agusan'] },
-      { riddle: 'Ano ang bundok na maaaring kainin?',                      answer: 'Pinatuyong isda',  options: ['Pinatuyong isda', 'Bundok', 'Tinapay', 'Gulay'] },
-      { riddle: 'Ano ang hayop na may sungay na maaaring kainin?',         answer: 'Kalabasa',         options: ['Kalabasa', 'Baka', 'Kambing', 'Toro'] },
-      { riddle: 'Ano ang tubig na hindi basang-basang?',                   answer: 'Litrato',          options: ['Litrato', 'Dagat', 'Ilog', 'Lawang'] },
-      { riddle: 'Ano ang puno na nagiging damit?',                         answer: 'Piyesta',          options: ['Piyesta', 'Mangga', 'Sampaloc', 'Bayabas'] },
-      { riddle: 'Ano ang araw na walang liwanag?',                         answer: 'Linggo',           options: ['Linggo', 'Lunes', 'Martes', 'Miyerkules'] },
-      { riddle: 'Ano ang ulan na hindi nababasa?',                         answer: 'Ulan ng apoy',     options: ['Ulan ng apoy', 'Ulan ng tubig', 'Ulan ng bato', 'Ulan ng dahon'] },
+      { riddle: 'May puno, walang sanga; may dahon, walang bunga.',                             answer: 'Saging',    options: ['Saging', 'Mangga', 'Bayabas', 'Puno'] },
+      { riddle: 'Bilog ang ulo, kulay berde ang suso; kapag dumizon ang suso, umiyak ang buong gubat.', answer: 'Pakwan',    options: ['Pakwan', 'Mansanas', 'Saging', 'Pineapple'] },
+      { riddle: 'Hindi tao, hindi hayop, nagdadala ng bahay.',                                answer: 'Pagong',    options: ['Pagong', 'Aso', 'Ibon', 'Isda'] },
+      { riddle: 'May mukha, maraming ngipin, ngunit hindi nanunuot.',                         answer: 'Suklay',    options: ['Suklay', 'Gunting', 'Kutsara', 'Kutsilyo'] },
+      { riddle: 'Bilog ang ulo, bughaw ang mata; kapag umiling, hindi mo siya makita.',       answer: 'Buwan',     options: ['Buwan', 'Araw', 'Ibon', 'Sikat'] },
+      { riddle: 'Hindi tao, hindi hayop, kung tinawag mo, sumasagot.',                        answer: 'Eko',       options: ['Eko', 'Ibon', 'Alon', 'Ulan'] },
+      { riddle: 'Apat ang paa, hindi naglalakad.',                                             answer: 'Kama',      options: ['Kama', 'Silya', 'Lamesa', 'Saklay'] },
+      { riddle: 'Apat ang paa, dalawang ulo; kung umiyak, dalawa ang luha.',                  answer: 'Sapatos',   options: ['Sapatos', 'Bangka', 'Aso', 'Tren'] },
+      { riddle: 'Isang prinsesa, napakagaling lumangoy, nasa dagat siya, hindi naliligo.',        answer: 'Isda',      options: ['Isda', 'Pusit', 'Pagong', 'Ibon'] },
+      { riddle: 'May ulo, walang katawan; may buntot, walang paa.',                            answer: 'Kutsilyo',  options: ['Kutsilyo', 'Tinidor', 'Suklay', 'Pluma'] },
+      { riddle: 'May leeg, walang ulo; may katawan, walang paa.',                              answer: 'Bote',      options: ['Bote', 'Garapon', 'Takalan', 'Kandila'] },
+      { riddle: 'Kung kailan mo ako kailangan, itinapon mo ako; kung hindi mo ako kailangan, pinapasok mo ako.', answer: 'Payong', options: ['Payong', 'Sapatos', 'Sumbrero', 'Literas'] },
+      { riddle: 'May mata, walang bibig; may ngipin, ngunit hindi kumakain.',                 answer: 'Gunting',   options: ['Gunting', 'Suklay', 'Aso', 'Kutsilyo'] },
+      { riddle: 'Sa gabi ay nagniningning, sa umaga ay nawawala.',                            answer: 'Bituin',    options: ['Bituin', 'Buwan', 'Araw', 'Paruparo'] },
+      { riddle: 'Isang prinsesa, laging natutulog sa gabi at naglalakad sa araw.',              answer: 'Kandila',   options: ['Kandila', 'Orasan', 'Laruan', 'Pula'] },
+      { riddle: 'May hawak na sinulid, kapag hinalo, nagtatago ang ilaw.',                     answer: 'Anino',     options: ['Anino', 'Alon', 'Hangin', 'Ulan'] },
+      { riddle: 'Tuwing gabi, ako ay nagbabantay; kapag gabi na, laging nagbubukas ng ilaw.', answer: 'Ilaw',      options: ['Ilaw', 'Bituin', 'Buwan', 'Sintang'] },
+      { riddle: 'May ulo, walang katawan; may buntot, walang paa; laging nasa kusina.',       answer: 'Kutsara',   options: ['Kutsara', 'Kutsilyo', 'Tinidor', 'Kutsarang Kahoy'] },
     ];
 
     const [score, setScore]       = useState(0);
@@ -332,8 +344,8 @@ const MiniGamesScreen = () => {
         </View>
 
         {current && (
-          <View style={styles.exampleContainer}>
-            <Text style={styles.exampleText}>{current.riddle}</Text>
+          <View style={styles.bugtongQuestionContainer}>
+            <Text style={styles.bugtongQuestionText}>{current.riddle}</Text>
           </View>
         )}
 
@@ -372,6 +384,9 @@ const MiniGamesScreen = () => {
       ['🚗','✈️','🚢','🚂'],
       ['⚽','🏀','🎾','🏐'],
       ['🎸','🎹','🎺','🥁'],
+      ['🍦','🍰','🍿','🧁'],
+      ['🌹','🌵','🌸','🌼'],
+      ['🧠','📚','✏️','🖋️'],
     ];
 
     const buildDeck = useCallback(() => {
@@ -576,8 +591,8 @@ const MiniGamesScreen = () => {
           <Text style={styles.lessonSubtitle}>Basahin ang pahayag nang mabuti — Tama ba o Mali?</Text>
         </View>
 
-        <View style={[styles.tipCard, { borderLeftColor: '#0EA5E9' }]}>
-          <Text style={styles.tipDescription}>{current.statement}</Text>
+        <View style={styles.trueOrFalseQuestionContainer}>
+          <Text style={styles.trueOrFalseQuestionText}>{current.statement}</Text>
         </View>
 
         {!answered ? (
@@ -773,6 +788,56 @@ const styles = StyleSheet.create({
     padding: 16, borderRadius: 8, marginBottom: 20,
   },
   exampleText: { fontSize: 16, color: '#0F172A', lineHeight: 22, textAlign: 'center' },
+  bugtongQuestionContainer: {
+    backgroundColor: 'rgba(14, 165, 233, 0.15)',
+    borderColor: '#38BDF8',
+    borderWidth: 1,
+    padding: 22,
+    borderRadius: 20,
+    marginBottom: 22,
+  },
+  bugtongQuestionText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0F172A',
+    textAlign: 'center',
+    lineHeight: 28,
+  },
+  colorMatchQuestionContainer: {
+    backgroundColor: 'rgba(14, 165, 233, 0.15)',
+    borderColor: '#38BDF8',
+    borderWidth: 1,
+    padding: 24,
+    borderRadius: 20,
+    marginBottom: 22,
+    alignItems: 'center',
+  },
+  colorMatchHint: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748B',
+    marginBottom: 12,
+  },
+  colorMatchWord: {
+    fontSize: 48,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  trueOrFalseQuestionContainer: {
+    backgroundColor: 'rgba(14, 165, 233, 0.15)',
+    borderColor: '#38BDF8',
+    borderWidth: 1,
+    padding: 24,
+    borderRadius: 20,
+    marginBottom: 22,
+  },
+  trueOrFalseQuestionText: {
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#0F172A',
+    textAlign: 'center',
+    lineHeight: 28,
+  },
 
   simulatorBtn: {
     flexDirection: 'row', alignItems: 'center',

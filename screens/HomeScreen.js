@@ -339,7 +339,7 @@ export default function HomeScreen({ navigation }) {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Profile</Text>
+              <Text style={styles.modalTitle}></Text>
               <Text style={styles.modalName}>{nickname}</Text>
               <TouchableOpacity
                 style={styles.logoutButton}
@@ -350,7 +350,7 @@ export default function HomeScreen({ navigation }) {
                 }}
               >
                 <Icon name="sign-out-alt" size={18} color="#fff" style={{ marginRight: 8 }} />
-                <Text style={styles.logoutButtonText}>Logout</Text>
+                <Text style={styles.logoutButtonText}>Balik sa Simula</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setProfileModalVisible(false)} style={styles.closeModalButton}>
                 <Text style={styles.closeModalText}>Close</Text>
