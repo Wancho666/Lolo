@@ -325,7 +325,7 @@ export default function HomeScreen({ navigation }) {
               end={{ x: 1, y: 1 }}
               style={styles.profileIconGradient}
             >
-              <Icon name="user-tie" size={24} color="#fff" />
+              <Icon name="reply" size={24} color="#fff" />
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -350,7 +350,7 @@ export default function HomeScreen({ navigation }) {
                 }}
               >
                 <Icon name="sign-out-alt" size={18} color="#fff" style={{ marginRight: 8 }} />
-                <Text style={styles.logoutButtonText}>Balik sa Simula</Text>
+                <Text style={styles.logoutButtonText}>Back</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setProfileModalVisible(false)} style={styles.closeModalButton}>
                 <Text style={styles.closeModalText}>Close</Text>
@@ -376,7 +376,7 @@ export default function HomeScreen({ navigation }) {
           >
             <View style={styles.logoShadow} />
             <Image
-              source={require("../assets/images/logo.png")}
+              source={require("../assets/images/logo3.png")}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -672,7 +672,7 @@ const styles = StyleSheet.create({
   profileIconContainer: {
     position: 'absolute',
     top: 38,
-    right: 24,
+    left: 24,
     zIndex: 999,
   },
   profileIconButton: {

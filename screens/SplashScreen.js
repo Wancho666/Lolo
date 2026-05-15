@@ -263,7 +263,7 @@ export default function SplashScreen({ navigation }) {
         >
           <View style={styles.logoShadow} />
           <Image
-            source={require('../assets/images/logo.png')}
+            source={require('../assets/images/logo3.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -378,8 +378,8 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   logo: {
-    width: 200,
-    height: 200,
+    width: 155,
+    height: 155,
     borderRadius: 100,
   },
   loaderContainer: {
