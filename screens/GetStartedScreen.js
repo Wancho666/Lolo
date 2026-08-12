@@ -229,7 +229,7 @@ export default function GetStartedScreen({ navigation }) {
 
     try {
       await AsyncStorage.setItem("hasOnboarded", "true");
-      navigation.replace("Home");
+      navigation.replace("PhoneKnowledge");
     } catch (error) {
       console.log("Error saving onboarding flag:", error);
     }
@@ -448,9 +448,12 @@ const styles = StyleSheet.create({
   slidesContainer: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 0,
   },
   flatList: {
     flexGrow: 0,
+    width: width,
   },
   slide: {
     width,
@@ -461,12 +464,14 @@ const styles = StyleSheet.create({
   slideContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    maxWidth: width - 60,
+    width: width - 40,
+    maxWidth: 360,
   },
   lottieContainer: {
     marginBottom: 30,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
   lottie: {
     width: 200,
@@ -484,6 +489,7 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(255, 255, 255, 0.8)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+    letterSpacing: 0.2,
   },
   subtitleContainer: {
     alignItems: 'center',
@@ -493,8 +499,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     color: "#334155",
-    fontWeight: '400',
-    letterSpacing: 0.3,
+    fontWeight: '500',
+    letterSpacing: 0.25,
     lineHeight: 24,
   },
   bottomSection: {
@@ -526,12 +532,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 180,
+    minWidth: 190,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.24,
+    shadowRadius: 14,
+    elevation: 8,
   },
   buttonText: {
     fontSize: 18,

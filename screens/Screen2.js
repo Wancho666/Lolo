@@ -1,0 +1,588 @@
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  Dimensions,
+  Platform,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+
+let LottieWrapper;
+if (Platform.OS === "web") {
+  const { default: Lottie } = require("lottie-react");
+  LottieWrapper = ({ source, style, autoPlay = true, loop = true }) => (
+    <Lottie animationData={source} style={style} autoplay={autoPlay} loop={loop} />
+  );
+} else {
+  const Lottie = require("lottie-react-native").default;
+  LottieWrapper = ({ source, style, autoPlay = true, loop = true }) => (
+    <Lottie source={source} style={style} autoPlay={autoPlay} loop={loop} />
+  );
+}
+
+const { width } = Dimensions.get("window");
+
+const FEATURES = [
+  {
+    id: 1,
+    title: "Social Media",
+    subtitle: "Open the social media learning path with Facebook, YouTube, and Messenger.",
+    animation: require("../assets/lotties/soc.json"),
+    icon: "share-social",
+    gradientColors: ["rgba(56, 189, 248, 0.18)", "rgba(59, 130, 246, 0.18)"],
+  },
+  {
+    id: 2,
+    title: "Messaging & Communication",
+    subtitle: "Build confidence with simple email habits and essentials.",
+    animation: require("../assets/lotties/Share.json"),
+    icon: "globe",
+    gradientColors: ["rgba(16, 185, 129, 0.18)", "rgba(59, 130, 246, 0.18)"],
+  },
+  {
+    id: 3,
+    title: "Scam Awareness",
+    subtitle: "Learn how to spot scams and protect your information.",
+    animation: require("../assets/lotties/Alert.json"),
+    icon: "phone",
+    gradientColors: ["rgba(236, 72, 153, 0.18)", "rgba(251, 146, 60, 0.18)"],
+  },
+];
+
+const SOCIAL_OPTIONS = [
+  {
+    id: 1,
+    title: "Facebook",
+    description: "Learn how to create an account and use Facebook safely.",
+    animation: require("../assets/lotties/social.json"),
+    gradientColors: ["rgba(59, 130, 246, 0.15)", "rgba(147, 51, 234, 0.15)"],
+  },
+  {
+    id: 2,
+    title: "YouTube",
+    description: "Learn the basics of creating and using YouTube.",
+    animation: require("../assets/lotties/phone.json"),
+    gradientColors: ["rgba(16, 185, 129, 0.15)", "rgba(59, 130, 246, 0.15)"],
+  },
+  {
+    id: 3,
+    title: "Messenger",
+    description: "Learn how to chat and stay safe in Messenger.",
+    animation: require("../assets/lotties/security.json"),
+    gradientColors: ["rgba(236, 72, 153, 0.15)", "rgba(251, 146, 60, 0.15)"],
+  },
+];
+
+export default function Screen2({ navigation }) {
+  const [nickname, setNickname] = useState("");
+  const [currentPage, setCurrentPage] = useState("main");
+  const [selectedOption, setSelectedOption] = useState(null);
+
+  useEffect(() => {
+    const loadNickname = async () => {
+      try {
+        const storedName = await AsyncStorage.getItem("nickname");
+        if (storedName) setNickname(storedName);
+      } catch (error) {
+        console.log("Error loading nickname:", error);
+      }
+    };
+    loadNickname();
+  }, []);
+
+  const PageHeader = () => {
+    const displayName = nickname ? nickname : "";
+    const title = currentPage === "main"
+      ? `Welcome ${displayName}`
+      : currentPage === "social"
+      ? "Choose a Social Media App"
+      : selectedOption?.title || "Social Media Tutorial";
+
+    const subtitle = currentPage === "main"
+      ? "Pick up where you left off and continue with a guided digital skills journey."
+      : currentPage === "social"
+      ? "Tap one of the app options below to begin the lesson."
+      : "Follow the guided steps and build confidence as you go.";
+
+    return (
+      <View style={styles.pageHeader}>
+        <View style={styles.pageHeaderTop}>
+          <View style={styles.pageHeaderBadge}>
+            <Ionicons name="globe" size={18} color="#38BDF8" />
+            <Text style={styles.pageHeaderBadgeText}>Social Media</Text>
+          </View>
+        </View>
+        <Text style={styles.pageHeaderTitle}>{title}</Text>
+        <Text style={styles.pageHeaderSub}>{subtitle}</Text>
+      </View>
+    );
+  };
+
+  const handleFeaturePress = (feature) => {
+    if (feature.id === 1) {
+      navigation.navigate("SocialMedia");
+    }
+  };
+
+  const handleOptionSelect = (option) => {
+    setSelectedOption(option);
+    setCurrentPage("detail");
+  };
+
+  const renderMainContent = () => (
+    <View>
+      <View style={styles.heroCard}>
+        <LinearGradient
+          colors={["rgba(255,255,255,0.8)", "rgba(255,255,255,0.3)"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.heroOverlay}
+        />
+        <LinearGradient
+          colors={["rgba(14, 165, 233, 0.18)", "rgba(59, 130, 246, 0.16)"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.heroGradient}
+        />
+        <View style={styles.heroContent}>
+          <View style={styles.heroBadge}>
+            <Ionicons name="sparkles" size={14} color="#0284C7" />
+            <Text style={styles.heroBadgeText}>Recommended path</Text>
+          </View>
+          <Text style={styles.heroTitle}>Continue your digital confidence journey</Text>
+          <Text style={styles.heroText}>Choose a topic and build practical skills with a calm, guided experience.</Text>
+        </View>
+      </View>
+      {FEATURES.map((feature) => (
+        <TouchableOpacity
+          key={feature.id}
+          style={styles.featureCard}
+          activeOpacity={0.9}
+          onPress={() => handleFeaturePress(feature)}
+        >
+          <LinearGradient
+            colors={feature.gradientColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.featureGradient}
+          />
+          <View style={styles.featureGlass} />
+          <View style={styles.featureRow}>
+            <View style={styles.lottieContainer}>
+              <LottieWrapper source={feature.animation} autoPlay loop style={styles.lottie} />
+            </View>
+            <View style={styles.featureText}>
+              <Text style={styles.featureTitle}>{feature.title}</Text>
+              <Text style={styles.featureSubtitle}>{feature.subtitle}</Text>
+            </View>
+            <View style={styles.featureIcon}>
+              <Ionicons name="chevron-forward" size={20} color="rgba(15, 23, 42, 0.7)" />
+            </View>
+          </View>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
+  const renderSocialPage = () => (
+    <View>
+      {SOCIAL_OPTIONS.map((option) => (
+        <TouchableOpacity
+          key={option.id}
+          style={styles.optionCard}
+          activeOpacity={0.95}
+          onPress={() => handleOptionSelect(option)}
+        >
+          <LinearGradient
+            colors={option.gradientColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.optionGradient}
+          />
+          <View style={styles.optionGlass} />
+          <View style={styles.optionRow}>
+            <View style={styles.lottieContainer}>
+              <LottieWrapper source={option.animation} autoPlay loop style={styles.lottie} />
+            </View>
+            <View style={styles.optionText}>
+              <Text style={styles.optionTitle}>{option.title}</Text>
+              <Text style={styles.optionDescription}>{option.description}</Text>
+            </View>
+            <View style={styles.featureIcon}>
+              <Ionicons name="chevron-forward" size={20} color="rgba(15, 23, 42, 0.7)" />
+            </View>
+          </View>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
+  const renderDetailPage = () => (
+    <View style={styles.optionDetailCard}>
+      <View style={styles.optionDetailHeader}>
+        <TouchableOpacity style={styles.optionDetailBack} onPress={() => setCurrentPage("social")}>
+          <Ionicons name="chevron-back" size={16} color="#0F172A" />
+          <Text style={styles.optionDetailBackText}>Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.optionDetailTitle}>{selectedOption?.title}</Text>
+      </View>
+      <Text style={styles.optionDetailDescription}>{selectedOption?.description}</Text>
+      <View style={styles.detailSection}>
+        <Text style={styles.detailSectionTitle}>Placeholder content</Text>
+        <Text style={styles.detailSectionText}>This page is ready for your final content. You can add step-by-step guidance, images, or tips for the selected social media option later.</Text>
+      </View>
+      <View style={styles.detailSection}>
+        <Text style={styles.detailSectionTitle}>What this can include</Text>
+        <View style={styles.detailBullet}><Text style={styles.detailBulletText}>• Intro to using social media safely.</Text></View>
+        <View style={styles.detailBullet}><Text style={styles.detailBulletText}>• Example screens for a beginner flow.</Text></View>
+        <View style={styles.detailBullet}><Text style={styles.detailBulletText}>• Notes about privacy and sharing carefully.</Text></View>
+      </View>
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <LinearGradient
+          colors={["#F0F9FF", "#E0F2FE", "#BAE6FD", "#7DD3FC", "#38BDF8", "#0EA5E9"]}
+          locations={[0, 0.15, 0.35, 0.55, 0.75, 1]}
+          style={styles.gradientBackground}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+
+        <PageHeader />
+
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {currentPage === "main" && renderMainContent()}
+          {currentPage === "social" && renderSocialPage()}
+          {currentPage === "detail" && renderDetailPage()}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#E0F2FE",
+  },
+  container: {
+    flex: 1,
+    position: "relative",
+  },
+  gradientBackground: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 24,
+    paddingBottom: 40,
+  },
+  pageHeader: {
+    paddingTop: Platform.OS === "ios" ? 24 : 18,
+    paddingHorizontal: 24,
+    paddingBottom: 18,
+  },
+  pageHeaderTop: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  pageHeaderBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "rgba(56, 189, 248, 0.15)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  pageHeaderBadgeText: {
+    color: "#0F172A",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  pageHeaderTitle: {
+    color: "#0F172A",
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  pageHeaderSub: {
+    color: "#475569",
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  heroCard: {
+    borderRadius: 24,
+    overflow: "hidden",
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.55)",
+    backgroundColor: "#ffffff",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 6,
+    position: "relative",
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  heroGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  heroContent: {
+    padding: 20,
+  },
+  heroBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 10,
+  },
+  heroBadgeText: {
+    marginLeft: 6,
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0369A1",
+  },
+  heroTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 8,
+  },
+  heroText: {
+    fontSize: 14,
+    color: "#475569",
+    lineHeight: 20,
+  },
+  featureCard: {
+    borderRadius: 24,
+    padding: 0,
+    marginBottom: 14,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.55)",
+    backgroundColor: "#ffffff",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  featureGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  featureGlass: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.75)",
+  },
+  featureRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 22,
+  },
+  lottieContainer: {
+    width: 80,
+    height: 80,
+    marginRight: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  lottie: {
+    width: 80,
+    height: 80,
+  },
+  featureText: {
+    flex: 1,
+  },
+  featureTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#0F172A",
+    marginBottom: 8,
+  },
+  featureSubtitle: {
+    fontSize: 15,
+    color: "#475569",
+    lineHeight: 22,
+  },
+  featureIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 16,
+    backgroundColor: "rgba(59, 130, 246, 0.15)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  popupOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.35)",
+    justifyContent: "flex-end",
+  },
+  popupContainer: {
+    maxHeight: "85%",
+    backgroundColor: "#F8FAFC",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.08)",
+  },
+  popupHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 18,
+  },
+  popupTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#0F172A",
+    marginBottom: 6,
+  },
+  popupSubtitle: {
+    fontSize: 15,
+    color: "#475569",
+    lineHeight: 22,
+    maxWidth: "78%",
+  },
+  popupCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.12)",
+  },
+  popupScroll: {
+    flex: 1,
+  },
+  popupContent: {
+    paddingBottom: 24,
+  },
+  optionCard: {
+    borderRadius: 22,
+    overflow: "hidden",
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.08)",
+    backgroundColor: "#FFFFFF",
+    minHeight: 120,
+  },
+  optionGradient: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.25,
+  },
+  optionGlass: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+  },
+  optionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 18,
+    position: "relative",
+    zIndex: 5,
+  },
+  optionText: {
+    flex: 1,
+  },
+  optionTitle: {
+    fontSize: 17,
+    fontWeight: "bold",
+    color: "#0F172A",
+    marginBottom: 8,
+  },
+  optionDescription: {
+    fontSize: 14,
+    color: "#475569",
+    lineHeight: 20,
+  },
+  optionDetailCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.08)",
+  },
+  optionDetailHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  optionDetailBack: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.08)",
+  },
+  optionDetailBackText: {
+    marginLeft: 6,
+    color: "#0F172A",
+    fontWeight: "700",
+  },
+  optionDetailTitle: {
+    flex: 1,
+    marginLeft: 16,
+    color: "#0F172A",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  optionDetailDescription: {
+    color: "#475569",
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  detailSection: {
+    marginBottom: 18,
+  },
+  detailSectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 8,
+  },
+  detailSectionText: {
+    fontSize: 14,
+    color: "#475569",
+    lineHeight: 22,
+  },
+  detailBullet: {
+    backgroundColor: "rgba(59, 130, 246, 0.1)",
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 10,
+  },
+  detailBulletText: {
+    color: "#0F172A",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+});
