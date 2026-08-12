@@ -1,0 +1,1484 @@
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  Animated,
+  Alert,
+  Dimensions,
+  Modal,
+  TextInput,
+  PanResponder,
+  KeyboardAvoidingView,
+  Platform,
+  Vibration,
+  Image,
+} from "react-native";
+import Slider from "@react-native-community/slider";
+import Icon from "react-native-vector-icons/FontAwesome5";
+import { LinearGradient } from "expo-linear-gradient";
+import { useNavigation } from "@react-navigation/native";
+import * as Speech from 'expo-speech';
+
+const { width, height } = Dimensions.get("window");
+const SIM_PHONE_WIDTH = Math.min(180, Math.floor(width * 0.42));
+const SIM_PHONE_HEIGHT = Math.floor(SIM_PHONE_WIDTH * 1.75);
+const BASE_PHONE_WIDTH = 160;
+const BASE_PHONE_HEIGHT = 280;
+const SCREEN_SCALE = Math.min(
+  SIM_PHONE_WIDTH / BASE_PHONE_WIDTH,
+  SIM_PHONE_HEIGHT / BASE_PHONE_HEIGHT
+);
+
+// ─── TTS Wrapper ────────────────────────────────────────────────────────────
+const TTSWrapper = {
+  speak: (text, options = {}) => {
+    const { onStart, onDone, onError } = options;
+    try {
+      if (typeof onStart === 'function') onStart();
+      Speech.speak(text, {
+        language: 'en', pitch: 1, rate: 0.8,
+        onStart: typeof onStart === 'function' ? onStart : undefined,
+        onDone: typeof onDone === 'function' ? onDone : undefined,
+        onStopped: typeof onDone === 'function' ? onDone : undefined,
+        onError: typeof onError === 'function' ? onError : undefined,
+      });
+    } catch (error) {
+      console.warn('TTS Error:', error);
+      if (typeof onError === 'function') onError(error);
+    }
+  },
+  stop: () => {
+    try { Speech.stop(); } catch (error) { console.warn('TTS Stop Error:', error); }
+  }
+};
+
+// ─── Phone Brand Definitions ─────────────────────────────────────────────────
+const PHONE_BRANDS = [
+  {
+    id: 'iphone',
+    name: 'iPhone',
+    company: 'Apple',
+    color: '#1C1C1E',
+    accentColor: '#0A84FF',
+    frameColor: '#2C2C2E',
+    buttonColor: '#3A3A3C',
+    screenRadius: 28,
+    hasDynamicIsland: true,
+    hasHomeButton: false,
+    logo: '🍎',
+    description: 'iOS interface with Dynamic Island',
+    bgGradient: ['#1C1C1E', '#2C2C2E'],
+    statusBarStyle: 'notch',
+    wallpaper: '#1A1A2E',
+  },
+  {
+    id: 'samsung',
+    name: 'Samsung',
+    company: 'Samsung',
+    color: '#1B2631',
+    accentColor: '#1428A0',
+    frameColor: '#2C3E50',
+    buttonColor: '#34495E',
+    screenRadius: 20,
+    hasDynamicIsland: false,
+    hasHomeButton: false,
+    logo: '◈',
+    description: 'One UI with punch-hole camera',
+    bgGradient: ['#0A2342', '#1B4F72'],
+    statusBarStyle: 'punchhole',
+    wallpaper: '#0D1B2A',
+  },
+  {
+    id: 'oppo',
+    name: 'OPPO',
+    company: 'OPPO',
+    color: '#1A1A2E',
+    accentColor: '#00C853',
+    frameColor: '#16213E',
+    buttonColor: '#0F3460',
+    screenRadius: 22,
+    hasDynamicIsland: false,
+    hasHomeButton: false,
+    logo: '◉',
+    description: 'ColorOS with pill camera',
+    bgGradient: ['#0F2027', '#203A43'],
+    statusBarStyle: 'punchhole',
+    wallpaper: '#0A1628',
+  },
+  {
+    id: 'realme',
+    name: 'Realme',
+    company: 'Realme',
+    color: '#FFC107',
+    accentColor: '#FF6D00',
+    frameColor: '#E65100',
+    buttonColor: '#BF360C',
+    screenRadius: 18,
+    hasDynamicIsland: false,
+    hasHomeButton: false,
+    logo: '⬡',
+    description: 'Realme UI with bold design',
+    bgGradient: ['#B71C1C', '#E65100'],
+    statusBarStyle: 'punchhole',
+    wallpaper: '#1A0A00',
+  },
+  {
+    id: 'huawei',
+    name: 'Huawei',
+    company: 'Huawei',
+    color: '#C0392B',
+    accentColor: '#E74C3C',
+    frameColor: '#922B21',
+    buttonColor: '#7B241C',
+    screenRadius: 20,
+    hasDynamicIsland: false,
+    hasHomeButton: false,
+    logo: '❋',
+    description: 'HarmonyOS with notch design',
+    bgGradient: ['#78281F', '#C0392B'],
+    statusBarStyle: 'notch',
+    wallpaper: '#1A0505',
+  },
+  {
+    id: 'infinix',
+    name: 'Infinix',
+    company: 'Infinix',
+    color: '#6A1B9A',
+    accentColor: '#AB47BC',
+    frameColor: '#4A148C',
+    buttonColor: '#38006B',
+    screenRadius: 16,
+    hasDynamicIsland: false,
+    hasHomeButton: false,
+    logo: '∞',
+    description: 'XOS with affordable style',
+    bgGradient: ['#4A148C', '#6A1B9A'],
+    statusBarStyle: 'punchhole',
+    wallpaper: '#0D0020',
+  },
+];
+
+// ─── Brand-aware Phone Frame ──────────────────────────────────────────────────
+const PhoneShell = ({ brand, children }) => {
+  const b = brand || PHONE_BRANDS[0];
+  return (
+    <View style={[styles.phoneFrame, { backgroundColor: b.frameColor }]}>
+      <View style={[styles.phoneBody, { backgroundColor: b.color, borderRadius: b.screenRadius + 4 }]}>
+        {/* Side buttons styled per brand */}
+        <View style={[styles.powerButton, { backgroundColor: b.buttonColor }]} />
+        <View style={styles.volumeButtons}>
+          <View style={[styles.volumeUp, { backgroundColor: b.buttonColor }]} />
+          <View style={[styles.volumeDown, { backgroundColor: b.buttonColor }]} />
+        </View>
+        {/* Screen */}
+        <View style={[styles.phoneScreen, { borderRadius: b.screenRadius, backgroundColor: b.wallpaper }]}>
+          {/* Top notch / punch-hole / dynamic island */}
+          {b.statusBarStyle === 'notch' && (
+            <View style={styles.notchBar}>
+              <View style={styles.notchCutout} />
+            </View>
+          )}
+          {b.statusBarStyle === 'punchhole' && (
+            <View style={[styles.punchHoleBar, { backgroundColor: b.wallpaper }]}>
+              <View style={[styles.punchHole, { backgroundColor: b.frameColor }]} />
+            </View>
+          )}
+          {children}
+        </View>
+        {/* Home button for brands that have it */}
+        {b.hasHomeButton && (
+          <View style={[styles.homeButton, { backgroundColor: b.buttonColor, borderColor: b.frameColor }]} />
+        )}
+      </View>
+    </View>
+  );
+};
+
+// ─── Brand-aware Status Bar ───────────────────────────────────────────────────
+const BrandStatusBar = ({ brand }) => {
+  const b = brand || PHONE_BRANDS[0];
+  return (
+    <View style={[styles.statusBar, b.statusBarStyle !== 'default' && { paddingTop: 4 }]}>
+      <Text style={styles.time}>9:41</Text>
+      <View style={styles.statusIcons}>
+        <Icon name="signal" size={10} color="#fff" />
+        <Icon name="wifi" size={10} color="#fff" />
+        <Icon name="battery-full" size={10} color="#fff" />
+      </View>
+    </View>
+  );
+};
+
+// ─── Brand Selection Screen ───────────────────────────────────────────────────
+const BrandSelector = ({ onSelect }) => {
+  const scaleAnims = useRef(PHONE_BRANDS.map(() => new Animated.Value(1))).current;
+
+  const handlePress = (brand, idx) => {
+    Animated.sequence([
+      Animated.timing(scaleAnims[idx], { toValue: 0.92, duration: 80, useNativeDriver: true }),
+      Animated.timing(scaleAnims[idx], { toValue: 1, duration: 80, useNativeDriver: true }),
+    ]).start(() => {
+      Vibration.vibrate(15);
+      onSelect(brand);
+    });
+  };
+
+  return (
+    <View style={styles.brandSelectorContainer}>
+      <View style={styles.brandSelectorHeader}>
+        <Icon name="mobile-alt" size={28} color="#38BDF8" />
+        <Text style={styles.brandSelectorTitle}>Choose Your Phone Brand</Text>
+        <Text style={styles.brandSelectorSubtitle}>
+          We'll simulate your exact phone experience
+        </Text>
+      </View>
+
+      <View style={styles.brandGrid}>
+        {PHONE_BRANDS.map((brand, idx) => (
+          <Animated.View key={brand.id} style={{ transform: [{ scale: scaleAnims[idx] }], width: '47%' }}>
+            <TouchableOpacity
+              style={styles.brandCard}
+              onPress={() => handlePress(brand, idx)}
+              activeOpacity={0.85}
+              accessibilityLabel={`Select ${brand.name}`}
+            >
+              <LinearGradient
+                colors={brand.bgGradient}
+                style={styles.brandCardGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={styles.brandLogo}>{brand.logo}</Text>
+                <Text style={styles.brandCardName}>{brand.name}</Text>
+                <Text style={styles.brandCardCompany}>{brand.company}</Text>
+              </LinearGradient>
+              <View style={styles.brandCardDesc}>
+                <Text style={styles.brandDescText}>{brand.description}</Text>
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+// ─── Phone Anatomy Simulator ──────────────────────────────────────────────────
+const PhoneAnatomySimulator = ({ onSuccess, brand }) => {
+  const [highlightedPart, setHighlightedPart] = useState(null);
+  const [identifiedParts, setIdentifiedParts] = useState(new Set());
+
+  const parts = [
+    { id: "power", name: "Power Button" },
+    { id: "volume", name: "Volume Buttons" },
+    { id: "screen", name: "Screen" },
+    { id: "speaker", name: "Speaker" },
+    { id: "camera", name: "Camera" },
+  ];
+
+  const handlePartPress = (part) => {
+    if (identifiedParts.has(part.id)) return;
+    Vibration.vibrate(10);
+    setHighlightedPart(part.id);
+    const newSet = new Set([...identifiedParts, part.id]);
+    setIdentifiedParts(newSet);
+    TTSWrapper.speak(`This is the ${part.name}`);
+    if (newSet.size >= 5) setTimeout(() => onSuccess(), 1000);
+    setTimeout(() => setHighlightedPart(null), 800);
+  };
+
+  const b = brand || PHONE_BRANDS[0];
+  const done = (id) => identifiedParts.has(id);
+
+  return (
+    <View style={styles.simulatorContainer}>
+      <Text style={styles.simulatorTitle}>Tap each part to learn about it</Text>
+      <View style={[styles.phoneFrame, { backgroundColor: b.frameColor }]}>
+        <View style={[styles.phoneBody, { backgroundColor: b.color, borderRadius: b.screenRadius + 4 }]}>
+          {/* Power Button */}
+          <TouchableOpacity
+            style={[styles.powerButton, { backgroundColor: done('power') ? '#10B981' : b.buttonColor },
+              highlightedPart === 'power' && styles.highlighted]}
+            onPress={() => handlePartPress(parts[0])}
+            accessibilityLabel="Power Button"
+          />
+          {/* Volume Buttons */}
+          <View style={styles.volumeButtons}>
+            <TouchableOpacity
+              style={[styles.volumeUp, { backgroundColor: done('volume') ? '#10B981' : b.buttonColor },
+                highlightedPart === 'volume' && styles.highlighted]}
+              onPress={() => handlePartPress(parts[1])}
+              accessibilityLabel="Volume Up"
+            />
+            <TouchableOpacity
+              style={[styles.volumeDown, { backgroundColor: done('volume') ? '#10B981' : b.buttonColor },
+                highlightedPart === 'volume' && styles.highlighted]}
+              onPress={() => handlePartPress(parts[1])}
+              accessibilityLabel="Volume Down"
+            />
+          </View>
+          {/* Speaker slot */}
+          <TouchableOpacity
+            style={[styles.speaker, { backgroundColor: done('speaker') ? '#10B981' : b.buttonColor },
+              highlightedPart === 'speaker' && styles.highlighted]}
+            onPress={() => handlePartPress(parts[3])}
+            accessibilityLabel="Speaker"
+          />
+          {/* Screen */}
+          <TouchableOpacity
+            style={[styles.phoneScreen, { borderRadius: b.screenRadius, backgroundColor: b.wallpaper },
+              done('screen') && { borderColor: '#10B981', borderWidth: 2 },
+              highlightedPart === 'screen' && styles.highlighted]}
+            onPress={() => handlePartPress(parts[2])}
+            activeOpacity={0.8}
+            accessibilityLabel="Screen"
+          >
+            <BrandStatusBar brand={b} />
+            {/* Camera dot on screen */}
+            <TouchableOpacity
+              style={[styles.cameraSpot, { borderColor: done('camera') ? '#10B981' : b.accentColor },
+                highlightedPart === 'camera' && { backgroundColor: '#F59E0B' }]}
+              onPress={() => handlePartPress(parts[4])}
+              accessibilityLabel="Camera"
+            >
+              <View style={[styles.cameraLens, { backgroundColor: b.accentColor }]} />
+            </TouchableOpacity>
+            {/* Brand indicator */}
+            <View style={styles.brandWatermark}>
+              <Text style={[styles.brandWatermarkText, { color: b.accentColor }]}>{b.name}</Text>
+            </View>
+          </TouchableOpacity>
+          {b.hasHomeButton && (
+            <View style={[styles.homeButton, { backgroundColor: b.buttonColor, borderColor: b.frameColor }]} />
+          )}
+        </View>
+      </View>
+      <View style={styles.progressIndicator}>
+        <Text style={styles.simProgressText}>{identifiedParts.size}/5 parts identified</Text>
+      </View>
+    </View>
+  );
+};
+
+// ─── Power On/Off Simulator ───────────────────────────────────────────────────
+const PowerSimulator = ({ onSuccess, brand }) => {
+  const [phoneState, setPhoneState] = useState("off");
+  const [pressTime, setPressTime] = useState(0);
+  const pressInterval = useRef(null);
+  const b = brand || PHONE_BRANDS[0];
+
+  const handlePowerPress = () => {
+    if (phoneState === "off") {
+      pressInterval.current = setInterval(() => setPressTime(prev => prev + 100), 100);
+    }
+  };
+
+  const handlePowerRelease = () => {
+    if (pressInterval.current) clearInterval(pressInterval.current);
+    if (pressTime >= 1000 && phoneState === "off") {
+      Vibration.vibrate(20);
+      setPhoneState("booting");
+      setTimeout(() => {
+        setPhoneState("on");
+        onSuccess();
+        TTSWrapper.speak("Phone turned on!");
+      }, 1200);
+    } else if (phoneState === "on") {
+      Vibration.vibrate(10);
+      setPhoneState("off");
+      TTSWrapper.speak("Phone turned off!");
+    }
+    setPressTime(0);
+  };
+
+  return (
+    <View style={styles.simulatorContainer}>
+      <Text style={styles.simulatorTitle}>
+        {phoneState === "off" ? "Hold power button for 1 second" : "Tap power to turn off"}
+      </Text>
+      <View style={[styles.phoneFrame, { backgroundColor: b.frameColor }]}>
+        <View style={[styles.phoneBody, { backgroundColor: b.color, borderRadius: b.screenRadius + 4 }]}>
+          <TouchableOpacity
+            style={[styles.powerButton, { backgroundColor: pressTime > 0 ? b.accentColor : b.buttonColor },
+              phoneState === 'on' && { backgroundColor: '#10B981' }]}
+            onPressIn={handlePowerPress}
+            onPressOut={handlePowerRelease}
+            accessibilityLabel="Power Button"
+          />
+          <View style={[styles.phoneScreen, { borderRadius: b.screenRadius, backgroundColor: b.wallpaper }]}>
+            {phoneState === "off" && <View style={{ flex: 1, backgroundColor: '#000' }} />}
+            {phoneState === "booting" && (
+              <View style={styles.bootScreen}>
+                <Text style={[styles.brandBootLogo, { color: b.accentColor }]}>{b.logo}</Text>
+                <Text style={[styles.bootText, { color: b.accentColor }]}>{b.name}</Text>
+              </View>
+            )}
+            {phoneState === "on" && (
+              <View style={[styles.homeScreen, { backgroundColor: b.wallpaper }]}>
+                <BrandStatusBar brand={b} />
+                <Text style={[styles.welcomeText, { color: b.accentColor }]}>Welcome!</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
+      {pressTime > 0 && phoneState === "off" && (
+        <View style={styles.pressIndicator}>
+          <View style={[styles.pressBar, { width: `${Math.min(pressTime / 10, 100)}%`, backgroundColor: b.accentColor }]} />
+          <Text style={styles.pressText}>Hold to power on...</Text>
+        </View>
+      )}
+    </View>
+  );
+};
+
+// ─── Unlock Simulator ─────────────────────────────────────────────────────────
+const UnlockSimulator = ({ onSuccess, brand }) => {
+  const [isLocked, setIsLocked] = useState(true);
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const swipeX = useRef(new Animated.Value(0)).current;
+  const b = brand || PHONE_BRANDS[0];
+
+  const panResponder = useRef(PanResponder.create({
+    onStartShouldSetPanResponder: () => isLocked,
+    onMoveShouldSetPanResponder: (_, gs) => isLocked && Math.abs(gs.dx) > 10,
+    onPanResponderMove: Animated.event([null, { dx: swipeX }], { useNativeDriver: false }),
+    onPanResponderRelease: (_, gs) => {
+      if (gs.dx > 60) {
+        Vibration.vibrate(15);
+        setIsLocked(false);
+        TTSWrapper.speak("Phone unlocked!");
+        onSuccess();
+        Animated.timing(slideAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+      } else {
+        Animated.spring(swipeX, { toValue: 0, useNativeDriver: false }).start();
+      }
+    },
+  })).current;
+
+  // iPhone uses PIN entry style instead of swipe
+  const [pin, setPin] = useState('');
+  const isIphone = b.id === 'iphone';
+
+  const handlePinPress = (digit) => {
+    if (pin.length < 6) {
+      const newPin = pin + digit;
+      setPin(newPin);
+      Vibration.vibrate(8);
+      if (newPin.length === 6) {
+        setTimeout(() => {
+          setIsLocked(false);
+          TTSWrapper.speak("Phone unlocked!");
+          onSuccess();
+        }, 300);
+      }
+    }
+  };
+
+  return (
+    <View style={styles.simulatorContainer}>
+      <Text style={styles.simulatorTitle}>
+        {isLocked
+          ? (isIphone ? "Enter any 6-digit PIN" : "Swipe right to unlock")
+          : "Phone unlocked!"}
+      </Text>
+      <View style={[styles.phoneFrame, { backgroundColor: b.frameColor }]}>
+        <View style={[styles.phoneBody, { backgroundColor: b.color, borderRadius: b.screenRadius + 4 }]}>
+          <View style={[styles.phoneScreen, { borderRadius: b.screenRadius, backgroundColor: b.wallpaper }]}>
+            {isLocked ? (
+              <View style={[styles.lockScreen, { backgroundColor: b.wallpaper }]}>
+                <BrandStatusBar brand={b} />
+                <View style={styles.clockDisplay}>
+                  <Text style={styles.clockTime}>9:41</Text>
+                  <Text style={styles.clockDate}>Tuesday, September 10</Text>
+                </View>
+                {isIphone ? (
+                  <View style={styles.pinPad}>
+                    <View style={styles.pinDots}>
+                      {[0,1,2,3,4,5].map(i => (
+                        <View key={i} style={[styles.pinDot,
+                          i < pin.length && { backgroundColor: b.accentColor }]} />
+                      ))}
+                    </View>
+                    <View style={styles.pinGrid}>
+                      {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((d, i) => (
+                        <TouchableOpacity
+                          key={i}
+                          style={[styles.pinButton, !d && { opacity: 0 }]}
+                          onPress={() => {
+                            if (d === '⌫') setPin(p => p.slice(0,-1));
+                            else if (d) handlePinPress(d);
+                          }}
+                          disabled={!d}
+                        >
+                          <Text style={styles.pinButtonText}>{d}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.swipeArea} {...panResponder.panHandlers}>
+                    <Animated.View style={[styles.swipeIndicator, { transform: [{ translateX: swipeX }] }]}>
+                      <Icon name="chevron-right" size={16} color={b.accentColor} />
+                      <Text style={[styles.swipeText, { color: b.accentColor }]}>Swipe to unlock</Text>
+                    </Animated.View>
+                  </View>
+                )}
+              </View>
+            ) : (
+              <Animated.View style={[styles.homeScreen, { backgroundColor: b.wallpaper }]}>
+                <BrandStatusBar brand={b} />
+                <View style={styles.appGrid}>
+                  {["phone", "comment", "camera", "cog"].map((icon, idx) => (
+                    <View key={idx} style={styles.appIcon}>
+                      <View style={[styles.appIconBg, { backgroundColor: b.accentColor }]}>
+                        <Icon name={icon} size={20} color="#fff" />
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </Animated.View>
+            )}
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+// ─── Touch Gesture Simulator ──────────────────────────────────────────────────
+const TouchSimulator = ({ onSuccess, brand }) => {
+  const [gestures, setGestures] = useState({ tap: false, swipe: false, pinch: false });
+  const [currentGesture, setCurrentGesture] = useState(null);
+  const b = brand || PHONE_BRANDS[0];
+  const swipeX = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(PanResponder.create({
+    onStartShouldSetPanResponder: () => !gestures.swipe,
+    onMoveShouldSetPanResponder: (_, gs) => !gestures.swipe && Math.abs(gs.dx) > 10,
+    onPanResponderMove: Animated.event([null, { dx: swipeX }], { useNativeDriver: false }),
+    onPanResponderRelease: (_, gs) => {
+      if (gs.dx > 80 && !gestures.swipe) {
+        setCurrentGesture("swipe");
+        const next = { ...gestures, swipe: true };
+        setGestures(next);
+        TTSWrapper.speak("Nice swipe!");
+        setTimeout(() => setCurrentGesture(null), 500);
+        swipeX.setValue(0);
+        if (next.tap && next.pinch) onSuccess();
+      } else {
+        Animated.spring(swipeX, { toValue: 0, useNativeDriver: false }).start();
+      }
+    },
+  })).current;
+
+  const handlePinch = () => {
+    if (!gestures.pinch) {
+      Vibration.vibrate(10);
+      setCurrentGesture("pinch");
+      const next = { ...gestures, pinch: true };
+      setGestures(next);
+      TTSWrapper.speak("Good pinch!");
+      setTimeout(() => setCurrentGesture(null), 500);
+      if (next.tap && next.swipe) onSuccess();
+    }
+  };
+
+  const handleTap = () => {
+    if (!gestures.tap) {
+      Vibration.vibrate(8);
+      setCurrentGesture("tap");
+      const next = { ...gestures, tap: true };
+      setGestures(next);
+      TTSWrapper.speak("Great tap!");
+      setTimeout(() => setCurrentGesture(null), 500);
+      if (next.swipe && next.pinch) onSuccess();
+    }
+  };
+
+  return (
+    <View style={styles.simulatorContainer}>
+      <Text style={styles.simulatorTitle}>Try all three gestures</Text>
+      <PhoneShell brand={b}>
+        <View style={styles.gestureArea}>
+          <TouchableOpacity
+            style={[styles.gestureButton,
+              { borderColor: b.accentColor },
+              currentGesture === "tap" && { backgroundColor: b.accentColor },
+              gestures.tap && styles.gestureCompleted]}
+            onPress={handleTap} activeOpacity={0.7} accessibilityLabel="Tap">
+            <Icon name="hand-point-up" size={26} color={gestures.tap ? '#fff' : b.accentColor} />
+            <Text style={[styles.gestureLabel, { color: gestures.tap ? '#fff' : b.accentColor }]}>Tap</Text>
+          </TouchableOpacity>
+          <Animated.View
+            style={[styles.gestureButton, { marginTop: 12, marginBottom: 12, borderColor: b.accentColor,
+              transform: [{ translateX: swipeX }] },
+              currentGesture === "swipe" && { backgroundColor: b.accentColor },
+              gestures.swipe && styles.gestureCompleted]}
+            {...panResponder.panHandlers} accessibilityLabel="Swipe">
+            <Icon name="hand-paper" size={26} color={gestures.swipe ? '#fff' : b.accentColor} />
+            <Text style={[styles.gestureLabel, { color: gestures.swipe ? '#fff' : b.accentColor }]}>Swipe →</Text>
+          </Animated.View>
+          <TouchableOpacity
+            style={[styles.gestureButton, { borderColor: b.accentColor },
+              currentGesture === "pinch" && { backgroundColor: b.accentColor },
+              gestures.pinch && styles.gestureCompleted]}
+            onLongPress={handlePinch} delayLongPress={200} activeOpacity={0.7} accessibilityLabel="Pinch">
+            <Icon name="compress-arrows-alt" size={26} color={gestures.pinch ? '#fff' : b.accentColor} />
+            <Text style={[styles.gestureLabel, { color: gestures.pinch ? '#fff' : b.accentColor }]}>Pinch</Text>
+            <Text style={{ color: '#94A3B8', fontSize: 9, marginTop: 2 }}>Long press</Text>
+          </TouchableOpacity>
+        </View>
+      </PhoneShell>
+      <View style={styles.progressIndicator}>
+        <Text style={styles.simProgressText}>
+          {Object.values(gestures).filter(Boolean).length}/3 gestures completed
+        </Text>
+      </View>
+    </View>
+  );
+};
+
+// ─── Volume & Brightness Simulator ───────────────────────────────────────────
+const VolumeSimulator = ({ onSuccess, brand }) => {
+  const [volume, setVolume] = useState(50);
+  const [brightness, setBrightness] = useState(50);
+  const [showVolumeControl, setShowVolumeControl] = useState(false);
+  const b = brand || PHONE_BRANDS[0];
+
+  const checkSuccess = (v, br) => { if (v >= 80 && br >= 80) onSuccess(); };
+
+  const handleVolumeButtonPress = (dir) => {
+    setShowVolumeControl(true);
+    Vibration.vibrate(8);
+    const nv = dir === "up" ? Math.min(100, volume + 10) : Math.max(0, volume - 10);
+    setVolume(nv);
+    setTimeout(() => setShowVolumeControl(false), 1200);
+    checkSuccess(nv, brightness);
+  };
+
+  return (
+    <View style={styles.simulatorContainer}>
+      <Text style={styles.simulatorTitle}>Adjust volume and brightness to 80%</Text>
+      <View style={[styles.phoneFrame, { backgroundColor: b.frameColor }]}>
+        <View style={[styles.phoneBody, { backgroundColor: b.color, borderRadius: b.screenRadius + 4 }]}>
+          <View style={styles.volumeButtons}>
+            <TouchableOpacity style={[styles.volumeUp, { backgroundColor: b.buttonColor }]}
+              onPress={() => handleVolumeButtonPress("up")} accessibilityLabel="Volume Up" />
+            <TouchableOpacity style={[styles.volumeDown, { backgroundColor: b.buttonColor }]}
+              onPress={() => handleVolumeButtonPress("down")} accessibilityLabel="Volume Down" />
+          </View>
+          <View style={[styles.phoneScreen, { borderRadius: b.screenRadius, backgroundColor: b.wallpaper,
+            opacity: Math.min(1, Math.max(brightness / 100, 0.3) + 0.3) }]}>
+            {showVolumeControl && (
+              <View style={styles.volumeOverlay}>
+                <Icon name="volume-up" size={16} color={b.accentColor} />
+                <View style={styles.volumeBar}>
+                  <View style={[styles.volumeFill, { width: `${volume}%`, backgroundColor: b.accentColor }]} />
+                </View>
+                <Text style={styles.volumeText}>{volume}%</Text>
+              </View>
+            )}
+            <View style={[styles.settingsScreen, { backgroundColor: b.wallpaper }]}>
+              <BrandStatusBar brand={b} />
+              <Text style={[styles.settingsTitle, { color: b.accentColor }]}>Settings</Text>
+              <View style={styles.settingItem}>
+                <View style={styles.settingRow}>
+                  <Icon name="volume-up" size={14} color={b.accentColor} />
+                  <Text style={styles.settingLabel}>Volume</Text>
+                  <Text style={styles.settingValue}>{volume}%</Text>
+                </View>
+                <Slider style={styles.settingSlider} value={volume}
+                  onValueChange={v => { setVolume(v); checkSuccess(v, brightness); }}
+                  minimumValue={0} maximumValue={100} step={10}
+                  minimumTrackTintColor={b.accentColor} maximumTrackTintColor="#CBD5E1" />
+              </View>
+              <View style={styles.settingItem}>
+                <View style={styles.settingRow}>
+                  <Icon name="sun" size={14} color={b.accentColor} />
+                  <Text style={styles.settingLabel}>Brightness</Text>
+                  <Text style={styles.settingValue}>{brightness}%</Text>
+                </View>
+                <Slider style={styles.settingSlider} value={brightness}
+                  onValueChange={v => { setBrightness(v); checkSuccess(volume, v); }}
+                  minimumValue={0} maximumValue={100} step={10}
+                  minimumTrackTintColor={b.accentColor} maximumTrackTintColor="#CBD5E1" />
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+// ─── Call Simulator ───────────────────────────────────────────────────────────
+const CallSimulator = ({ onSuccess, brand }) => {
+  const [callState, setCallState] = useState("incoming");
+  const [callDuration, setCallDuration] = useState(0);
+  const durationInterval = useRef(null);
+  const b = brand || PHONE_BRANDS[0];
+
+  useEffect(() => {
+    if (callState === "answered") {
+      durationInterval.current = setInterval(() => setCallDuration(p => p + 1), 1000);
+    } else {
+      if (durationInterval.current) clearInterval(durationInterval.current);
+    }
+    return () => { if (durationInterval.current) clearInterval(durationInterval.current); };
+  }, [callState]);
+
+  const fmt = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+
+  return (
+    <View style={styles.simulatorContainer}>
+      <Text style={styles.simulatorTitle}>
+        {callState === "incoming" ? "Answer or decline the call"
+          : callState === "answered" ? "You are in a call" : "Call ended"}
+      </Text>
+      <PhoneShell brand={b}>
+        {callState === "incoming" && (
+          <View style={[styles.incomingCall, { backgroundColor: b.wallpaper }]}>
+            <BrandStatusBar brand={b} />
+            <View style={styles.callerInfo}>
+              <View style={[styles.callerAvatar, { backgroundColor: b.accentColor + '33' }]}>
+                <Icon name="user" size={32} color={b.accentColor} />
+              </View>
+              <Text style={styles.callerName}>Mom</Text>
+              <Text style={styles.callerNumber}>+63 912 345 6789</Text>
+              <Text style={[styles.callStatus, { color: b.accentColor }]}>Incoming call...</Text>
+            </View>
+            <View style={styles.callControls}>
+              <TouchableOpacity style={[styles.callButton, styles.declineButton]}
+                onPress={() => { Vibration.vibrate(15); setCallState("ended"); TTSWrapper.speak("Call declined!"); onSuccess(); }}
+                accessibilityLabel="Decline">
+                <Icon name="phone-slash" size={20} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.callButton, styles.answerButton]}
+                onPress={() => { Vibration.vibrate(15); setCallState("answered"); TTSWrapper.speak("Call answered!"); onSuccess(); }}
+                accessibilityLabel="Answer">
+                <Icon name="phone" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        {callState === "answered" && (
+          <View style={[styles.activeCall, { backgroundColor: b.wallpaper }]}>
+            <BrandStatusBar brand={b} />
+            <View style={styles.callerInfo}>
+              <View style={[styles.callerAvatar, { backgroundColor: b.accentColor + '33' }]}>
+                <Icon name="user" size={32} color={b.accentColor} />
+              </View>
+              <Text style={styles.callerName}>Mom</Text>
+              <Text style={[styles.callDuration, { color: b.accentColor }]}>{fmt(callDuration)}</Text>
+            </View>
+            <View style={styles.callControls}>
+              <TouchableOpacity style={[styles.callButton, styles.endButton]}
+                onPress={() => { Vibration.vibrate(10); setCallState("ended"); TTSWrapper.speak("Call ended!"); }}
+                accessibilityLabel="End Call">
+                <Icon name="phone-slash" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        {callState === "ended" && (
+          <View style={[styles.callEnded, { backgroundColor: b.wallpaper }]}>
+            <Icon name="phone" size={48} color="#64748B" />
+            <Text style={styles.callEndedText}>Call ended</Text>
+          </View>
+        )}
+      </PhoneShell>
+    </View>
+  );
+};
+
+// ─── Message Simulator ────────────────────────────────────────────────────────
+const MessageSimulator = ({ onSuccess, brand }) => {
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([
+    { id: 1, text: "Hi! How are you?", sender: "contact", time: "9:30 AM" },
+  ]);
+  const b = brand || PHONE_BRANDS[0];
+
+  const handleSend = () => {
+    if (message.trim().toLowerCase() === "hello") {
+      Vibration.vibrate(10);
+      setMessages(prev => [...prev, { id: Date.now(), text: message, sender: "user", time: "9:41 AM" }]);
+      setMessage("");
+      TTSWrapper.speak("Message sent!");
+      setTimeout(() => onSuccess(), 500);
+    }
+  };
+
+  return (
+    <View style={styles.simulatorContainer}>
+      <Text style={styles.simulatorTitle}>Type "hello" and send it</Text>
+      <PhoneShell brand={b}>
+        <View style={[styles.messageApp, { backgroundColor: b.wallpaper }]}>
+          <View style={[styles.messageHeader, { backgroundColor: b.accentColor + '22' }]}>
+            <BrandStatusBar brand={b} />
+            <View style={styles.contactInfo}>
+              <View style={[styles.contactAvatar, { backgroundColor: b.accentColor }]}>
+                <Icon name="user" size={12} color="#fff" />
+              </View>
+              <Text style={styles.contactName}>John</Text>
+            </View>
+          </View>
+          <ScrollView style={styles.messagesContainer} showsVerticalScrollIndicator={false}>
+            {messages.map(msg => (
+              <View key={msg.id} style={[styles.messageBubble,
+                msg.sender === "user"
+                  ? [styles.userMessage, { backgroundColor: b.accentColor }]
+                  : styles.contactMessage]}>
+                <Text style={styles.messageText}>{msg.text}</Text>
+                <Text style={styles.messageTime}>{msg.time}</Text>
+              </View>
+            ))}
+          </ScrollView>
+          <View style={[styles.messageInput, { backgroundColor: b.accentColor + '11' }]}>
+            <TextInput
+              style={styles.messageTextInput}
+              value={message}
+              onChangeText={setMessage}
+              placeholder="Type hello..."
+              placeholderTextColor="#94A3B8"
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="send"
+              onSubmitEditing={handleSend}
+            />
+            <TouchableOpacity
+              style={[styles.sendButton, message.trim().toLowerCase() === "hello" && { backgroundColor: b.accentColor }]}
+              onPress={handleSend}
+              disabled={message.trim().toLowerCase() !== "hello"}
+              accessibilityLabel="Send">
+              <Icon name="paper-plane" size={11} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </PhoneShell>
+      <View style={styles.instructionText}>
+        <Text style={styles.hintText}>Hint: Type exactly "hello" (lowercase)</Text>
+      </View>
+    </View>
+  );
+};
+
+// ─── App Launcher Simulator ───────────────────────────────────────────────────
+const AppSimulator = ({ onSuccess, brand }) => {
+  const [openApp, setOpenApp] = useState(null);
+  const b = brand || PHONE_BRANDS[0];
+
+  const apps = [
+    { id: "camera", name: "Camera", icon: "camera" },
+    { id: "phone", name: "Phone", icon: "phone" },
+    { id: "messages", name: "Messages", icon: "comment" },
+    { id: "settings", name: "Settings", icon: "cog" },
+  ];
+
+  return (
+    <View style={styles.simulatorContainer}>
+      <Text style={styles.simulatorTitle}>Tap the Camera app to open it</Text>
+      <PhoneShell brand={b}>
+        {!openApp ? (
+          <View style={[styles.homeScreen, { backgroundColor: b.wallpaper }]}>
+            <BrandStatusBar brand={b} />
+            <View style={styles.appGrid}>
+              {apps.map(app => (
+                <TouchableOpacity key={app.id} style={styles.appIcon}
+                  onPress={() => {
+                    if (app.id === "camera") {
+                      setOpenApp(app);
+                      TTSWrapper.speak("Camera app opened!");
+                      onSuccess();
+                    }
+                  }}
+                  accessibilityLabel={app.name}>
+                  <View style={[styles.appIconBg, { backgroundColor: b.accentColor }]}>
+                    <Icon name={app.icon} size={20} color="#fff" />
+                  </View>
+                  <Text style={styles.appName}>{app.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        ) : (
+          <View style={styles.cameraApp}>
+            <View style={styles.cameraViewfinder}>
+              <Icon name="camera" size={48} color={b.accentColor} />
+              <Text style={[styles.cameraText, { color: b.accentColor }]}>Camera Ready</Text>
+            </View>
+            <TouchableOpacity style={[styles.captureButton, { borderColor: b.accentColor }]}>
+              <View style={[styles.captureInner, { backgroundColor: b.accentColor }]} />
+            </TouchableOpacity>
+          </View>
+        )}
+      </PhoneShell>
+    </View>
+  );
+};
+
+// ─── WiFi Simulator ───────────────────────────────────────────────────────────
+const WiFiSimulator = ({ onSuccess, brand }) => {
+  const [wifiState, setWifiState] = useState("scanning");
+  const [selectedNetwork, setSelectedNetwork] = useState(null);
+  const [password, setPassword] = useState("");
+  const b = brand || PHONE_BRANDS[0];
+
+  const networks = [
+    { name: "Home WiFi", strength: 3, secured: true },
+    { name: "Guest Network", strength: 2, secured: false },
+    { name: "Neighbor WiFi", strength: 1, secured: true },
+  ];
+
+  useEffect(() => {
+    const t = setTimeout(() => setWifiState("networks"), 1500);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handleConnect = () => {
+    if (!selectedNetwork) return;
+    if (password.trim() === "password123") {
+      setWifiState("connected");
+      TTSWrapper.speak("Connected to Home WiFi!");
+      setTimeout(() => onSuccess(), 500);
+    } else {
+      TTSWrapper.speak("Incorrect password. Try password123");
+    }
+  };
+
+  return (
+    <View style={styles.simulatorContainer}>
+      <Text style={styles.simulatorTitle}>Connect to "Home WiFi" {'\n'}password: password123</Text>
+      <PhoneShell brand={b}>
+        <View style={[styles.wifiSettings, { backgroundColor: b.wallpaper }]}>
+          <BrandStatusBar brand={b} />
+          <View style={styles.settingsHeader}>
+            <Text style={[styles.wifiSettingsTitle, { color: b.accentColor }]}>WiFi Settings</Text>
+          </View>
+          {wifiState === "scanning" && (
+            <View style={styles.scanningView}>
+              <Icon name="wifi" size={26} color={b.accentColor} />
+              <Text style={styles.scanningText}>Scanning for networks...</Text>
+            </View>
+          )}
+          {wifiState === "networks" && (
+            <>
+              <ScrollView style={styles.networksList} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                {networks.map((net, idx) => (
+                  <TouchableOpacity key={idx}
+                    style={[styles.networkItem, selectedNetwork?.name === net.name && { borderColor: b.accentColor, borderWidth: 1, backgroundColor: b.accentColor + '11' }]}
+                    onPress={() => {
+                      if (net.name === "Home WiFi") setSelectedNetwork(net);
+                      else TTSWrapper.speak("Please select Home WiFi network");
+                    }}
+                    accessibilityLabel={net.name}>
+                    <Icon name="wifi" size={12} color={b.accentColor} />
+                    <Text style={styles.networkName}>{net.name}</Text>
+                    <View style={styles.networkInfo}>
+                      {net.secured && <Icon name="lock" size={9} color="#64748B" />}
+                      <View style={styles.signalStrength}>
+                        {[1,2,3].map(bar => (
+                          <View key={bar} style={[styles.signalBar, bar <= net.strength && { backgroundColor: b.accentColor }]} />
+                        ))}
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              {selectedNetwork && (
+                <View style={styles.passwordDialog}>
+                  <Text style={styles.passwordLabel}>Password for {selectedNetwork.name}:</Text>
+                  <TextInput
+                    style={styles.passwordInput}
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="password123"
+                    secureTextEntry
+                    placeholderTextColor="#94A3B8"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="done"
+                    onSubmitEditing={handleConnect}
+                  />
+                  <TouchableOpacity
+                    style={[styles.connectButton, password.length > 0 && { backgroundColor: b.accentColor }]}
+                    onPress={handleConnect}
+                    accessibilityLabel="Connect">
+                    <Text style={styles.connectButtonText}>Connect</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
+          )}
+          {wifiState === "connected" && (
+            <View style={styles.connectedView}>
+              <Icon name="check-circle" size={28} color="#10B981" />
+              <Text style={styles.connectedText}>Connected to Home WiFi</Text>
+              <View style={styles.connectionDetails}>
+                <Icon name="wifi" size={12} color="#10B981" />
+                <Text style={styles.ipAddress}>192.168.1.105</Text>
+              </View>
+            </View>
+          )}
+        </View>
+      </PhoneShell>
+      {selectedNetwork && wifiState === "networks" && (
+        <View style={styles.instructionText}>
+          <Text style={styles.hintText}>Password: password123</Text>
+        </View>
+      )}
+    </View>
+  );
+};
+
+// ─── Lessons List (no Charging) ───────────────────────────────────────────────
+const lessons = [
+  { title: "Getting to Know the Phone", content: "Alamin ang mga bahagi ng iyong smartphone: power button, volume, baterya, at signal.", simulator: PhoneAnatomySimulator, icon: "mobile-alt" },
+  { title: "Turning the Phone On and Off", content: "Pindutin at hawakan ang power button para i-on o i-off ang iyong phone.", simulator: PowerSimulator, icon: "power-off" },
+  { title: "Unlocking the Phone", content: "I-swipe ang screen o mag-enter ng PIN para ma-unlock ang iyong phone.", simulator: UnlockSimulator, icon: "unlock-alt" },
+  { title: "Using the Touchscreen", content: "Mag-tap, mag-swipe, at mag-pinch para gamitin ang iyong phone.", simulator: TouchSimulator, icon: "hand-point-up" },
+  { title: "Adjusting Volume & Brightness", content: "Gamitin ang volume buttons at brightness slider para ayusin ang mga settings.", simulator: VolumeSimulator, icon: "volume-up" },
+  { title: "Making and Receiving Calls", content: "Mag-dial ng number para tumawag. I-tap ang green para sagutin, red para tanggihan.", simulator: CallSimulator, icon: "phone" },
+  { title: "Sending and Reading Text Messages", content: "Gamitin ang Messages app para mag-type at magbasa ng SMS.", simulator: MessageSimulator, icon: "comment" },
+  { title: "Opening Apps", content: "I-tap ang icon ng app para buksan ito, tulad ng Camera app.", simulator: AppSimulator, icon: "camera" },
+  { title: "Connecting to WiFi", content: "Ang WiFi ay nagbibigay-daan sa iyo na kumonekta sa internet nang walang mobile data.", simulator: WiFiSimulator, icon: "wifi" },
+];
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+export default function SmartPhoneBasicsScreen() {
+  const navigation = useNavigation();
+  const [selectedBrand, setSelectedBrand] = useState(null);
+  const [selectedLesson, setSelectedLesson] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isReading, setIsReading] = useState(false);
+  const [textSize, setTextSize] = useState("medium");
+  const [practiceCompleted, setPracticeCompleted] = useState({});
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const pulseValue = useRef(new Animated.Value(0)).current;
+  const floatValue1 = useRef(new Animated.Value(0)).current;
+  const floatValue2 = useRef(new Animated.Value(0)).current;
+  const particle1 = useRef(new Animated.Value(0)).current;
+  const particle2 = useRef(new Animated.Value(0)).current;
+  const brandFade = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 800, useNativeDriver: true }),
+    ]).start();
+    Animated.loop(Animated.sequence([
+      Animated.timing(pulseValue, { toValue: 1, duration: 4000, useNativeDriver: false }),
+      Animated.timing(pulseValue, { toValue: 0, duration: 4000, useNativeDriver: false }),
+    ])).start();
+    Animated.loop(Animated.sequence([
+      Animated.timing(floatValue1, { toValue: 1, duration: 6000, useNativeDriver: true }),
+      Animated.timing(floatValue1, { toValue: 0, duration: 6000, useNativeDriver: true }),
+    ])).start();
+    Animated.loop(Animated.sequence([
+      Animated.timing(floatValue2, { toValue: 1, duration: 4000, useNativeDriver: true }),
+      Animated.timing(floatValue2, { toValue: 0, duration: 4000, useNativeDriver: true }),
+    ])).start();
+    [particle1, particle2].forEach((p, i) => {
+      Animated.loop(Animated.timing(p, { toValue: 1, duration: 8000 + i * 2000, useNativeDriver: true })).start();
+    });
+    return () => TTSWrapper.stop();
+  }, []);
+
+  const handleBrandSelect = (brand) => {
+    setSelectedBrand(brand);
+    Animated.timing(brandFade, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+  };
+
+  const getTextSizeStyle = () => ({ small: { fontSize: 14, lineHeight: 20 }, large: { fontSize: 20, lineHeight: 28 }, medium: { fontSize: 16, lineHeight: 24 } }[textSize]);
+  const getTitleSizeStyle = () => ({ small: { fontSize: 18, lineHeight: 24 }, large: { fontSize: 24, lineHeight: 32 }, medium: { fontSize: 20, lineHeight: 28 } }[textSize]);
+
+  const handleReadLesson = (lesson) => {
+    if (isReading) { TTSWrapper.stop(); setIsReading(false); return; }
+    TTSWrapper.speak(`${lesson.title}. ${lesson.content}`, {
+      onStart: () => setIsReading(true),
+      onDone: () => setIsReading(false),
+      onError: () => setIsReading(false),
+    });
+  };
+
+  const closeModal = () => {
+    if (isReading) { TTSWrapper.stop(); setIsReading(false); }
+    setIsModalVisible(false);
+    setSelectedLesson(null);
+  };
+
+  const handlePracticeSuccess = (lessonTitle) => {
+    setPracticeCompleted(prev => ({ ...prev, [lessonTitle]: true }));
+    Alert.alert("Well done!", "You completed the practice!", [{ text: "Continue", style: "default" }]);
+  };
+
+  const pulseOpacity = pulseValue.interpolate({ inputRange: [0,1], outputRange: [0.02, 0.06] });
+  const float1Y = floatValue1.interpolate({ inputRange: [0,1], outputRange: [0, -30] });
+  const float2Y = floatValue2.interpolate({ inputRange: [0,1], outputRange: [0, 25] });
+  const particle1Y = particle1.interpolate({ inputRange: [0,1], outputRange: [height, -100] });
+  const particle2Y = particle2.interpolate({ inputRange: [0,1], outputRange: [height, -100] });
+
+  const activeBrand = selectedBrand;
+
+  return (
+    <View style={styles.container}>
+      <LinearGradient
+        colors={["#F0F9FF","#E0F2FE","#BAE6FD","#7DD3FC","#38BDF8","#0EA5E9"]}
+        locations={[0,0.15,0.35,0.55,0.75,1]}
+        style={styles.gradientBackground}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+      />
+      <Animated.View style={[styles.backgroundOverlay, { opacity: pulseOpacity }]} />
+      <View style={styles.backgroundElements}>
+        <Animated.View style={[styles.floatingElement1, { transform: [{ translateY: float1Y }] }]}>
+          <Icon name="heart" size={28} color="rgba(255,255,255,0.12)" />
+        </Animated.View>
+        <Animated.View style={[styles.floatingElement2, { transform: [{ translateY: float2Y }] }]}>
+          <Icon name="mobile-alt" size={32} color="rgba(255,255,255,0.12)" />
+        </Animated.View>
+        <Animated.View style={[styles.particle, styles.particle1, { transform: [{ translateY: particle1Y }] }]} />
+        <Animated.View style={[styles.particle, styles.particle2, { transform: [{ translateY: particle2Y }] }]} />
+      </View>
+
+      <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <View style={styles.headerIconContainer}>
+          <Icon name="mobile-alt" size={32} color="#0F172A" />
+        </View>
+        <Text style={styles.headerTitle}>Smartphone Basics</Text>
+        <Text style={styles.headerSubtitle}>Interactive lessons for seniors</Text>
+        <View style={styles.headerDivider} />
+      </Animated.View>
+
+      <ScrollView style={styles.lessonScroll} contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        {/* Brand selector always visible at top */}
+        {!selectedBrand ? (
+          <BrandSelector onSelect={handleBrandSelect} />
+        ) : (
+          <>
+            {/* Selected brand banner with change option */}
+            <TouchableOpacity style={styles.selectedBrandBanner} onPress={() => setSelectedBrand(null)} activeOpacity={0.85}>
+              <LinearGradient colors={activeBrand.bgGradient} style={styles.selectedBrandGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                <Text style={styles.selectedBrandLogo}>{activeBrand.logo}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.selectedBrandName}>{activeBrand.name}</Text>
+                  <Text style={styles.selectedBrandSub}>{activeBrand.description}</Text>
+                </View>
+                <View style={styles.changeBrandPill}>
+                  <Text style={styles.changeBrandText}>Change</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Lesson cards */}
+            {lessons.map((lesson, idx) => (
+              <TouchableOpacity key={idx}
+                style={[styles.lessonCard, practiceCompleted[lesson.title] && styles.lessonCardCompleted]}
+                onPress={() => { setSelectedLesson(lesson); setIsModalVisible(true); }}
+                activeOpacity={0.92}
+                accessibilityLabel={lesson.title}>
+                <View style={styles.lessonImageContainer}>
+                  <View style={[styles.lessonIconBg, activeBrand && { backgroundColor: activeBrand.accentColor + '22' }]}>
+                    <Icon name={lesson.icon} size={32} color={activeBrand?.accentColor || '#38BDF8'} />
+                  </View>
+                  {practiceCompleted[lesson.title] && (
+                    <View style={styles.completedBadge}>
+                      <Icon name="check" size={12} color="#fff" />
+                    </View>
+                  )}
+                </View>
+                <View style={styles.lessonContent}>
+                  <Text style={[styles.lessonTitle, getTitleSizeStyle()]}>{lesson.title}</Text>
+                  <Text style={[styles.lessonSummary, getTextSizeStyle()]} numberOfLines={2}>{lesson.content}</Text>
+                  <Text style={styles.progressText}>
+                    {practiceCompleted[lesson.title] ? "✓ Completed" : "Ready to learn"}
+                  </Text>
+                </View>
+                <View style={styles.arrowIcon}>
+                  <Icon name="chevron-right" size={18} color={activeBrand?.accentColor || '#38BDF8'} />
+                </View>
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
+      </ScrollView>
+
+      {/* Lesson Modal */}
+      <Modal visible={isModalVisible} animationType="slide" transparent onRequestClose={closeModal} statusBarTranslucent>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              {selectedLesson && (
+                <>
+                  <View style={styles.modalHeader}>
+                    <View style={[styles.modalIconContainer, activeBrand && { backgroundColor: activeBrand.accentColor + '22' }]}>
+                      <Icon name={selectedLesson.icon} size={40} color={activeBrand?.accentColor || '#38BDF8'} />
+                    </View>
+                    <TouchableOpacity style={styles.modalCloseButton} onPress={closeModal} accessibilityLabel="Close">
+                      <Icon name="times" size={20} color="#64748B" />
+                    </TouchableOpacity>
+                  </View>
+                  <ScrollView style={styles.modalScrollView} contentContainerStyle={styles.modalScrollContainer}
+                    showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" bounces>
+                    <Text style={[styles.modalHeadline, getTitleSizeStyle()]}>{selectedLesson.title}</Text>
+                    <Text style={[styles.modalBody, getTextSizeStyle()]}>{selectedLesson.content}</Text>
+                    <View style={styles.controlsSection}>
+                      <View style={styles.primaryControls}>
+                        <TouchableOpacity
+                          style={[styles.ttsButton, isReading && { backgroundColor: activeBrand?.accentColor || '#38BDF8' },
+                            { borderColor: activeBrand?.accentColor || '#38BDF8' }]}
+                          onPress={() => handleReadLesson(selectedLesson)} activeOpacity={0.8}>
+                          <Icon name={isReading ? "stop" : "volume-up"} size={18} color={isReading ? '#fff' : (activeBrand?.accentColor || '#38BDF8')} />
+                          <Text style={[styles.ttsButtonText, isReading && styles.ttsButtonTextActive,
+                            { color: isReading ? '#fff' : (activeBrand?.accentColor || '#38BDF8') }]}>
+                            {isReading ? "Stop" : "Read"}
+                          </Text>
+                        </TouchableOpacity>
+                        <View style={styles.textSizeControls}>
+                          <Text style={styles.textSizeLabel}>Text:</Text>
+                          {["small","medium","large"].map((size, idx) => (
+                            <TouchableOpacity key={size}
+                              style={[styles.textSizeButton, textSize === size && { backgroundColor: activeBrand?.accentColor || '#38BDF8' }]}
+                              onPress={() => setTextSize(size)}>
+                              <Text style={[styles.textSizeButtonText, textSize === size && styles.textSizeButtonTextActive]}>
+                                {["A-","A","A+"][idx]}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+                    </View>
+                    <View style={styles.practiceSection}>
+                      <Text style={styles.practiceSectionTitle}>Interactive Practice</Text>
+                      <View style={styles.practiceContent}>
+                        {React.createElement(selectedLesson.simulator, {
+                          onSuccess: () => handlePracticeSuccess(selectedLesson.title),
+                          brand: activeBrand,
+                        })}
+                      </View>
+                    </View>
+                  </ScrollView>
+                </>
+              )}
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.8} accessibilityLabel="Back">
+        <Icon name="arrow-left" size={18} color="#0F172A" />
+        <Text style={styles.backButtonText}>Back</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ─── StyleSheet ───────────────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  // Brand selector
+  brandSelectorContainer: { paddingBottom: 20 },
+  brandSelectorHeader: { alignItems: 'center', paddingVertical: 20, paddingHorizontal: 16 },
+  brandSelectorTitle: { fontSize: 22, fontWeight: 'bold', color: '#0F172A', marginTop: 10, textAlign: 'center' },
+  brandSelectorSubtitle: { fontSize: 14, color: '#64748B', textAlign: 'center', marginTop: 4 },
+  brandGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 4 },
+  brandCard: { backgroundColor: '#fff', borderRadius: 16, marginBottom: 12, overflow: 'hidden',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 4 },
+  brandCardGradient: { padding: 16, alignItems: 'center', minHeight: 100, justifyContent: 'center' },
+  brandLogo: { fontSize: 32, marginBottom: 6, color: '#fff' },
+  brandCardName: { fontSize: 18, fontWeight: 'bold', color: '#fff', textAlign: 'center' },
+  brandCardCompany: { fontSize: 11, color: 'rgba(255,255,255,0.7)', textAlign: 'center', marginTop: 2 },
+  brandCardDesc: { padding: 10, backgroundColor: '#fff' },
+  brandDescText: { fontSize: 11, color: '#64748B', textAlign: 'center' },
+  // Selected brand banner
+  selectedBrandBanner: { borderRadius: 16, marginBottom: 16, overflow: 'hidden',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 6, elevation: 4 },
+  selectedBrandGradient: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
+  selectedBrandLogo: { fontSize: 28, color: '#fff' },
+  selectedBrandName: { fontSize: 16, fontWeight: 'bold', color: '#fff' },
+  selectedBrandSub: { fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
+  changeBrandPill: { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
+  changeBrandText: { fontSize: 12, color: '#fff', fontWeight: '600' },
+  // Notch / punchhole
+  notchBar: { width: '100%', alignItems: 'center', paddingTop: 2 },
+  notchCutout: { width: 80, height: 16, backgroundColor: '#000', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 },
+  punchHoleBar: { width: '100%', alignItems: 'center', paddingVertical: 4 },
+  punchHole: { width: 10, height: 10, borderRadius: 5 },
+  // Camera spot
+  cameraSpot: { position: 'absolute', top: 10, right: 10, width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, justifyContent: 'center', alignItems: 'center' },
+  cameraLens: { width: 10, height: 10, borderRadius: 5 },
+  brandWatermark: { position: 'absolute', bottom: 8, alignSelf: 'center' },
+  brandWatermarkText: { fontSize: 10, fontWeight: '600', opacity: 0.6 },
+  // PIN pad
+  pinPad: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 8 },
+  pinDots: { flexDirection: 'row', marginBottom: 14, gap: 6 },
+  pinDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#374151', borderWidth: 1, borderColor: '#6B7280' },
+  pinGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', width: '100%', gap: 4 },
+  pinButton: { width: '30%', aspectRatio: 1.4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
+  pinButtonText: { color: '#fff', fontSize: 16, fontWeight: '500' },
+  // Boot logo
+  brandBootLogo: { fontSize: 48, marginBottom: 8 },
+  // Camera app
+  cameraApp: { flex: 1, backgroundColor: '#000', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 20 },
+  cameraViewfinder: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  cameraText: { fontSize: 14, marginTop: 8, fontWeight: '500' },
+  captureButton: { width: 48, height: 48, borderRadius: 24, borderWidth: 3, justifyContent: 'center', alignItems: 'center' },
+  captureInner: { width: 36, height: 36, borderRadius: 18 },
+  // Existing styles below
+  instructionText: { marginTop: 12, paddingHorizontal: 20, alignItems: 'center' },
+  hintText: { fontSize: 12, color: '#64748B', fontStyle: 'italic', textAlign: 'center' },
+  messageApp: { flex: 1 },
+  messageHeader: { paddingHorizontal: 12, paddingVertical: 4 },
+  contactInfo: { flexDirection: 'row', alignItems: 'center' },
+  contactAvatar: { width: 22, height: 22, borderRadius: 11, justifyContent: 'center', alignItems: 'center', marginRight: 6 },
+  contactName: { color: '#fff', fontSize: 11, fontWeight: '600' },
+  messagesContainer: { flex: 1, paddingHorizontal: 10, paddingVertical: 6 },
+  messageBubble: { maxWidth: '75%', padding: 7, borderRadius: 10, marginBottom: 5 },
+  contactMessage: { backgroundColor: '#374151', alignSelf: 'flex-start' },
+  userMessage: { alignSelf: 'flex-end' },
+  messageText: { color: '#fff', fontSize: 11 },
+  messageTime: { color: 'rgba(255,255,255,0.6)', fontSize: 8, marginTop: 2 },
+  messageInput: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6 },
+  messageTextInput: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 4, color: '#fff', fontSize: 10, marginRight: 6, minHeight: 24 },
+  sendButton: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#6B7280', justifyContent: 'center', alignItems: 'center' },
+  wifiSettings: { flex: 1, paddingHorizontal: 10 },
+  settingsHeader: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#374151' },
+  settingsTitle: { fontSize: 14, fontWeight: '600', textAlign: 'center' },
+  wifiSettingsTitle: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
+  scanningView: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  scanningText: { color: '#9CA3AF', fontSize: 11, marginTop: 10 },
+  networksList: { flex: 1, paddingTop: 6 },
+  networkItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 6, borderBottomWidth: 1, borderBottomColor: '#374151', borderRadius: 6, marginBottom: 2 },
+  networkName: { color: '#fff', fontSize: 11, marginLeft: 6, flex: 1 },
+  networkInfo: { flexDirection: 'row', alignItems: 'center' },
+  signalStrength: { flexDirection: 'row', marginLeft: 4 },
+  signalBar: { width: 3, height: 6, backgroundColor: '#6B7280', marginLeft: 1, borderRadius: 1 },
+  passwordDialog: { backgroundColor: '#374151', borderRadius: 8, padding: 10, marginTop: 6 },
+  passwordLabel: { color: '#fff', fontSize: 10, marginBottom: 6 },
+  passwordInput: { backgroundColor: '#1F2937', borderRadius: 5, paddingHorizontal: 7, paddingVertical: 5, color: '#fff', fontSize: 10, marginBottom: 8 },
+  connectButton: { backgroundColor: '#6B7280', borderRadius: 5, paddingVertical: 7, alignItems: 'center' },
+  connectButtonText: { color: '#fff', fontSize: 10, fontWeight: '600' },
+  connectedView: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16 },
+  connectedText: { color: '#10B981', fontSize: 12, fontWeight: '600', marginTop: 10, textAlign: 'center' },
+  connectionDetails: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
+  ipAddress: { color: '#9CA3AF', fontSize: 9, marginLeft: 4 },
+  container: { flex: 1, backgroundColor: '#F0F9FF' },
+  gradientBackground: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
+  backgroundOverlay: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: '#38BDF8' },
+  backgroundElements: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
+  floatingElement1: { position: 'absolute', top: 100, left: 50 },
+  floatingElement2: { position: 'absolute', top: 200, right: 80 },
+  particle: { position: 'absolute', width: 4, height: 4, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 2 },
+  particle1: { left: '20%' },
+  particle2: { left: '80%' },
+  header: { alignItems: 'center', paddingTop: Platform.OS === 'ios' ? 60 : 40, paddingBottom: 24, paddingHorizontal: 20 },
+  headerIconContainer: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.9)', justifyContent: 'center', alignItems: 'center', marginBottom: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 5 },
+  headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#0F172A', marginBottom: 5, textAlign: 'center' },
+  headerSubtitle: { fontSize: 16, color: '#64748B', textAlign: 'center', marginBottom: 20 },
+  headerDivider: { width: 60, height: 4, backgroundColor: '#38BDF8', borderRadius: 2 },
+  lessonScroll: { flex: 1 },
+  scrollContainer: { padding: 20, paddingTop: 10 },
+  lessonCard: { backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 16, padding: 20, marginBottom: 16, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
+  lessonCardCompleted: { borderColor: '#10B981', borderWidth: 2 },
+  lessonImageContainer: { position: 'relative', marginRight: 16 },
+  lessonIconBg: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#F0F9FF', justifyContent: 'center', alignItems: 'center' },
+  completedBadge: { position: 'absolute', top: -4, right: -4, width: 20, height: 20, borderRadius: 10, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' },
+  lessonContent: { flex: 1 },
+  lessonTitle: { fontSize: 18, fontWeight: '600', color: '#0F172A', marginBottom: 4 },
+  lessonSummary: { fontSize: 14, color: '#64748B', lineHeight: 20, marginBottom: 6 },
+  progressText: { fontSize: 12, color: '#10B981', fontWeight: '500' },
+  arrowIcon: { marginLeft: 12 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, height: '92%', maxHeight: height * 0.92 },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 24, paddingBottom: 0, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  modalIconContainer: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#F0F9FF', justifyContent: 'center', alignItems: 'center' },
+  modalCloseButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center' },
+  modalScrollView: { flex: 1 },
+  modalScrollContainer: { padding: 24, paddingTop: 0, paddingBottom: 40 },
+  modalHeadline: { fontSize: 24, fontWeight: 'bold', color: '#0F172A', marginBottom: 16, lineHeight: 32, marginTop: 20 },
+  modalBody: { fontSize: 16, color: '#475569', lineHeight: 24, marginBottom: 24 },
+  controlsSection: { marginBottom: 24 },
+  primaryControls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap' },
+  ttsButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0F9FF', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, borderWidth: 2, borderColor: '#38BDF8' },
+  ttsButtonText: { marginLeft: 8, fontSize: 16, fontWeight: '600', color: '#38BDF8' },
+  ttsButtonTextActive: { color: '#fff' },
+  textSizeControls: { flexDirection: 'row', alignItems: 'center' },
+  textSizeLabel: { fontSize: 14, color: '#64748B', marginRight: 8 },
+  textSizeButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center', marginLeft: 4 },
+  textSizeButtonText: { fontSize: 14, fontWeight: '600', color: '#64748B' },
+  textSizeButtonTextActive: { color: '#fff' },
+  practiceSection: { backgroundColor: '#F8FAFC', borderRadius: 16, padding: 20, marginBottom: 20 },
+  practiceSectionTitle: { fontSize: 18, fontWeight: '600', color: '#0F172A', marginBottom: 16, textAlign: 'center' },
+  practiceContent: { alignItems: 'center' },
+  backButton: { position: 'absolute', top: Platform.OS === 'ios' ? 50 : 30, left: 20, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  backButtonText: { marginLeft: 8, fontSize: 16, fontWeight: '600', color: '#0F172A' },
+  // Simulator base
+  simulatorContainer: { alignItems: 'center', paddingVertical: 10, width: '100%' },
+  simulatorTitle: { fontSize: 16, fontWeight: '600', color: '#0F172A', marginBottom: 16, textAlign: 'center', paddingHorizontal: 16 },
+  phoneFrame: { padding: 6, borderRadius: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8, alignSelf: 'center', transform: [{ scale: SCREEN_SCALE }] },
+  phoneBody: { width: SIM_PHONE_WIDTH, height: SIM_PHONE_HEIGHT, borderRadius: 20, position: 'relative' },
+  phoneScreen: { position: 'absolute', top: 16, left: 10, right: 10, bottom: 16, backgroundColor: '#000', borderRadius: 12, overflow: 'hidden' },
+  powerButton: { position: 'absolute', right: -4, top: 60, width: 8, height: 40, borderRadius: 4 },
+  volumeButtons: { position: 'absolute', left: -4, top: 50 },
+  volumeUp: { width: 8, height: 30, borderRadius: 4, marginBottom: 8 },
+  volumeDown: { width: 8, height: 30, borderRadius: 4 },
+  speaker: { position: 'absolute', top: 8, left: '50%', marginLeft: -20, width: 40, height: 4, borderRadius: 2 },
+  homeButton: { position: 'absolute', bottom: 4, left: '50%', marginLeft: -15, width: 30, height: 30, borderRadius: 15, borderWidth: 2 },
+  highlighted: { backgroundColor: '#F59E0B', shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 8, elevation: 8 },
+  bootScreen: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  bootText: { fontSize: 14, marginTop: 6, fontWeight: '600' },
+  homeScreen: { flex: 1 },
+  statusBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5 },
+  time: { color: '#fff', fontSize: 10, fontWeight: '600' },
+  statusIcons: { flexDirection: 'row', gap: 3 },
+  welcomeText: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginTop: 50 },
+  progressIndicator: { backgroundColor: 'rgba(56,189,248,0.1)', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginTop: 15, alignSelf: 'center' },
+  simProgressText: { fontSize: 12, color: '#10B981', fontWeight: '600', textAlign: 'center' },
+  pressIndicator: { marginTop: 14, alignItems: 'center', width: '100%' },
+  pressBar: { height: 4, backgroundColor: '#38BDF8', borderRadius: 2, marginBottom: 6 },
+  pressText: { fontSize: 12, color: '#64748B' },
+  lockScreen: { flex: 1, justifyContent: 'space-between', paddingVertical: 16 },
+  clockDisplay: { alignItems: 'center', marginTop: 16 },
+  clockTime: { color: '#fff', fontSize: 32, fontWeight: '200' },
+  clockDate: { color: '#9CA3AF', fontSize: 11, marginTop: 2 },
+  swipeArea: { alignSelf: 'center', marginBottom: 16, maxWidth: '90%' },
+  swipeIndicator: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 14 },
+  swipeText: { marginLeft: 5, fontSize: 11 },
+  appGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', paddingTop: 20, gap: 10 },
+  appIcon: { alignItems: 'center', width: 46 },
+  appIconBg: { width: 38, height: 38, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 4 },
+  appName: { color: '#fff', fontSize: 8, textAlign: 'center' },
+  gestureArea: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10 },
+  gestureButton: { width: 88, height: 64, borderRadius: 12, justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: '#38BDF8', backgroundColor: 'rgba(56,189,248,0.08)' },
+  gestureCompleted: { backgroundColor: '#10B981', borderColor: '#10B981' },
+  gestureLabel: { fontSize: 10, marginTop: 4, fontWeight: '500' },
+  settingsScreen: { flex: 1, paddingHorizontal: 10 },
+  settingItem: { flexDirection: 'column', alignItems: 'stretch', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#374151' },
+  settingRow: { flexDirection: 'row', alignItems: 'center' },
+  settingLabel: { color: '#fff', fontSize: 11, marginLeft: 8, flex: 1 },
+  settingSlider: { width: '100%', height: 22, marginTop: 6 },
+  settingValue: { color: '#9CA3AF', fontSize: 9, width: 28, textAlign: 'right' },
+  volumeOverlay: { position: 'absolute', top: 40, left: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.85)', borderRadius: 8, padding: 8, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
+  volumeBar: { flex: 1, height: 3, backgroundColor: '#374151', borderRadius: 2, marginHorizontal: 8 },
+  volumeFill: { height: '100%', borderRadius: 2 },
+  volumeText: { color: '#fff', fontSize: 9, fontWeight: '600' },
+  incomingCall: { flex: 1, justifyContent: 'space-between', paddingVertical: 24, alignItems: 'center' },
+  callerInfo: { alignItems: 'center' },
+  callerAvatar: { width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+  callerName: { color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 2 },
+  callerNumber: { color: '#9CA3AF', fontSize: 10, marginBottom: 5 },
+  callStatus: { fontSize: 11 },
+  callDuration: { fontSize: 13, fontWeight: '600', marginTop: 4 },
+  callControls: { flexDirection: 'row', justifyContent: 'space-between', width: '65%', marginBottom: 10 },
+  callButton: { width: 38, height: 38, borderRadius: 19, justifyContent: 'center', alignItems: 'center' },
+  answerButton: { backgroundColor: '#10B981' },
+  declineButton: { backgroundColor: '#EF4444' },
+  endButton: { backgroundColor: '#EF4444' },
+  activeCall: { flex: 1, justifyContent: 'space-between', paddingVertical: 32, alignItems: 'center' },
+  callEnded: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  callEndedText: { color: '#9CA3AF', fontSize: 16, marginTop: 14 },
+});
