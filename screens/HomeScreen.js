@@ -13,9 +13,12 @@ import {
   Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Icon from "react-native-vector-icons/FontAwesome5";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native";
+import Sidebar from "./sidebar";
+
+const Icon = FontAwesome5;
 
 
 let LottieWrapper;
@@ -35,7 +38,7 @@ const { width, height } = Dimensions.get("window");
 
 export default function HomeScreen({ navigation }) {
   const [nickname, setNickname] = useState("");
-  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
 
   // Animations
   const logoScaleValue = useRef(new Animated.Value(0.8)).current;
@@ -90,14 +93,6 @@ export default function HomeScreen({ navigation }) {
       animation: require("../assets/lotties/government.json"),
       icon: "users",
       gradientColors: ['rgba(236, 72, 153, 0.15)', 'rgba(251, 146, 60, 0.15)'],
-    },
-    {
-      id: 4,
-      title: "Mini Games",
-      description: "Exercise your mind with fun memory games.",
-      animation: require("../assets/lotties/games.json"),
-      icon: "gamepad",
-      gradientColors: ['rgba(251, 191, 36, 0.15)', 'rgba(34, 197, 94, 0.15)'],
     },
     
     
@@ -250,10 +245,6 @@ export default function HomeScreen({ navigation }) {
       case 3:
         navigation.navigate("E-Gov");
         break;
-      case 4:
-        navigation.navigate("MiniGames");
-        break;
-      
     }
   };
 
@@ -316,89 +307,62 @@ export default function HomeScreen({ navigation }) {
           <Animated.View style={[styles.particle, styles.particle2, { transform: [{ translateY: particle2Y }] }]} />
         </View>
 
-        {/* Profile Icon (top right, absolute) */}
-        <View style={styles.profileIconContainer}>
-          <TouchableOpacity onPress={() => setProfileModalVisible(true)} style={styles.profileIconButton}>
-            <LinearGradient
-              colors={['#74bfe2', '#6abfe9']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.profileIconGradient}
-            >
-              <Icon name="reply" size={24} color="#fff" />
-            </LinearGradient>
-          </TouchableOpacity>
+        {/* Sidebar trigger and logo */}
+        <View style={styles.topActionRow}>
+          <View style={styles.leftTopArea}>
+            <TouchableOpacity onPress={() => setSidebarVisible(true)} style={styles.profileIconButton}>
+              <LinearGradient
+                colors={['#74bfe2', '#6abfe9']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.profileIconGradient}
+              >
+                <Icon name="bars" size={22} color="#fff" />
+              </LinearGradient>
+            </TouchableOpacity>
+            <Image source={require("../assets/images/nlogo.png")} style={styles.headerLogo} resizeMode="contain" />
+          </View>
+
+          <View style={styles.pageHeaderBadge}>
+            <Icon name="home" size={18} color="#38BDF8" />
+            <Text style={styles.pageHeaderBadgeText}>Beginner Mode</Text>
+          </View>
         </View>
 
-        {/* Profile Modal */}
-        <Modal
-          visible={profileModalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setProfileModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}></Text>
-              <Text style={styles.modalName}>{nickname}</Text>
-              <TouchableOpacity
-                style={styles.logoutButton}
-                onPress={async () => {
-                  await AsyncStorage.clear();
-                  setProfileModalVisible(false);
-                  navigation.replace("GetStarted");
-                }}
-              >
-                <Icon name="sign-out-alt" size={18} color="#fff" style={{ marginRight: 8 }} />
-                <Text style={styles.logoutButtonText}>Back</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setProfileModalVisible(false)} style={styles.closeModalButton}>
-                <Text style={styles.closeModalText}>Close</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+        <Sidebar
+          visible={sidebarVisible}
+          onClose={() => setSidebarVisible(false)}
+          navigation={navigation}
+        />
 
         <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Logo Section */}
-          <Animated.View
-            style={[
-              styles.logoContainer,
-              {
-                opacity: logoFadeValue,
-                transform: [{ scale: logoScaleValue }],
-              },
-            ]}
-          >
-            <View style={styles.logoShadow} />
-            <Image
-              source={require("../assets/images/logo3.png")}
-              style={styles.logo}
-              resizeMode="contain"
+          {/* Hero Card */}
+          <View style={styles.heroCard}>
+            <LinearGradient
+              colors={["rgba(255,255,255,0.8)", "rgba(255,255,255,0.3)"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroOverlay}
             />
-          </Animated.View>
-
-          {/* Welcome Section
-          <Animated.View
-            style={[
-              styles.welcomeContainer,
-              {
-                opacity: headerFadeValue,
-                transform: [{ translateY: headerSlideValue }],
-              },
-            ]}
-          >
-            <Text style={styles.welcomeText}>
-              {nickname ? `Kumusta, ${nickname}!` : "Welcome, Lolo't Lola!"}
-            </Text>
-            <Text style={styles.subtitleText}>
-              Choose what you'd like to learn today
-            </Text>
-          </Animated.View> */}
+            <LinearGradient
+              colors={["rgba(14, 165, 233, 0.18)", "rgba(59, 130, 246, 0.16)"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroGradient}
+            />
+            <View style={styles.heroContent}>
+              <View style={styles.heroBadge}>
+                <Icon name="star" size={14} color="#0284C7" />
+                <Text style={styles.heroBadgeText}>Welcome</Text>
+              </View>
+              <Text style={styles.heroTitle}>Start Learning Today</Text>
+              <Text style={styles.heroText}>Explore essential digital skills designed just for you. Begin your journey at your own pace.</Text>
+            </View>
+          </View>
 
           {/* Features Grid */}
           <View style={styles.featuresContainer}>
@@ -524,33 +488,82 @@ const styles = StyleSheet.create({
   particle2: {
     left: '80%',
   },
+  pageHeaderBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "rgba(56, 189, 248, 0.15)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  pageHeaderBadgeText: {
+    color: "#0F172A",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  headerLogo: {
+    width: 70,
+    height: 32,
+  },
   scrollView: {
     flex: 1,
+    marginTop: 70,
   },
   scrollContent: {
     padding: 24,
     paddingBottom: 50,
   },
-  logoContainer: {
+  heroCard: {
+    borderRadius: 24,
+    overflow: "hidden",
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.55)",
+    backgroundColor: "#ffffff",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 6,
+    position: "relative",
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  heroGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  heroContent: {
+    padding: 24,
+    zIndex: 2,
+  },
+  heroBadge: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 30,
-    marginBottom: 40,
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 12,
+    gap: 6,
   },
-  logoShadow: {
-    position: 'absolute',
-    width: 90,
-    height: 90,
-    borderRadius: 55,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    shadowColor: '#ffffff',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
+  heroBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0369A1",
   },
-  logo: {
-    width: 200,
-    height: 90,
+  heroTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 8,
+  },
+  heroText: {
+    fontSize: 14,
+    color: "#475569",
+    lineHeight: 20,
   },
   welcomeContainer: {
     alignItems: 'center',
@@ -675,19 +688,35 @@ const styles = StyleSheet.create({
     left: 24,
     zIndex: 999,
   },
+  topActionRow: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 34 : 22,
+    left: 18,
+    right: 18,
+    zIndex: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  leftTopArea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   profileIconButton: {
-    borderRadius: 18,
-    padding: 2,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    overflow: 'hidden',
     elevation: 10,
-    shadowColor: '#aed4e7',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
   },
   profileIconGradient: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },

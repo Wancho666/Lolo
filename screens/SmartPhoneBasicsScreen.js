@@ -16,9 +16,11 @@ import {
   Vibration,
 } from "react-native";
 import Slider from "@react-native-community/slider";
-import Icon from "react-native-vector-icons/FontAwesome5";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
+
+const Icon = FontAwesome5;
 import * as Speech from "expo-speech";
 
 const { width, height } = Dimensions.get("window");
@@ -36,7 +38,7 @@ const TTS = {
     try {
       if (onStart) onStart();
       Speech.speak(text, {
-        language: "fil",
+        language: "en-US",
         pitch: 1,
         rate: 0.85,
         onStart,
@@ -131,11 +133,11 @@ const PhoneAnatomySimulator = ({ onSuccess }) => {
   const [highlighted, setHighlighted] = useState(null);
 
   const parts = [
-    { id: "notch", name: "Notch / Camera", desc: "Ito ang harap na kamera at sensor." },
-    { id: "screen", name: "Screen", desc: "Ito ang touch screen – dito ka nag-ta-tap at nag-si-swipe." },
-    { id: "volume", name: "Volume Buttons", desc: "Pataas o pababa ang volume gamit ang mga button na ito." },
-    { id: "power", name: "Power Button", desc: "Pindutin ito para i-on o i-off ang phone." },
-    { id: "home", name: "Home Indicator", desc: "I-swipe pataas para bumalik sa Home Screen." },
+    { id: "notch", name: "Notch / Camera", desc: "This is the front camera and sensor." },
+    { id: "screen", name: "Screen", desc: "This is the touch screen where you tap and swipe." },
+    { id: "volume", name: "Volume Buttons", desc: "Use these buttons to turn the volume up or down." },
+    { id: "power", name: "Power Button", desc: "Press this to turn the phone on or off." },
+    { id: "home", name: "Home Indicator", desc: "Swipe up to return to the Home Screen." },
   ];
 
   const tap = (part) => {
@@ -262,14 +264,14 @@ const PowerSimulator = ({ onSuccess }) => {
       setTimeout(() => {
         setState("on");
         if (!succeeded) { setSucceeded(true); onSuccess(); }
-        TTS.speak("Nag-on na ang phone!");
+        TTS.speak("Phone is now on!");
       }, 1500);
     } else if (state === "on") {
       Vibration.vibrate(15);
       setState("off");
       setHeld(0);
       progressAnim.setValue(0);
-      TTS.speak("Na-off ang phone.");
+      TTS.speak("Phone is now off.");
     } else {
       progressAnim.setValue(0);
     }
@@ -351,7 +353,7 @@ const UnlockSimulator = ({ onSuccess }) => {
         Vibration.vibrate(20);
         setLocked(false);
         if (!succeeded) { setSucceeded(true); onSuccess(); }
-        TTS.speak("Na-unlock ang phone!");
+        TTS.speak("Phone is now unlocked!");
       } else {
         Animated.spring(swipeX, { toValue: 0, useNativeDriver: false }).start();
       }
@@ -365,9 +367,9 @@ const UnlockSimulator = ({ onSuccess }) => {
       Vibration.vibrate(20);
       setLocked(false);
       if (!succeeded) { setSucceeded(true); onSuccess(); }
-      TTS.speak("Tamang PIN! Na-unlock ang phone!");
+      TTS.speak("Correct PIN! Phone is unlocked!");
     } else if (newPin.length >= 4) {
-      TTS.speak("Maling PIN. Subukan ulit.");
+      TTS.speak("Wrong PIN. Try again.");
       setTimeout(() => setPin(""), 500);
     }
   };
@@ -471,7 +473,7 @@ const TouchSimulator = ({ onSuccess }) => {
       Animated.timing(scaleAnim, { toValue: 0.85, duration: 100, useNativeDriver: true }),
       Animated.timing(scaleAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
     ]).start();
-    TTS.speak("Magaling! Nag-tap ka.");
+    TTS.speak("Good! You tapped the screen.");
     setTimeout(() => { setActive(null); complete("tap"); }, 600);
   };
 
@@ -482,7 +484,7 @@ const TouchSimulator = ({ onSuccess }) => {
     onPanResponderRelease: (_, g) => {
       if (g.dx > 70 && !done.swipe) {
         setActive("swipe");
-        TTS.speak("Magaling! Nag-swipe ka.");
+        TTS.speak("Good! You swiped the screen.");
         swipeX.setValue(0);
         setTimeout(() => { setActive(null); complete("swipe"); }, 600);
       } else {
@@ -495,7 +497,7 @@ const TouchSimulator = ({ onSuccess }) => {
     if (done.pinch) return;
     Vibration.vibrate(15);
     setActive("pinch");
-    TTS.speak("Magaling! Nag-pinch ka.");
+    TTS.speak("Good! You pinched the screen.");
     setTimeout(() => { setActive(null); complete("pinch"); }, 600);
   };
 
@@ -577,7 +579,7 @@ const VolumeSimulator = ({ onSuccess }) => {
   const check = (v, b) => {
     if (v >= 75 && b >= 75 && !succeeded) {
       setSucceeded(true);
-      TTS.speak("Magaling! Na-adjust mo na ang volume at brightness!");
+      TTS.speak("Great! You adjusted the volume and brightness!");
       setTimeout(onSuccess, 800);
     }
   };
@@ -702,21 +704,21 @@ const CallSimulator = ({ onSuccess }) => {
     Vibration.vibrate(20);
     setState("answered");
     if (!succeeded) { setSucceeded(true); onSuccess(); }
-    TTS.speak("Sinagot ang tawag!");
+    TTS.speak("Call answered!");
   };
 
   const decline = () => {
     Vibration.vibrate(20);
     setState("ended");
     if (!succeeded) { setSucceeded(true); onSuccess(); }
-    TTS.speak("Tinanggihan ang tawag.");
+    TTS.speak("Call declined.");
   };
 
   const end = () => {
     clearInterval(timerRef.current);
     Vibration.vibrate(15);
     setState("ended");
-    TTS.speak("Natapos na ang tawag.");
+    TTS.speak("Call ended.");
   };
 
   const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -790,7 +792,7 @@ const CallSimulator = ({ onSuccess }) => {
 // ─── 7. Messages Simulator ────────────────────────────────────────────────────
 const MessageSimulator = ({ onSuccess }) => {
   const [msgs, setMsgs] = useState([
-    { id: 1, text: "Kumusta ka na? Ligtas ka ba?", sender: "contact", time: "9:30" },
+    { id: 1, text: "How are you? Are you safe?", sender: "contact", time: "9:30" },
   ]);
   const [input, setInput] = useState("");
   const [sent, setSent] = useState(false);
@@ -803,12 +805,12 @@ const MessageSimulator = ({ onSuccess }) => {
     setMsgs(updated);
     setInput("");
     Vibration.vibrate(12);
-    TTS.speak("Naipadala ang mensahe!");
+    TTS.speak("Message sent!");
     if (!sent) { setSent(true); onSuccess(); }
 
     // Auto reply after 1.2s
     setTimeout(() => {
-      setMsgs(p => [...p, { id: Date.now() + 1, text: "Salamat! Ingat ka rin!", sender: "contact", time: "9:41" }]);
+      setMsgs(p => [...p, { id: Date.now() + 1, text: "Thanks! Take care too!", sender: "contact", time: "9:41" }]);
     }, 1200);
   };
 
@@ -877,12 +879,12 @@ const AppSimulator = ({ onSuccess }) => {
   const [succeeded, setSucceeded] = useState(false);
 
   const apps = [
-    { id: "phone", label: "Telepono", icon: "phone", color: "#10B981" },
-    { id: "messages", label: "Mensahe", icon: "comment-dots", color: "#3B82F6" },
-    { id: "camera", label: "Kamera", icon: "camera", color: "#8B5CF6" },
+    { id: "phone", label: "Phone", icon: "phone", color: "#10B981" },
+    { id: "messages", label: "Messages", icon: "comment-dots", color: "#3B82F6" },
+    { id: "camera", label: "Camera", icon: "camera", color: "#8B5CF6" },
     { id: "gmail", label: "Gmail", icon: "envelope", color: "#EF4444" },
     { id: "browser", label: "Browser", icon: "globe", color: "#F59E0B" },
-    { id: "maps", label: "Mapa", icon: "map-marker-alt", color: "#14B8A6" },
+    { id: "maps", label: "Maps", icon: "map-marker-alt", color: "#14B8A6" },
     { id: "gallery", label: "Gallery", icon: "images", color: "#EC4899" },
     { id: "settings", label: "Settings", icon: "cog", color: "#6B7280" },
   ];
@@ -890,7 +892,7 @@ const AppSimulator = ({ onSuccess }) => {
   const open = (app) => {
     Vibration.vibrate(12);
     setOpenApp(app);
-    TTS.speak(`Binuksan ang ${app.label} app!`);
+    TTS.speak(`Opened ${app.label} app!`);
     if (app.id === "camera" && !succeeded) { setSucceeded(true); setTimeout(onSuccess, 800); }
   };
 
@@ -975,7 +977,7 @@ const WiFiSimulator = ({ onSuccess }) => {
     if (step === "off") {
       Vibration.vibrate(10);
       setStep("scanning");
-      TTS.speak("Naghahanap ng WiFi networks...");
+      TTS.speak("Searching for WiFi networks...");
       setTimeout(() => { setStep("list"); setNetworks(nets); }, 1800);
     } else {
       setStep("off");
@@ -1003,7 +1005,7 @@ const WiFiSimulator = ({ onSuccess }) => {
       TTS.speak(`Nakakonekta sa ${selected.name}!`);
       if (!succeeded) { setSucceeded(true); setTimeout(onSuccess, 800); }
     } else {
-      TTS.speak("Maling password. Subukan ulit. Ang password ay password123");
+      TTS.speak("Wrong password. Try again. The password is password123");
       setPw("");
     }
   };
@@ -1113,72 +1115,72 @@ const WiFiSimulator = ({ onSuccess }) => {
 // ─── Lessons data ─────────────────────────────────────────────────────────────
 const lessons = [
   {
-    title: "Mga Bahagi ng Phone",
-    content: "Alamin ang bawat bahagi ng iyong smartphone: ang screen, power button, volume buttons, camera, at speaker. Mahalaga na malaman mo ang bawat isa para mas madaling gamitin ang phone.",
+    title: "Phone Anatomy",
+    content: "Learn each part of your smartphone: the screen, power button, volume buttons, camera, and speaker. It is important to know each one to make it easier to use your phone.",
     simulator: PhoneAnatomySimulator,
     icon: "mobile-alt",
     color: "#3B82F6",
     duration: "5 min",
   },
   {
-    title: "Pag-on at Pag-off ng Phone",
-    content: "Para i-on ang phone, pindutin at hawakan ang Power Button sa loob ng 2 segundo. Para naman i-off, pindutin ang Power Button at piliin ang 'Power off' sa screen.",
+    title: "Turning Phone On and Off",
+    content: "To turn on the phone, press and hold the Power Button for 2 seconds. To turn it off, press the Power Button and select 'Power off' on the screen.",
     simulator: PowerSimulator,
     icon: "power-off",
     color: "#EF4444",
     duration: "3 min",
   },
   {
-    title: "Pag-unlock ng Phone",
-    content: "Para buksan ang iyong phone mula sa lock screen, maaari kang mag-swipe sa screen o mag-enter ng iyong PIN code. Ang PIN ay isang lihim na numero para protektahan ang iyong phone.",
+    title: "Unlocking Your Phone",
+    content: "To open your phone from the lock screen, you can swipe on the screen or enter your PIN code. The PIN is a secret number to protect your phone.",
     simulator: UnlockSimulator,
     icon: "lock-open",
     color: "#8B5CF6",
     duration: "4 min",
   },
   {
-    title: "Paggamit ng Touchscreen",
-    content: "Ang touchscreen ay ang malaking glass sa harap ng phone. Matuto ng tatlong paraan: Tap (isang pindutin), Swipe (mag-slide ng daliri), at Pinch/Zoom (palapit o palayo ang dalawang daliri).",
+    title: "Using the Touchscreen",
+    content: "The touchscreen is the large glass on the front of the phone. Learn three ways to use it: Tap (one touch), Swipe (slide your finger), and Pinch/Zoom (move two fingers together or apart).",
     simulator: TouchSimulator,
     icon: "hand-point-up",
     color: "#10B981",
     duration: "5 min",
   },
   {
-    title: "Volume at Liwanag",
-    content: "Maaari mong ayusin ang lakas ng tunog gamit ang Volume Buttons sa gilid ng phone, o ang slider sa Settings. Ang Liwanag naman ay ang liwanag ng screen para mas madaling makita.",
+    title: "Volume and Brightness",
+    content: "You can adjust the volume using the Volume Buttons on the side of the phone, or use the slider in Settings. Brightness is the light of the screen to make it easier to see.",
     simulator: VolumeSimulator,
     icon: "volume-up",
     color: "#F59E0B",
     duration: "3 min",
   },
   {
-    title: "Pagtawag at Pagtanggap ng Tawag",
-    content: "Para tumawag, buksan ang Telepono app at i-dial ang numero. Kapag may tumatawag sa iyo, i-tap ang berdeng button para sagutin, o pula para tanggihan. Maaari mo ring gamitin ang speaker para mas malinaw marinig.",
+    title: "Receiving Calls",
+    content: "To call someone, open the Phone app and dial the number. When someone calls you, tap the green button to answer or the red button to decline. You can also use the speaker for clearer sound.",
     simulator: CallSimulator,
     icon: "phone",
     color: "#10B981",
     duration: "5 min",
   },
   {
-    title: "Pagpapadala ng SMS / Mensahe",
-    content: "Gamitin ang Messages app para mag-text. I-tap ang pangalan ng taong gusto mong kausapin, i-type ang iyong mensahe sa kahon sa ibaba, at i-tap ang Send button para ipadala. Libre ang SMS sa karamihan ng plano.",
+    title: "Sending SMS / Messages",
+    content: "Use the Messages app to send text. Tap the name of the person you want to talk to, type your message in the box below, and tap the Send button to send. SMS is free on most plans.",
     simulator: MessageSimulator,
     icon: "comment-dots",
     color: "#3B82F6",
     duration: "5 min",
   },
   {
-    title: "Pagbubukas ng Apps",
-    content: "Ang mga app ay mga programa sa iyong phone. I-tap ang icon nito sa Home Screen para buksan. Kapag tapos na, i-tap ang Home button o mag-swipe pataas para bumalik sa Home Screen.",
+    title: "Opening Apps",
+    content: "Apps are programs on your phone. Tap its icon on the Home Screen to open it. When you are done, tap the Home button or swipe up to return to the Home Screen.",
     simulator: AppSimulator,
     icon: "th",
     color: "#EC4899",
     duration: "4 min",
   },
   {
-    title: "Pagkonekta sa WiFi",
-    content: "Ang WiFi ay nagbibigay ng libreng internet kapag naka-konekta ka sa bahay o sa coffee shop. Pumunta sa Settings, i-tap ang WiFi, piliin ang iyong network, at i-enter ang password.",
+    title: "Connecting to WiFi",
+    content: "WiFi provides free internet when you are connected at home or at a coffee shop. Go to Settings, tap WiFi, select your network, and enter the password.",
     simulator: WiFiSimulator,
     icon: "wifi",
     color: "#14B8A6",
@@ -1252,10 +1254,6 @@ export default function SmartPhoneBasicsScreen() {
           <View style={{ width: 40 }} />
         </View>
         <Text style={mainStyles.headerTitle}>Matuto Gumamit ng{"\n"}Smartphone</Text>
-        <View style={mainStyles.progressBar}>
-          <View style={[mainStyles.progressFill, { width: `${(completedCount / lessons.length) * 100}%` }]} />
-        </View>
-        <Text style={mainStyles.progressLabel}>{completedCount}/{lessons.length} aralin na natapos</Text>
       </Animated.View>
 
       {/* Lesson List */}
@@ -1272,7 +1270,7 @@ export default function SmartPhoneBasicsScreen() {
             </View>
             <View style={mainStyles.cardBody}>
               <View style={mainStyles.cardTopRow}>
-                <Text style={mainStyles.cardNum}>Aralin {idx + 1}</Text>
+                <Text style={mainStyles.cardNum}>Lesson {idx + 1}</Text>
                 <View style={mainStyles.durationTag}>
                   <Icon name="clock" size={9} color="#94A3B8" />
                   <Text style={mainStyles.durationText}>{lesson.duration}</Text>
@@ -1283,7 +1281,7 @@ export default function SmartPhoneBasicsScreen() {
               <View style={mainStyles.cardStatus}>
                 <View style={[mainStyles.statusDot, { backgroundColor: completed[lesson.title] ? "#10B981" : "#38BDF8" }]} />
                 <Text style={[mainStyles.statusText, { color: completed[lesson.title] ? "#10B981" : "#94A3B8" }]}>
-                  {completed[lesson.title] ? "✓ Tapos na" : "Simulan ang aralin"}
+                  {completed[lesson.title] ? "✓ Completed" : "Start lesson"}
                 </Text>
               </View>
             </View>
@@ -1307,7 +1305,7 @@ export default function SmartPhoneBasicsScreen() {
                     </View>
                     <View style={{ flex: 1, marginLeft: 12 }}>
                       <Text style={modalStyles.lessonNum}>
-                        Aralin {lessons.findIndex(l => l.title === selectedLesson.title) + 1}
+                        Lesson {lessons.findIndex(l => l.title === selectedLesson.title) + 1}
                       </Text>
                       <Text style={modalStyles.lessonTitle} numberOfLines={2}>{selectedLesson.title}</Text>
                     </View>
@@ -1354,7 +1352,7 @@ export default function SmartPhoneBasicsScreen() {
                         {completed[selectedLesson.title] && (
                           <View style={modalStyles.completedTag}>
                             <Icon name="check" size={10} color="#fff" />
-                            <Text style={modalStyles.completedTagText}>Tapos na</Text>
+                            <Text style={modalStyles.completedTagText}>Completed</Text>
                           </View>
                         )}
                       </View>
@@ -2439,21 +2437,6 @@ const mainStyles = StyleSheet.create({
     fontSize: 13,
     color: "#64748B",
     marginBottom: 16,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: "#E2E8F0",
-    borderRadius: 2,
-    marginBottom: 6,
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#38BDF8",
-    borderRadius: 2,
-  },
-  progressLabel: {
-    fontSize: 11,
-    color: "#64748B",
   },
   listContainer: {
     paddingHorizontal: 20,

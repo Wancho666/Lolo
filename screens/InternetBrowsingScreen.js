@@ -11,30 +11,30 @@ const { width } = Dimensions.get("window");
 
 // ─── Tutorial modules ────────────────────────────────────────────────────────
 const TUTORIAL_MODULES = [
-  { id: 'basics',   title: 'Basic Internet Safety',  icon: 'shield-checkmark', description: 'Mga pangunahing kaligtasan sa internet' },
-  { id: 'browsing', title: 'Safe Browsing Tips',      icon: 'globe',            description: 'Paano mag-browse nang ligtas' },
-  { id: 'scams',    title: 'Avoiding Scams',          icon: 'warning',          description: 'Makilala at iwasan ang mga scam' },
-  { id: 'apps',     title: 'Common Apps Tutorial',    icon: 'apps',             description: 'Paano gamitin ang Facebook, YouTube at Messenger' },
+  { id: 'basics',   title: 'Basic Internet Safety',  icon: 'shield-checkmark', description: 'Internet safety essentials' },
+  { id: 'browsing', title: 'Safe Browsing Tips',      icon: 'globe',            description: 'How to browse safely' },
+  { id: 'scams',    title: 'Avoiding Scams',          icon: 'warning',          description: 'Identify and avoid scams' },
+  { id: 'apps',     title: 'Common Apps Tutorial',    icon: 'apps',             description: 'How to use Facebook, YouTube, and Messenger' },
 ];
 
 // ─── Safe browsing tips ───────────────────────────────────────────────────────
 const BROWSING_TIPS = [
   {
-    title: "Tingnan ang lock icon sa address bar",
-    description: "Kung may lock icon (🔒) sa address bar, ligtas ang website. Kung wala, mag-ingat at huwag ilagay ang inyong personal na impormasyon.",
-    example: "Tama: https://www.bpi.com.ph  ✅\nMali: http://fake-bpi.com  ❌",
+    title: "Check the lock icon in the address bar",
+    description: "If there is a lock icon (🔒) in the address bar, the website is safe. If not, be careful and do not enter your personal information.",
+    example: "Correct: https://www.bpi.com.ph  ✅\nIncorrect: http://fake-bpi.com  ❌",
     simulatorType: "url_compare",
   },
   {
-    title: "Gamitin ang search engine para mag-hanap",
-    description: "Huwag i-type ang address ng website nang direkta. I-search muna sa Google para mahanap ang tamang website at iwasan ang pekeng site.",
-    example: "I-search sa Google: Bank of the Philippine Islands",
+    title: "Use a search engine to find websites",
+    description: "Do not type the website address directly. Search Google first to find the correct website and avoid fake sites.",
+    example: "Search on Google: Bank of the Philippine Islands",
     simulatorType: "search",
   },
   {
-    title: "Magtanong sa pamilya kung hindi sigurado",
-    description: "Mas mabuti na magtanong kaysa magkamali. Ipakita sa inyong anak o apo ang hindi kilalang message o website.",
-    example: "Sabihin: 'Anak, tingnan mo ito – totoo ba?'",
+    title: "Ask your family if you are not sure",
+    description: "It is better to ask than to make a mistake. Show your child or grandchild the unknown message or website.",
+    example: "Say: 'Child, look at this - is it real?'",
     simulatorType: "family",
   },
 ];
@@ -43,29 +43,29 @@ const BROWSING_TIPS = [
 const SCAM_EXAMPLES = [
   {
     type: "Fake Prize SMS",
-    message: "CONGRATULATIONS! Nanalo ka ng P500,000! Txt CLAIM sa 2366 o click bit.ly/win500k",
-    warning: "SCAM ito! Walang libreng prize sa text. Huwag i-click ang link at huwag mag-reply. I-delete na lang ang message.",
+    message: "CONGRATULATIONS! You won P500,000! Text CLAIM to 2366 or click bit.ly/win500k",
+    warning: "This is a SCAM! There are no free prizes in texts. Do not click the link and do not reply. Just delete the message.",
     safe: false,
     simulatorType: "sms_scam",
   },
   {
     type: "Fake Bank Email",
     message: "FROM: security@bpi-bank.net\nYour account will be closed. Click here to verify your password.",
-    warning: "SCAM ito! Ang tunay na bangko ay hindi hihilingin ang inyong password sa email. Tumawag sa opisyal na hotline ng inyong bangko para mag-verify.",
+    warning: "This is a SCAM! Real banks will not ask for your password in an email. Call the official hotline of your bank to verify.",
     safe: false,
     simulatorType: "email_scam",
   },
   {
     type: "Fake Government Text",
-    message: "FROM: BIR Philippines\nMayroon kang unpaid taxes na P25,000. Bayaran na via GCash 09171234567.",
-    warning: "SCAM ito! Ang gobyerno ay hindi nangongolekta ng bayad sa pamamagitan ng text message o GCash sa ganitong paraan.",
+    message: "FROM: BIR Philippines\nYou have unpaid taxes of P25,000. Pay now via GCash 09171234567.",
+    warning: "This is a SCAM! The government does not collect payments through text messages or GCash in this way.",
     safe: false,
     simulatorType: "govt_scam",
   },
   {
-    type: "Ligitimong Government Website",
-    message: "Department of Health – www.doh.gov.ph\nSecure connection (https://) na may kumpleto na contact information.",
-    warning: "LIGITIMO ito! May lock icon, may https, at may kumpleto na contact details tulad ng telepono at opisyal na email.",
+    type: "Legitimate Government Website",
+    message: "Department of Health – www.doh.gov.ph\nSecure connection (https://) with complete contact information.",
+    warning: "This is LEGITIMATE! It has a lock icon, has https, and has complete contact details such as phone number and official email.",
     safe: true,
     simulatorType: "legit_website",
   },
@@ -75,55 +75,55 @@ const SCAM_EXAMPLES = [
 const SAFETY_RULES = {
   dos: [
     {
-      text: "Tingnan ang lock icon (🔒) sa address bar",
-      detail: "Nagpapakita na ligtas ang website na inyong binibisita. Huwag ilagay ang password o personal info kung walang lock.",
+      text: "Check the lock icon (🔒) in the address bar",
+      detail: "It shows that the website you are visiting is safe. Do not enter your password or personal information if there is no lock.",
       simulatorType: "lock_icon",
     },
     {
-      text: "Gamitin ang mga kilalang website",
-      detail: "Tulad ng Google, Facebook, at mga government websites na nagtatapos sa .gov.ph. Mas ligtas ang mga kilalang site.",
+      text: "Use well-known websites",
+      detail: "Such as Google, Facebook, and government websites that end in .gov.ph. Well-known sites are safer.",
       simulatorType: "known_website",
     },
     {
-      text: "Mag-logout pagkatapos gamitin",
-      detail: "Lalo na sa shared o public na computer. I-tap ang inyong pangalan o profile picture, pagkatapos hanapin ang 'Log Out' o 'Sign Out'.",
+      text: "Log out after using",
+      detail: "Especially on a shared or public computer. Tap your name or profile picture, then find 'Log Out' or 'Sign Out'.",
       simulatorType: "logout",
     },
     {
-      text: "Magtanong sa pamilya kung hindi sigurado",
-      detail: "Mas mabuti magtanong kaysa maging biktima ng scam. Ipakita ang kahina-hinalang message sa inyong anak o apo.",
+      text: "Ask your family if you are not sure",
+      detail: "It is better to ask than to become a victim of scams. Show the suspicious message to your child or grandchild.",
       simulatorType: "ask_family",
     },
     {
-      text: "Gamitin ang mahirap hulaan na password",
-      detail: "Huwag gamitin ang inyong pangalan, birthday, o '123456' bilang password. Gumamit ng halo ng letra, numero, at simbolo.",
+      text: "Use a hard to guess password",
+      detail: "Use a hard to guess password. Do not use your name, birthday, or '123456' as a password. Use a mix of letters, numbers, and symbols.",
       simulatorType: "strong_password",
     },
   ],
   donts: [
     {
-      text: "Huwag mag-click sa hindi kilalang links",
-      detail: "Lalo na sa email o text na hindi kilala ang nagpadala. Ang mga link na ito ay maaaring magdala sa pekeng website para magnakaw ng inyong impormasyon.",
+      text: "Do not click on unknown links",
+      detail: "Especially in emails or texts from unknown senders. These links can take you to fake websites to steal your information.",
       simulatorType: "unknown_link",
     },
     {
-      text: "Huwag magbigay ng personal info sa tawag",
-      detail: "Ang tunay na bangko ay hindi tatawag para humingi ng password, OTP, o account number. Ibaba ang tawag at tumawag sa opisyal na hotline.",
+      text: "Do not give personal information on calls",
+      detail: "Real banks will not call to ask for your password, OTP, or account number. Hang up and call the official hotline.",
       simulatorType: "phone_call",
     },
     {
-      text: "Huwag maniwala sa 'Nanalo Ka' na mensahe",
-      detail: "Scam yan. Walang libreng pera o premyo sa internet na walang pinagbasehan. I-delete agad ang ganitong mensahe.",
+      text: "Do not believe 'You Won' messages",
+      detail: "That is a scam. There is no free money or prize on the internet without a reason. Delete such messages immediately.",
       simulatorType: "prize_scam",
     },
     {
-      text: "Huwag mag-share ng password",
-      detail: "Huwag ibigay ang password sa kahit sino – kahit pa sabihing mula sa bangko o gobyerno. Ang inyong password ay para sa inyo lamang.",
+      text: "Do not share your password",
+      detail: "Do not give your password to anyone – even if they say they are from a bank or government. Your password is only for you.",
       simulatorType: "password_sharing",
     },
     {
-      text: "Huwag mag-click sa pop-up ads",
-      detail: "Ang mga pop-up na nagsasabing 'May virus ka!' o 'Nanalo ka!' ay scam din. I-close ang window at huwag i-click ang kahit anong button sa loob nito.",
+      text: "Do not click on pop-up ads",
+      detail: "Pop-ups that say 'You have a virus!' or 'You won!' are also scams. Close the window and do not click any button inside.",
       simulatorType: "popup",
     },
   ],
@@ -136,31 +136,31 @@ const COMMON_APPS = [
     name: 'Facebook',
     icon: 'logo-facebook',
     color: '#1877F2',
-    description: 'Para sa pakikipag-ugnayan sa mga kaibigan at pamilya.',
+    description: 'For communicating with friends and family.',
     steps: [
       {
         title: 'News Feed',
-        detail: 'Ito ang unang makikita ninyo pagbukas ng Facebook. Dito makikita ang mga post ng inyong mga kaibigan at pamilya.',
+        detail: 'This is the first thing you will see when you open Facebook. Here you will see posts from your friends and family.',
         highlight: 'newsfeed',
       },
       {
-        title: 'Pag-like ng Post',
-        detail: "I-tap ang 'Like' button (thumbs up) sa ibaba ng post para ipakita na nagustuhan ninyo ito.",
+        title: 'Liking a Post',
+        detail: "Tap the 'Like' button (thumbs up) below the post to show that you liked it.",
         highlight: 'like',
       },
       {
-        title: 'Pag-comment',
-        detail: "I-tap ang 'Comment' para mag-iwan ng mensahe sa post ng inyong kaibigan.",
+        title: 'Commenting',
+        detail: "Tap 'Comment' to leave a message on your friend's post.",
         highlight: 'comment',
       },
       {
-        title: 'Pag-share ng Post',
-        detail: "I-tap ang 'Share' para ipabahagi ang post sa inyong mga kaibigan.",
+        title: 'Sharing a Post',
+        detail: "Tap 'Share' to share the post with your friends.",
         highlight: 'share',
       },
       {
         title: 'Messenger Icon',
-        detail: 'I-tap ang chat bubble icon sa itaas para buksan ang Messenger at makausap ang inyong mga kamag-anak.',
+        detail: 'Tap the chat bubble icon at the top to open Messenger and chat with your family.',
         highlight: 'messenger',
       },
     ],
@@ -171,31 +171,31 @@ const COMMON_APPS = [
     name: 'YouTube',
     icon: 'logo-youtube',
     color: '#FF0000',
-    description: 'Para sa panunuod ng mga video, balita, at tutorial.',
+    description: 'For watching videos, news, and tutorials.',
     steps: [
       {
         title: 'Home Feed',
-        detail: 'Makikita ninyo ang mga video na inirerekomenda para sa inyo base sa inyong mga napanood na video dati.',
+        detail: 'You will see videos that are recommended for you based on videos you have watched before.',
         highlight: 'home',
       },
       {
-        title: 'Mag-search ng Video',
-        detail: 'I-tap ang magnifying glass icon sa itaas at i-type ang gusto ninyong panoorin, halimbawa: "paano magluto ng sinigang".',
+        title: 'Search for a Video',
+        detail: 'Tap the magnifying glass icon at the top and type what you want to watch, for example: "how to cook sinigang".',
         highlight: 'search',
       },
       {
-        title: 'I-play ang Video',
-        detail: 'I-tap ang video para i-play ito. I-tap ulit ang screen para mapakita ang play at pause buttons sa gitna.',
+        title: 'Play the Video',
+        detail: 'Tap the video to play it. Tap the screen again to show the play and pause buttons in the middle.',
         highlight: 'play',
       },
       {
-        title: 'I-adjust ang Volume',
-        detail: 'I-slide ang volume bar sa screen o gamitin ang side buttons ng inyong telepono para palakasan o pabababain ang tunog.',
+        title: 'Adjust Volume',
+        detail: 'Slide the volume bar on the screen or use the side buttons of your phone to turn the volume up or down.',
         highlight: 'volume',
       },
       {
-        title: 'Bumalik sa Home',
-        detail: 'I-tap ang Home icon sa ibaba ng screen para bumalik sa listahan ng mga video.',
+        title: 'Return to Home',
+        detail: 'Tap the Home icon at the bottom of the screen to return to the list of videos.',
         highlight: 'navhome',
       },
     ],
@@ -206,31 +206,31 @@ const COMMON_APPS = [
     name: 'Messenger',
     icon: 'chatbubble-ellipses',
     color: '#0084FF',
-    description: 'Para sa pagpapadala ng mensahe at pagtawag sa pamilya.',
+    description: 'For sending messages and calling family.',
     steps: [
       {
-        title: 'Listahan ng Chats',
-        detail: 'Makikita ninyo ang lahat ng inyong mga usapan. I-tap ang pangalan ng tao para buksan ang inyong chat sa kanya.',
+        title: 'Chat List',
+        detail: 'You will see all your conversations. Tap the name of a person to open your chat with them.',
         highlight: 'chatlist',
       },
       {
-        title: 'Mag-type ng Mensahe',
-        detail: "I-tap ang text box sa ibaba at i-type ang inyong mensahe gamit ang keyboard. I-tap ang send button (arrow) para ipadala.",
+        title: 'Type a Message',
+        detail: "Tap the text box at the bottom and type your message using the keyboard. Tap the send button (arrow) to send it.",
         highlight: 'typemsg',
       },
       {
-        title: 'Mag-video Call',
-        detail: 'I-tap ang video camera icon sa kanang sulok sa itaas ng chat para mag-video call at makita ang inyong kausap.',
+        title: 'Make a Video Call',
+        detail: 'Tap the video camera icon at the right corner at the top of the chat to make a video call and see the person you are talking to.',
         highlight: 'videocall',
       },
       {
-        title: 'Mag-voice Call',
-        detail: 'I-tap ang phone icon para mag-regular na voice call kung ayaw ninyong makita ang camera.',
+        title: 'Make a Voice Call',
+        detail: 'Tap the phone icon to make a regular voice call if you do not want to use the camera.',
         highlight: 'voicecall',
       },
       {
-        title: 'Mag-send ng Larawan',
-        detail: 'I-tap ang camera icon o gallery icon sa tabi ng text box para pumili ng litrato mula sa inyong telepono at i-send.',
+        title: 'Send a Photo',
+        detail: 'Tap the camera icon or gallery icon next to the text box to choose a photo from your phone and send it.',
         highlight: 'sendphoto',
       },
     ],
@@ -253,10 +253,10 @@ export default function InternetBrowsingScreen({ navigation }) {
     setCurrentlyNarrating(buttonId);
     try {
       await Speech.speak(text, {
-        language: 'fil-PH', pitch: 1.0, rate: 0.55,
+        language: 'en-US', pitch: 1.0, rate: 0.55,
         onDone:    () => setCurrentlyNarrating(null),
         onStopped: () => setCurrentlyNarrating(null),
-        onError:   () => { setCurrentlyNarrating(null); Alert.alert('Audio Error', 'Hindi ma-play ang audio. Subukan ulit.'); },
+        onError:   () => { setCurrentlyNarrating(null); Alert.alert('Audio Error', 'Could not play audio. Please try again.'); },
       });
     } catch { setCurrentlyNarrating(null); }
   };
@@ -314,7 +314,7 @@ export default function InternetBrowsingScreen({ navigation }) {
         danger && styles.dangerSimulatorText,
         appColor && { color: appColor },
       ]}>
-        Tingnan sa Screen
+        See on Screen
       </Text>
     </TouchableOpacity>
   );
@@ -409,11 +409,11 @@ export default function InternetBrowsingScreen({ navigation }) {
               <Text style={[styles.addrText, { color: '#059669' }]}>https://www.bpi.com.ph</Text>
             </View>
           }>
-            <Text style={styles.simSectionTitle}>Pagkakaiba ng Ligtas at Mapanganib na Website</Text>
+            <Text style={styles.simSectionTitle}>Difference between Safe and Unsafe Websites</Text>
             <View style={[styles.compareBlock, { borderColor: '#059669', backgroundColor: 'rgba(5,150,105,0.06)' }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                 <Ionicons name="lock-closed" size={16} color="#059669" />
-                <Text style={[styles.compareLabel, { color: '#059669' }]}>LIGTAS – May lock at https://</Text>
+                <Text style={[styles.compareLabel, { color: '#059669' }]}>SAFE – Has lock and https://</Text>
               </View>
               <Text style={styles.correctUrl}>https://www.bpi.com.ph</Text>
               <Text style={styles.correctUrl}>https://www.facebook.com</Text>
@@ -421,14 +421,14 @@ export default function InternetBrowsingScreen({ navigation }) {
             <View style={[styles.compareBlock, { borderColor: '#DC2626', backgroundColor: 'rgba(220,38,38,0.06)', marginTop: 10 }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                 <Ionicons name="warning" size={16} color="#DC2626" />
-                <Text style={[styles.compareLabel, { color: '#DC2626' }]}>MAPANGANIB – Walang lock, http lang</Text>
+                <Text style={[styles.compareLabel, { color: '#DC2626' }]}>UNSAFE – No lock, only http</Text>
               </View>
               <Text style={styles.wrongUrl}>http://fake-bpi.com</Text>
               <Text style={styles.wrongUrl}>http://faceb00k-login.net</Text>
             </View>
             <View style={[styles.warningBubble, styles.safeBubble, { marginTop: 12 }]}>
               <Ionicons name="checkmark-circle" size={18} color="#059669" />
-              <Text style={[styles.warningText, styles.safeText]}>Laging hanapin ang 🔒 at "https://" bago ilagay ang password o personal na impormasyon.</Text>
+              <Text style={[styles.warningText, styles.safeText]}>Always look for 🔒 and "https://" before entering a password or personal information.</Text>
             </View>
           </PhoneShell>
         );
@@ -442,11 +442,11 @@ export default function InternetBrowsingScreen({ navigation }) {
               <Text style={[styles.addrText, { color: '#059669' }]}>https://www.bpi.com.ph</Text>
             </View>
           }>
-            <Text style={styles.simSectionTitle}>Paano Maghanap ng Lock Icon</Text>
+            <Text style={styles.simSectionTitle}>How to Find the Lock Icon</Text>
             <View style={styles.instructionCard}>
               <View style={styles.instructionStep}>
                 <View style={styles.stepNum}><Text style={styles.stepNumTxt}>1</Text></View>
-                <Text style={styles.stepTxt}>Tingnan ang address bar sa tuktok ng browser</Text>
+                <Text style={styles.stepTxt}>Check the address bar at the top of the browser</Text>
               </View>
               <View style={styles.instructionStep}>
                 <View style={styles.stepNum}><Text style={styles.stepNumTxt}>2</Text></View>
@@ -454,7 +454,7 @@ export default function InternetBrowsingScreen({ navigation }) {
               </View>
               <View style={styles.instructionStep}>
                 <View style={styles.stepNum}><Text style={styles.stepNumTxt}>3</Text></View>
-                <Text style={styles.stepTxt}>Tingnan kung nagsisimula ang address sa "https://"</Text>
+                <Text style={styles.stepTxt}>Check if the address starts with "https://"</Text>
               </View>
             </View>
             <View style={[styles.addrBarRow, styles.unsecureBar, { marginTop: 12 }]}>
@@ -462,7 +462,7 @@ export default function InternetBrowsingScreen({ navigation }) {
               <Text style={[styles.addrText, { color: '#DC2626' }]}>http://mapanganib-site.com</Text>
             </View>
             <Text style={{ fontSize: 12, color: '#DC2626', fontWeight: '600', marginTop: 4, marginLeft: 4 }}>
-              Walang lock = huwag ilagay ang personal info dito
+              Walang lock = Do not enter personal information here
             </Text>
             <View style={[styles.warningBubble, styles.safeBubble, { marginTop: 10 }]}>
               <Ionicons name="checkmark-circle" size={18} color="#059669" />
@@ -480,7 +480,7 @@ export default function InternetBrowsingScreen({ navigation }) {
               <Text style={styles.searchInputText}>philhealth.gov.ph</Text>
             </View>
           }>
-            <Text style={styles.simSectionTitle}>Mga Ligtas na Website</Text>
+            <Text style={styles.simSectionTitle}>Safe Websites</Text>
             {[
               { name: 'Google', url: 'https://www.google.com', icon: 'search', color: '#4285F4' },
               { name: 'Facebook', url: 'https://www.facebook.com', icon: 'logo-facebook', color: '#1877F2' },
@@ -520,20 +520,20 @@ export default function InternetBrowsingScreen({ navigation }) {
                 <Ionicons name="lock-closed" size={12} color="#059669" />
                 <Text style={styles.srUrl}>https://www.bpi.com.ph</Text>
               </View>
-              <Text style={styles.srTitle}>BPI – Bank of the Philippine Islands (Opisyal)</Text>
-              <Text style={styles.srDesc}>Ligtas na gamitin – Opisyal na website ng BPI</Text>
+              <Text style={styles.srTitle}>BPI – Bank of the Philippine Islands (Official)</Text>
+              <Text style={styles.srDesc}>Safe to use – Official website of BPI</Text>
             </View>
             <View style={[styles.searchResult, { borderLeftColor: '#DC2626', backgroundColor: 'rgba(220,38,38,0.05)', marginTop: 8 }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
                 <Ionicons name="warning" size={12} color="#DC2626" />
                 <Text style={[styles.srUrl, { color: '#DC2626' }]}>http://bpi-login-verify.net</Text>
               </View>
-              <Text style={[styles.srTitle, { color: '#DC2626' }]}>BPI Login Verification (PEKENG SITE)</Text>
-              <Text style={[styles.srDesc, { color: '#DC2626' }]}>Huwag gamitin – Hindi ito ang tunay na BPI</Text>
+              <Text style={[styles.srTitle, { color: '#DC2626' }]}>BPI Login Verification (FAKE SITE)</Text>
+              <Text style={[styles.srDesc, { color: '#DC2626' }]}>Do not use – This is not the real BPI</Text>
             </View>
             <View style={[styles.warningBubble, styles.safeBubble, { marginTop: 10 }]}>
               <Ionicons name="checkmark-circle" size={18} color="#059669" />
-              <Text style={[styles.warningText, styles.safeText]}>Palaging i-search ang bangko o ahensya sa Google. Piliin ang unang resulta na may https:// at opisyal na pangalan.</Text>
+              <Text style={[styles.warningText, styles.safeText]}>Always search for the bank or agency on Google. Choose the first result with https:// and official name.</Text>
             </View>
           </PhoneShell>
         );
@@ -543,22 +543,22 @@ export default function InternetBrowsingScreen({ navigation }) {
       case 'ask_family':
         return (
           <PhoneShell header={<View style={styles.smsAppBar}><Text style={styles.appBarTitle}>Messages</Text></View>}>
-            <Text style={styles.simSectionTitle}>Magpadala ng Mensahe sa Pamilya</Text>
+            <Text style={styles.simSectionTitle}>Sending a Message to Family</Text>
             <View style={[styles.bubble, { backgroundColor: '#E5E5EA', alignSelf: 'flex-start', marginBottom: 8 }]}>
-              <Text style={styles.bubbleSender}>Kayo (Lolo/Lola)</Text>
-              <Text style={styles.bubbleText}>Anak, may natanggap akong mensahe. Totoo ba ito?{'\n\n'}"Nanalo ka ng P500,000! Click dito para i-claim."</Text>
+              <Text style={styles.bubbleSender}>You (Lolo/Lola)</Text>
+              <Text style={styles.bubbleText}>Child, I received a message. Is it real?{'\n\n'}"You won P500,000! Click here to claim."</Text>
             </View>
             <View style={[styles.bubble, { backgroundColor: '#DCF8C6', alignSelf: 'flex-end', marginBottom: 8 }]}>
-              <Text style={[styles.bubbleSender, { textAlign: 'right' }]}>Inyong Anak</Text>
-              <Text style={styles.bubbleText}>Scam po iyan! Huwag po i-click. I-delete na lang. Palagi po kayong magpadala sa akin bago mag-click ng anumang link.</Text>
+              <Text style={[styles.bubbleSender, { textAlign: 'right' }]}>Your Child</Text>
+              <Text style={styles.bubbleText}>That is a scam! Do not click. Just delete. Always ask me before clicking any link.</Text>
             </View>
             <View style={[styles.bubble, { backgroundColor: '#E5E5EA', alignSelf: 'flex-start' }]}>
-              <Text style={styles.bubbleSender}>Kayo</Text>
-              <Text style={styles.bubbleText}>Salamat anak! Dine-delete ko na.</Text>
+              <Text style={styles.bubbleSender}>You</Text>
+              <Text style={styles.bubbleText}>Thank you child! I am deleting it now.</Text>
             </View>
             <View style={[styles.warningBubble, styles.safeBubble, { marginTop: 10 }]}>
               <Ionicons name="checkmark-circle" size={18} color="#059669" />
-              <Text style={[styles.warningText, styles.safeText]}>Huwag mahiyang magtanong sa inyong pamilya. Mas mabuting magtanong kaysa maging biktima ng scam.</Text>
+              <Text style={[styles.warningText, styles.safeText]}>Do not be shy to ask your family. It is better to ask than to become a victim of scams.</Text>
             </View>
           </PhoneShell>
         );
@@ -567,19 +567,19 @@ export default function InternetBrowsingScreen({ navigation }) {
       case 'logout':
         return (
           <PhoneShell header={<View style={[styles.appBarSolid, { backgroundColor: '#1877F2' }]}><Text style={styles.appBarTitle}>Facebook</Text></View>}>
-            <Text style={styles.simSectionTitle}>Paano Mag-logout sa Facebook</Text>
+            <Text style={styles.simSectionTitle}>How to Log Out from Facebook</Text>
             <View style={styles.instructionCard}>
               <View style={styles.instructionStep}>
                 <View style={styles.stepNum}><Text style={styles.stepNumTxt}>1</Text></View>
-                <Text style={styles.stepTxt}>I-tap ang tatlong linya (menu) sa kanang sulok sa itaas</Text>
+                <Text style={styles.stepTxt}>Tap the three lines (menu) at the right corner at the top</Text>
               </View>
               <View style={styles.instructionStep}>
                 <View style={styles.stepNum}><Text style={styles.stepNumTxt}>2</Text></View>
-                <Text style={styles.stepTxt}>Mag-scroll pababa hanggang makita ang "Log Out"</Text>
+                <Text style={styles.stepTxt}>Scroll down until you see "Log Out"</Text>
               </View>
               <View style={styles.instructionStep}>
                 <View style={styles.stepNum}><Text style={styles.stepNumTxt}>3</Text></View>
-                <Text style={styles.stepTxt}>I-tap ang "Log Out" para ligtas na lumabas</Text>
+                <Text style={styles.stepTxt}>Tap "Log Out" to safely exit</Text>
               </View>
             </View>
             <TouchableOpacity style={styles.logoutBtn}>
@@ -588,7 +588,7 @@ export default function InternetBrowsingScreen({ navigation }) {
             </TouchableOpacity>
             <View style={[styles.warningBubble, styles.safeBubble, { marginTop: 12 }]}>
               <Ionicons name="checkmark-circle" size={18} color="#059669" />
-              <Text style={[styles.warningText, styles.safeText]}>Lalo na sa shared o public na computer, laging mag-logout pagkatapos gamitin ang Facebook, email, o anumang account.</Text>
+              <Text style={[styles.warningText, styles.safeText]}>Especially on a shared or public computer, always log out after using Facebook, email, or any account.</Text>
             </View>
           </PhoneShell>
         );
@@ -612,7 +612,7 @@ export default function InternetBrowsingScreen({ navigation }) {
             </View>
             <View style={[styles.warningBubble, styles.safeBubble, { marginTop: 10 }]}>
               <Ionicons name="checkmark-circle" size={18} color="#059669" />
-              <Text style={[styles.warningText, styles.safeText]}>Huwag gamitin ang inyong pangalan, birthday, o simpleng numero bilang password. Gumamit ng halo ng malalaking letra, maliliit na letra, numero, at simbolo.</Text>
+              <Text style={[styles.warningText, styles.safeText]}>Do not use your name, birthday, or simple numbers as a password. Use a mix of uppercase letters, lowercase letters, numbers, and symbols.</Text>
             </View>
           </PhoneShell>
         );
@@ -621,24 +621,24 @@ export default function InternetBrowsingScreen({ navigation }) {
       case 'unknown_link':
         return (
           <PhoneShell header={<View style={[styles.appBarSolid, { backgroundColor: '#1976D2' }]}><Text style={styles.appBarTitle}>Email</Text></View>}>
-            <Text style={styles.simSectionTitle}>Halimbawa ng Mapanganib na Email</Text>
+            <Text style={styles.simSectionTitle}>Example of a Dangerous Email</Text>
             <View style={styles.dangerEmailMsg}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 }}>
                 <Ionicons name="warning" size={14} color="#DC2626" />
-                <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '700' }}>HINDI KILALANG NAGPADALA</Text>
+                <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '700' }}>UNKNOWN SENDER</Text>
               </View>
-              <Text style={styles.emailTxt}>FROM: noreply@suspicious-prize.xyz{'\n'}SUBJECT: URGENT – I-verify ang inyong account ngayon!</Text>
+              <Text style={styles.emailTxt}>FROM: noreply@suspicious-prize.xyz{'\n'}SUBJECT: URGENT – Verify your account now!</Text>
               <Text style={[styles.emailTxt, { marginTop: 8, lineHeight: 18 }]}>
-                Mahal na Customer,{'\n'}Ang inyong account ay mase-suspend. I-click ang link sa ibaba para ma-verify kaagad.
+                Dear Customer,{'\n'}Your account will be suspended. Click the link below to verify immediately.
               </Text>
               <View style={styles.dangerLinkBox}>
-                <Text style={styles.dangerLinkTxt}>I-CLICK DITO NGAYON</Text>
+                <Text style={styles.dangerLinkTxt}>CLICK HERE NOW</Text>
                 <Text style={{ color: '#ffcccc', fontSize: 10, textAlign: 'center', marginTop: 2 }}>bit.ly/account-verify-fake</Text>
               </View>
             </View>
             <View style={styles.warningBubble}>
               <Ionicons name="warning" size={18} color="#DC2626" />
-              <Text style={styles.warningText}>HUWAG I-CLICK! Ang email mula sa hindi kilalang address na may link ay scam. I-delete agad. Ang tunay na bangko ay hindi nagpapadala ng ganitong email.</Text>
+              <Text style={styles.warningText}>DO NOT CLICK! Email from unknown addresses with links is a scam. Delete immediately. Real banks do not send such emails.</Text>
             </View>
           </PhoneShell>
         );
@@ -649,19 +649,19 @@ export default function InternetBrowsingScreen({ navigation }) {
           <PhoneShell header={null}>
             <View style={styles.callScreen}>
               <View style={styles.callerAvatar}><Ionicons name="call" size={28} color="#DC2626" /></View>
-              <Text style={styles.callerName}>Hindi Kilalang Tawag</Text>
+              <Text style={styles.callerName}>Unknown Call</Text>
               <Text style={styles.callerNum}>+63-2-FAKE-NUM</Text>
               <View style={[styles.callQuote, { borderColor: '#DC2626', borderWidth: 1.5 }]}>
-                <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '700', marginBottom: 4 }}>SINASABI NG SCAMMER:</Text>
-                <Text style={styles.callQtxt}>"Ito ang BPI. May problema ang inyong account. Ibigay po ang inyong password at OTP ngayon para ma-fix."</Text>
+                <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '700', marginBottom: 4 }}>SCAMMER SAYS:</Text>
+                <Text style={styles.callQtxt}>"This is BPI. Your account has a problem. Give us your password and OTP now to fix it."</Text>
               </View>
               <View style={[styles.warningBubble, { marginTop: 8 }]}>
                 <Ionicons name="warning" size={18} color="#DC2626" />
-                <Text style={styles.warningText}>HUWAG MAGBIGAY! Ang tunay na bangko ay HINDI tatawag para humingi ng password o OTP. Ibaba ang tawag at tumawag sa opisyal na hotline ng inyong bangko.</Text>
+                <Text style={styles.warningText}>DO NOT GIVE! Real banks WILL NOT call to ask for your password or OTP. Hang up and call the official hotline of your bank.</Text>
               </View>
               <TouchableOpacity style={styles.declineBtn}>
                 <Ionicons name="call" size={22} color="#fff" style={{ transform: [{ rotate: '135deg' }] }} />
-                <Text style={styles.declineTxt}>I-Decline</Text>
+                <Text style={styles.declineTxt}>Decline</Text>
               </TouchableOpacity>
             </View>
           </PhoneShell>
@@ -694,7 +694,7 @@ export default function InternetBrowsingScreen({ navigation }) {
             </View>
             <View style={styles.warningBubble}>
               <Ionicons name="warning" size={18} color="#DC2626" />
-              <Text style={styles.warningText}>HUWAG MAG-REPLY! Ang tunay na bangko ay HINDI KAILANMAN hihilingin ang inyong password o OTP sa text. I-delete at i-report ang ganitong mensahe.</Text>
+              <Text style={styles.warningText}>DO NOT REPLY! Real banks WILL NEVER ask for your password or OTP via text. Delete and report such messages.</Text>
             </View>
           </PhoneShell>
         );
@@ -709,12 +709,12 @@ export default function InternetBrowsingScreen({ navigation }) {
               <Text style={styles.popupTitle}>VIRUS DETECTED!</Text>
               <Text style={styles.popupTxt}>Nahanap ang 5 virus sa inyong telepono!{'\n'}I-click dito para alisin NGAYON bago masira ang inyong telepono!</Text>
               <TouchableOpacity style={styles.popupBtn}>
-                <Text style={styles.popupBtnTxt}>I-AYOS NA (HUWAG ITONG I-CLICK)</Text>
+                <Text style={styles.popupBtnTxt}>FIX NOW (DO NOT CLICK THIS)</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.warningBubble}>
               <Ionicons name="warning" size={18} color="#DC2626" />
-              <Text style={styles.warningText}>SCAM ITO! Walang website ang makakalam kung may virus ang inyong telepono. Huwag i-click – ISARA ang browser at huwag ilagay ang kahit anong impormasyon.</Text>
+              <Text style={styles.warningText}>THIS IS A SCAM! No website can detect viruses on your phone. Do not click – CLOSE the browser and do not enter any information.</Text>
             </View>
           </PhoneShell>
         );
@@ -757,7 +757,7 @@ export default function InternetBrowsingScreen({ navigation }) {
               </View>
               <Text style={styles.emailTxt}>{data.message}</Text>
               <View style={styles.dangerLinkBox}>
-                <Text style={styles.dangerLinkTxt}>Verify Account – HUWAG I-CLICK</Text>
+                <Text style={styles.dangerLinkTxt}>Verify Account – DO NOT CLICK</Text>
               </View>
             </View>
             <View style={styles.warningBubble}>
@@ -1198,7 +1198,7 @@ export default function InternetBrowsingScreen({ navigation }) {
               badgeIcon="shield-checkmark"
               badgeText="Module"
             />
-            <ReadBtn id="basics-main" text="Ang basic internet safety ay ang pag-alam kung paano protektahan ang inyong sarili sa internet. Matutuhan natin ang mga dapat at hindi dapat gawin para manatiling ligtas." />
+            <ReadBtn id="basics-main" text="Basic internet safety is knowing how to protect yourself on the internet. Let us learn what to do and what not to do to stay safe." />
 
             <Text style={styles.sectionLabel}>MGA DAPAT GAWIN</Text>
             {SAFETY_RULES.dos.map((r, i) => (
@@ -1214,7 +1214,7 @@ export default function InternetBrowsingScreen({ navigation }) {
               </View>
             ))}
 
-            <Text style={[styles.sectionLabel, { color: '#DC2626' }]}>MGA HUWAG GAWIN</Text>
+            <Text style={[styles.sectionLabel, { color: '#DC2626' }]}>DO NOT DO</Text>
             {SAFETY_RULES.donts.map((r, i) => (
               <View key={i} style={[styles.ruleCard, { borderLeftColor: '#DC2626', marginBottom: 12 }]}>
                 <TouchableOpacity style={styles.ruleInner} onPress={() => narrate(`${r.text}. ${r.detail}`, `dont-${i}`)}>
@@ -1248,7 +1248,7 @@ export default function InternetBrowsingScreen({ navigation }) {
               badgeIcon="globe"
               badgeText="Browsing"
             />
-            <ReadBtn id="browsing-main" text="Matutuhan natin ang tatlong simpleng paraan para mag-browse nang ligtas sa internet. Laging tingnan ang lock icon, gamitin ang search engine, at huwag mahiyang magtanong sa pamilya." />
+            <ReadBtn id="browsing-main" text="Let us learn three simple ways to browse the internet safely. Always check the lock icon, use a search engine, and do not be shy to ask your family." />
             {BROWSING_TIPS.map((t, i) => (
               <View key={i} style={styles.tipCard}>
                 <TouchableOpacity style={styles.listenIconCorner} onPress={() => narrate(`${t.title}. ${t.description}`, `tip-${i}`)}>
@@ -1283,7 +1283,7 @@ export default function InternetBrowsingScreen({ navigation }) {
               badgeIcon="warning"
               badgeText="Scam"
             />
-            <ReadBtn id="scams-main" text="Maraming uri ng scam sa internet. Matutuhan natin kung paano sila makilala para hindi kayo maging biktima. Ang mga scammer ay nagpapanggap na bangko, gobyerno, o nagbibigay ng pekeng premyo." />
+            <ReadBtn id="scams-main" text="There are many kinds of scams on the internet. Let us learn how to identify them so you do not become a victim. Scammers pretend to be banks, governments, or offer fake prizes." />
             {SCAM_EXAMPLES.map((s, i) => (
               <View key={i} style={[styles.scamCard, s.safe ? styles.safeCard : styles.dangerCard, { marginBottom: 16 }]}> 
                 <TouchableOpacity style={styles.listenIconCorner} onPress={() => narrate(`${s.type}. ${s.message}. ${s.warning}`, `scam-${i}`)}>

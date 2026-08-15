@@ -11,7 +11,6 @@ import {
   Platform,
   Linking,
 } from "react-native";
-import * as Speech from "expo-speech";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -527,46 +526,17 @@ export default function EGovScreen({ navigation }) {
   const [currentModule, setCurrentModule] = useState("menu");
   const [showSimulator, setShowSimulator] = useState(false);
   const [simulatorData, setSimulatorData] = useState(null);
-  const [currentlyNarrating, setCurrentlyNarrating] = useState(null);
-
   const GRADIENT = ["#F0F9FF", "#E0F2FE", "#BAE6FD", "#7DD3FC", "#38BDF8", "#0EA5E9"];
 
-  // ── TTS ──────────────────────────────────────
-  const narrate = async (text, buttonId) => {
-    if (currentlyNarrating === buttonId) { stopNarration(); return; }
-    if (currentlyNarrating) await stopNarration();
-    setCurrentlyNarrating(buttonId);
-    try {
-      await Speech.speak(text, {
-        language: "fil-PH",
-        pitch: 1.0,
-        rate: 0.6,
-        onDone: () => setCurrentlyNarrating(null),
-        onStopped: () => setCurrentlyNarrating(null),
-        onError: () => { setCurrentlyNarrating(null); Alert.alert("Audio Error", "Hindi ma-play ang audio. Subukan ulit."); },
-      });
-    } catch { setCurrentlyNarrating(null); }
-  };
-
-  const stopNarration = async () => {
-    try { await Speech.stop(); } catch {}
-    setCurrentlyNarrating(null);
-  };
-
-  const isNarrating = (id) => currentlyNarrating === id;
-
   const goBack = () => {
-    stopNarration();
     if (showSimulator) { setShowSimulator(false); setSimulatorData(null); }
     else if (currentModule === "menu") { navigation.goBack(); }
     else { setCurrentModule("menu"); }
   };
 
-  const goToModule = (id) => { stopNarration(); setCurrentModule(id); };
+  const goToModule = (id) => { setCurrentModule(id); };
 
   const openSimulator = (type, data) => { setSimulatorData({ type, data }); setShowSimulator(true); };
-
-  useEffect(() => () => stopNarration(), []);
 
   // ─────────────────────────────────────────────
   // SHARED UI COMPONENTS
@@ -584,13 +554,6 @@ export default function EGovScreen({ navigation }) {
         </TouchableOpacity>
       </View>
     </SafeAreaView>
-  );
-
-  const ReadBtn = ({ text, id }) => (
-    <TouchableOpacity style={[s.audioBtn, isNarrating(id) && s.speakingBtn]} onPress={() => narrate(text, id)}>
-      <Ionicons name={isNarrating(id) ? "stop" : "volume-high"} size={20} color={isNarrating(id) ? "#fff" : "#38BDF8"} />
-      <Text style={[s.audioBtnText, isNarrating(id) && s.audioBtnTextActive]}>{isNarrating(id) ? "Tumutugtog..." : "Basahin"}</Text>
-    </TouchableOpacity>
   );
 
   const SimBtn = ({ type, data, danger }) => (
@@ -1089,7 +1052,6 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>IDs at Rehistrasyon</Text>
-          <ReadBtn text="Ang IDs at Rehistrasyon ay ang unang hakbang para ma-access ang lahat ng senior citizen benefits sa Cabanatuan City, Nueva Ecija. Matutuhan natin ang OSCA ID mula sa Cabanatuan City Hall, PhilSys National ID, at Digital Senior Citizens ID." id="ids-main"/>
         </View>
         {IDS_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
@@ -1112,10 +1074,6 @@ export default function EGovScreen({ navigation }) {
               <Text style={[s.requirementText, {color: item.color}]}>Para sa: {item.requirement}</Text>
             </View>
             <View style={s.cardActions}>
-              <TouchableOpacity style={s.listenBtn} onPress={()=>narrate(`${item.title}. ${item.description}`, `ids-${i}`)}>
-                <Ionicons name={isNarrating(`ids-${i}`)?"stop":"play"} size={16} color="#38BDF8"/>
-                <Text style={s.listenBtnText}>{isNarrating(`ids-${i}`)?"Tumutugtog...":"Basahin"}</Text>
-              </TouchableOpacity>
               {item.simulatorType && <SimBtn type={item.simulatorType} data={item}/>}
             </View>
           </View>
@@ -1132,7 +1090,6 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>Mga Benepisyo at Diskwento</Text>
-          <ReadBtn text="Bilang senior citizen ng Cabanatuan City, Nueva Ecija, marami kayong karapatan sa ilalim ng Batas RA 9994 o Expanded Senior Citizens Act. Matutuhan natin ang lahat ng mga benepisyo na dapat ninyong matanggap sa lahat ng establisyimento sa Cabanatuan." id="ben-main"/>
         </View>
         {BENEFITS_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
@@ -1150,10 +1107,6 @@ export default function EGovScreen({ navigation }) {
               ))}
             </View>
             <View style={s.cardActions}>
-              <TouchableOpacity style={s.listenBtn} onPress={()=>narrate(`${item.title}. ${item.description}`, `ben-${i}`)}>
-                <Ionicons name={isNarrating(`ben-${i}`)?"stop":"play"} size={16} color="#38BDF8"/>
-                <Text style={s.listenBtnText}>{isNarrating(`ben-${i}`)?"Tumutugtog...":"Basahin"}</Text>
-              </TouchableOpacity>
               {item.simulatorType && <SimBtn type={item.simulatorType} data={item}/>}
             </View>
           </View>
@@ -1170,7 +1123,6 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>Serbisyong Pangkalusugan</Text>
-          <ReadBtn text="Ang kalusugan ang pinakamahalagang bagay para sa mga senior citizen ng Cabanatuan City. Mayroon tayong PhilHealth office sa NE Pacific Mall, ang Dr. Paulino J. Garcia Memorial Hospital sa Mabini Street na may hotline na 044-463-8888, at ang M.V. Gallego City General Hospital para sa inyong kalusugan." id="health-main"/>
         </View>
         {HEALTH_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
@@ -1189,10 +1141,6 @@ export default function EGovScreen({ navigation }) {
               ))}
             </View>
             <View style={s.cardActions}>
-              <TouchableOpacity style={s.listenBtn} onPress={()=>narrate(`${item.title}. ${item.description}`, `health-${i}`)}>
-                <Ionicons name={isNarrating(`health-${i}`)?"stop":"play"} size={16} color="#38BDF8"/>
-                <Text style={s.listenBtnText}>{isNarrating(`health-${i}`)?"Tumutugtog...":"Basahin"}</Text>
-              </TouchableOpacity>
               {item.simulatorType && <SimBtn type={item.simulatorType} data={item}/>}
             </View>
           </View>
@@ -1209,7 +1157,6 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>Social Pension</Text>
-          <ReadBtn text="Ang social pension ay tumutulong sa mga senior citizen ng Cabanatuan City para sa kanilang pangangailangan. Mayroon tayong DSWD Social Pension sa Mabini Extension Street, SSS Cabanatuan Branch sa NE Pacific Mall na may numero 044-463-0691, at GSIS Cabanatuan Branch sa NFA Compound Maharlika Highway na may numero 044-463-0572." id="pen-main"/>
         </View>
         {PENSION_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
@@ -1241,10 +1188,6 @@ export default function EGovScreen({ navigation }) {
               ))}
             </View>
             <View style={s.cardActions}>
-              <TouchableOpacity style={s.listenBtn} onPress={()=>narrate(`${item.title}. ${item.description}. Halaga: ${item.amount}`, `pen-${i}`)}>
-                <Ionicons name={isNarrating(`pen-${i}`)?"stop":"play"} size={16} color="#38BDF8"/>
-                <Text style={s.listenBtnText}>{isNarrating(`pen-${i}`)?"Tumutugtog...":"Basahin"}</Text>
-              </TouchableOpacity>
               {item.simulatorType && <SimBtn type={item.simulatorType} data={item}/>}
             </View>
           </View>
@@ -1261,7 +1204,6 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>Gabay sa eGov Apps</Text>
-          <ReadBtn text="Ang mga eGov apps ay nagbibigay ng madaling access sa mga serbisyo ng pamahalaan sa inyong telepono. Para sa mga senior ng Cabanatuan City, matutuhan natin ang eGovPH, My SSS, PhilHealth, at Pag-IBIG apps bilang alternatibo sa personal na pagpunta sa mga opisina." id="apps-main"/>
         </View>
         {APPS_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
@@ -1280,10 +1222,6 @@ export default function EGovScreen({ navigation }) {
               ))}
             </View>
             <View style={s.cardActions}>
-              <TouchableOpacity style={s.listenBtn} onPress={()=>narrate(`${item.title}. ${item.description}`, `apps-${i}`)}>
-                <Ionicons name={isNarrating(`apps-${i}`)?"stop":"play"} size={16} color="#38BDF8"/>
-                <Text style={s.listenBtnText}>{isNarrating(`apps-${i}`)?"Tumutugtog...":"Basahin"}</Text>
-              </TouchableOpacity>
               {item.simulatorType && <SimBtn type={item.simulatorType} data={item}/>}
               <TouchableOpacity style={[s.listenBtn, {borderColor: item.color, backgroundColor: item.color+"15"}]} onPress={()=>Linking.openURL(item.downloadLink)}>
                 <Ionicons name="download-outline" size={16} color={item.color}/>
@@ -1304,7 +1242,6 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>Legal na Proteksyon</Text>
-          <ReadBtn text="Bilang senior citizen ng Cabanatuan City, Nueva Ecija, kayo ay protektado ng batas. Ang Republic Act 9994 at iba pang batas ay nagbibigay ng karapatan at proteksyon sa lahat ng matatanda sa lungsod." id="legal-main"/>
         </View>
         {LEGAL_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
@@ -1347,10 +1284,6 @@ export default function EGovScreen({ navigation }) {
               </View>
             )}
             <View style={s.cardActions}>
-              <TouchableOpacity style={s.listenBtn} onPress={()=>narrate(`${item.title}. ${item.description}`, `legal-${i}`)}>
-                <Ionicons name={isNarrating(`legal-${i}`)?"stop":"play"} size={16} color="#38BDF8"/>
-                <Text style={s.listenBtnText}>{isNarrating(`legal-${i}`)?"Tumutugtog...":"Basahin"}</Text>
-              </TouchableOpacity>
               {item.simulatorType && <SimBtn type={item.simulatorType} data={item} danger={item.color==="#DC2626"}/>}
             </View>
           </View>
@@ -1367,7 +1300,6 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>LGU / Barangay Serbisyo</Text>
-          <ReadBtn text="Ang Cabanatuan City Hall sa M. de Leon Avenue at ang inyong barangay sa isa sa 89 barangay ng Cabanatuan City ang pinakamalapit na lugar para humingi ng tulong at serbisyo bilang senior citizen." id="lgu-main"/>
         </View>
         {LGU_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
@@ -1390,10 +1322,6 @@ export default function EGovScreen({ navigation }) {
               </View>
             )}
             <View style={s.cardActions}>
-              <TouchableOpacity style={s.listenBtn} onPress={()=>narrate(`${item.title}. ${item.description}`, `lgu-${i}`)}>
-                <Ionicons name={isNarrating(`lgu-${i}`)?"stop":"play"} size={16} color="#38BDF8"/>
-                <Text style={s.listenBtnText}>{isNarrating(`lgu-${i}`)?"Tumutugtog...":"Basahin"}</Text>
-              </TouchableOpacity>
               {item.simulatorType && <SimBtn type={item.simulatorType} data={item}/>}
             </View>
           </View>
@@ -1410,7 +1338,6 @@ export default function EGovScreen({ navigation }) {
       <GradientScreen>
         <View style={s.lessonHeader}>
           <Text style={s.lessonTitle}>Mga Hotline at Emergency</Text>
-          <ReadBtn text="Narito ang lahat ng mahahalagang numero para sa mga senior citizen ng Cabanatuan City, Nueva Ecija. I-save ang mga numerong ito sa inyong telepono para sa inyong kaligtasan at kaginhawahan. Para sa emergency, tumawag sa 911 anumang oras ng araw o gabi." id="hotlines-main"/>
         </View>
         <View style={[s.tipBox, {marginBottom:20}]}>
           <Text style={s.tipBoxTitle}>📞 I-save ang mga numerong ito!</Text>
@@ -1514,15 +1441,6 @@ const s = StyleSheet.create({
   },
   lessonTitle: { fontSize: 22, fontWeight: "bold", color: "#0F172A", textAlign: "center", marginBottom: 14 },
   lessonSubtitle: { fontSize: 15, color: "#64748B", textAlign: "center" },
-
-  // Audio Button
-  audioBtn: {
-    flexDirection: "row", alignItems: "center", backgroundColor: "#F0F9FF",
-    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderWidth: 2, borderColor: "#38BDF8",
-  },
-  speakingBtn: { backgroundColor: "#38BDF8" },
-  audioBtnText: { marginLeft: 8, fontSize: 15, fontWeight: "600", color: "#38BDF8" },
-  audioBtnTextActive: { color: "#fff" },
 
   // Info Card
   infoCard: {

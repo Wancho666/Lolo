@@ -8,10 +8,12 @@ import {
   SafeAreaView,
   Dimensions,
   Platform,
+  Image,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import Sidebar from "./sidebar";
 
 let LottieWrapper;
 if (Platform.OS === "web") {
@@ -53,6 +55,14 @@ const FEATURES = [
     icon: "phone",
     gradientColors: ["rgba(236, 72, 153, 0.18)", "rgba(251, 146, 60, 0.18)"],
   },
+  {
+    id: 4,
+    title: "Mini Games",
+    subtitle: "Exercise your mind with fun memory games.",
+    animation: require("../assets/lotties/games.json"),
+    icon: "gamepad",
+    gradientColors: ["rgba(251, 191, 36, 0.18)", "rgba(34, 197, 94, 0.18)"],
+  },
 ];
 
 const SOCIAL_OPTIONS = [
@@ -83,6 +93,7 @@ export default function Screen2({ navigation }) {
   const [nickname, setNickname] = useState("");
   const [currentPage, setCurrentPage] = useState("main");
   const [selectedOption, setSelectedOption] = useState(null);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
 
   useEffect(() => {
     const loadNickname = async () => {
@@ -96,37 +107,22 @@ export default function Screen2({ navigation }) {
     loadNickname();
   }, []);
 
-  const PageHeader = () => {
-    const displayName = nickname ? nickname : "";
-    const title = currentPage === "main"
-      ? `Welcome ${displayName}`
-      : currentPage === "social"
-      ? "Choose a Social Media App"
-      : selectedOption?.title || "Social Media Tutorial";
-
-    const subtitle = currentPage === "main"
-      ? "Pick up where you left off and continue with a guided digital skills journey."
-      : currentPage === "social"
-      ? "Tap one of the app options below to begin the lesson."
-      : "Follow the guided steps and build confidence as you go.";
-
-    return (
-      <View style={styles.pageHeader}>
-        <View style={styles.pageHeaderTop}>
-          <View style={styles.pageHeaderBadge}>
-            <Ionicons name="globe" size={18} color="#38BDF8" />
-            <Text style={styles.pageHeaderBadgeText}>Social Media</Text>
-          </View>
-        </View>
-        <Text style={styles.pageHeaderTitle}>{title}</Text>
-        <Text style={styles.pageHeaderSub}>{subtitle}</Text>
-      </View>
-    );
-  };
+  const PageHeader = () => (
+    <View style={styles.pageHeaderBadge}>
+      <Ionicons name="rocket" size={18} color="#38BDF8" />
+      <Text style={styles.pageHeaderBadgeText}>Experience Mode</Text>
+    </View>
+  );
 
   const handleFeaturePress = (feature) => {
     if (feature.id === 1) {
       navigation.navigate("SocialMedia");
+    } else if (feature.id === 2) {
+      navigation.navigate("MessagingAndCommunication");
+    } else if (feature.id === 3) {
+      navigation.navigate("ScamAwareness");
+    } else if (feature.id === 4) {
+      navigation.navigate("MiniGames");
     }
   };
 
@@ -137,6 +133,7 @@ export default function Screen2({ navigation }) {
 
   const renderMainContent = () => (
     <View>
+      {/* Hero Card */}
       <View style={styles.heroCard}>
         <LinearGradient
           colors={["rgba(255,255,255,0.8)", "rgba(255,255,255,0.3)"]}
@@ -152,11 +149,11 @@ export default function Screen2({ navigation }) {
         />
         <View style={styles.heroContent}>
           <View style={styles.heroBadge}>
-            <Ionicons name="sparkles" size={14} color="#0284C7" />
-            <Text style={styles.heroBadgeText}>Recommended path</Text>
+            <Ionicons name="school" size={14} color="#0284C7" />
+            <Text style={styles.heroBadgeText}>Advanced Learning</Text>
           </View>
-          <Text style={styles.heroTitle}>Continue your digital confidence journey</Text>
-          <Text style={styles.heroText}>Choose a topic and build practical skills with a calm, guided experience.</Text>
+          <Text style={styles.heroTitle}>Expand Your Skills</Text>
+          <Text style={styles.heroText}>Master advanced digital skills and social media expertise at your own pace.</Text>
         </View>
       </View>
       {FEATURES.map((feature) => (
@@ -257,7 +254,30 @@ export default function Screen2({ navigation }) {
           end={{ x: 1, y: 1 }}
         />
 
-        <PageHeader />
+        {/* Sidebar trigger and logo */}
+        <View style={styles.topActionRow}>
+          <View style={styles.leftTopArea}>
+            <TouchableOpacity onPress={() => setSidebarVisible(true)} style={styles.menuButton}>
+              <LinearGradient
+                colors={["#74bfe2", "#6abfe9"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.menuButtonGradient}
+              >
+                <Ionicons name="menu" size={22} color="#fff" />
+              </LinearGradient>
+            </TouchableOpacity>
+            <Image source={require("../assets/images/nlogo.png")} style={styles.headerLogo} resizeMode="contain" />
+          </View>
+
+          <PageHeader />
+        </View>
+
+        <Sidebar
+          visible={sidebarVisible}
+          onClose={() => setSidebarVisible(false)}
+          navigation={navigation}
+        />
 
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {currentPage === "main" && renderMainContent()}
@@ -283,21 +303,47 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    marginTop: 70,
   },
   scrollContent: {
     padding: 24,
     paddingBottom: 40,
   },
-  pageHeader: {
-    paddingTop: Platform.OS === "ios" ? 24 : 18,
-    paddingHorizontal: 24,
-    paddingBottom: 18,
-  },
-  pageHeaderTop: {
+  topActionRow: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? 34 : 22,
+    left: 18,
+    right: 18,
+    zIndex: 20,
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+  },
+  leftTopArea: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  menuButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  menuButtonGradient: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerLogo: {
+    width: 70,
+    height: 32,
   },
   pageHeaderBadge: {
     flexDirection: "row",
@@ -345,7 +391,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   heroContent: {
-    padding: 20,
+    padding: 24,
   },
   heroBadge: {
     flexDirection: "row",
@@ -355,7 +401,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   heroBadgeText: {
     marginLeft: 6,
@@ -364,7 +410,7 @@ const styles = StyleSheet.create({
     color: "#0369A1",
   },
   heroTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "700",
     color: "#0F172A",
     marginBottom: 8,

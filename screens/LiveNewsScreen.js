@@ -15,9 +15,11 @@ import {
   RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import { FontAwesome5 } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import { useNavigation } from "@react-navigation/native";
+
+const Icon = FontAwesome5;
 
 const { width, height } = Dimensions.get('window');
 

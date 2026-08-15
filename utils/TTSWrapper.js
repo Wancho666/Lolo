@@ -6,10 +6,7 @@ const DEFAULT_RATE = 0.8; // slower for seniors
 const DEFAULT_LANG = "en-US";
 
 const detectLanguage = (text) => {
-  if (!text) return DEFAULT_LANG;
-  // Simple heuristic: common Filipino/Tagalog words
-  const filipinoWords = /\b(ang|ng|mga|si|ni|ako|ikaw|kayo|po|opo|salamat|magandang|bahay|kaibigan|gabi|umaga)\b/i;
-  if (filipinoWords.test(text)) return "fil-PH"; // detected Filipino
+  // Always return English for TTS
   return DEFAULT_LANG;
 };
 

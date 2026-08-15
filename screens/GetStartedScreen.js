@@ -12,8 +12,10 @@ import {
   Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Icon from "react-native-vector-icons/FontAwesome5";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+
+const Icon = FontAwesome5;
 
 // 👇 Conditional Lottie import
 import LottieViewNative from "lottie-react-native";
@@ -71,7 +73,18 @@ export default function GetStartedScreen({ navigation }) {
       description: "Exercise your brain and have fun with simple games.",
       animation: require("../assets/lotties/games.json"),
     },
-    
+    {
+      key: "5",
+      title: "Social Media",
+      description: "Learn to use Facebook, YouTube, and Messenger safely and confidently.",
+      animation: require("../assets/lotties/soc.json"),
+    },
+    {
+      key: "6",
+      title: "Scam Awareness",
+      description: "Stay protected and learn how to recognize and avoid online scams.",
+      animation: require("../assets/lotties/Alert.json"),
+    },
   ];
 
   useEffect(() => {
@@ -221,6 +234,15 @@ export default function GetStartedScreen({ navigation }) {
     }
   };
 
+  const handleSkip = async () => {
+    try {
+      await AsyncStorage.setItem("hasOnboarded", "true");
+      navigation.replace("PhoneKnowledge");
+    } catch (error) {
+      console.log("Error saving onboarding flag:", error);
+    }
+  };
+
   const handleGetStarted = async () => {
     Animated.sequence([
       Animated.timing(buttonScaleValue, { toValue: 0.95, duration: 100, useNativeDriver: true }),
@@ -358,7 +380,7 @@ export default function GetStartedScreen({ navigation }) {
             ))}
           </View>
 
-          {/* Button */}
+          {/* Buttons */}
           <Animated.View 
             style={[
               styles.buttonContainer, 
@@ -371,12 +393,24 @@ export default function GetStartedScreen({ navigation }) {
               }
             ]}
           >
-            <TouchableOpacity style={styles.button} onPress={handleNext} activeOpacity={0.8}>
-              <Text style={styles.buttonText}>
-                {currentIndex === slides.length - 1 ? "Get Started" : "Next"}
-              </Text>
-              <Icon name="arrow-right" size={18} color="#FFFFFF" style={styles.buttonIcon} />
-            </TouchableOpacity>
+            {currentIndex === slides.length - 1 ? (
+              // Final slide: Get Started button
+              <TouchableOpacity style={styles.button} onPress={handleGetStarted} activeOpacity={0.8}>
+                <Text style={styles.buttonText}>Get Started</Text>
+                <Icon name="arrow-right" size={18} color="#FFFFFF" style={styles.buttonIcon} />
+              </TouchableOpacity>
+            ) : (
+              // Other slides: Next and Skip buttons
+              <View style={styles.buttonRow}>
+                <TouchableOpacity style={styles.button} onPress={handleNext} activeOpacity={0.8}>
+                  <Text style={styles.buttonText}>Next</Text>
+                  <Icon name="arrow-right" size={18} color="#FFFFFF" style={styles.buttonIcon} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.skipButton} onPress={handleSkip} activeOpacity={0.8}>
+                  <Text style={styles.skipButtonText}>Skip</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </Animated.View>
         </View>
       </View>
@@ -547,5 +581,31 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginLeft: 5,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  skipButton: {
+    backgroundColor: "#0EA5E9",
+    paddingVertical: 18,
+    paddingHorizontal: 40,
+    borderRadius: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 120,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  skipButtonText: {
+    fontSize: 18,
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
 });

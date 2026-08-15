@@ -9,6 +9,8 @@ import PhoneKnowledgeScreen from "./screens/PhoneKnowledgeScreen";
 import HomeScreen from "./screens/HomeScreen";
 import Screen2 from "./screens/Screen2";
 import SocialMedia from "./screens/SocialMedia";
+import MessagingAndCommunication from "./screens/MessagingAndCommunication";
+import ScamAwareness from "./screens/ScamAwareness";
 import SmartPhoneBasicsScreen from "./screens/SmartPhoneBasicsScreen";
 import LiveNewsScreen from "./screens/LiveNewsScreen";
 import InternetBrowsingScreen from "./screens/InternetBrowsingScreen";
@@ -23,7 +25,7 @@ export default function App() {
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
-          animation: "slide_from_right",
+          animationEnabled: true,
           contentStyle: { backgroundColor: "#F8FAFC" },
           gestureEnabled: true,
         }}
@@ -34,6 +36,8 @@ export default function App() {
         <Stack.Screen name="PhoneKnowledge" component={PhoneKnowledgeScreen} />
         <Stack.Screen name="Screen2" component={Screen2} />
         <Stack.Screen name="SocialMedia" component={SocialMedia} />
+        <Stack.Screen name="MessagingAndCommunication" component={MessagingAndCommunication} />
+        <Stack.Screen name="ScamAwareness" component={ScamAwareness} />
 
         {/* Main app */}
         <Stack.Screen name="Home" component={HomeScreen} />

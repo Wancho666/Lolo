@@ -1,8 +1,10 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, Animated, Easing, Image, Dimensions, Platform } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from "expo-linear-gradient";
+
+const Icon = FontAwesome5;
 import LottieViewNative from "lottie-react-native";
 import LottieViewWeb from "lottie-react";
 const LottieView = Platform.OS === "web" ? LottieViewWeb : LottieViewNative;
@@ -286,7 +288,7 @@ export default function SplashScreen({ navigation }) {
           ]}
         >
           <Text style={styles.welcome}>
-            Welcome po
+            
           </Text>
           
         </Animated.View>
