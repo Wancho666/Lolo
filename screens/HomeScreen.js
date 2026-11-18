@@ -16,6 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Sidebar from "./sidebar";
 
 const Icon = FontAwesome5;
@@ -37,6 +38,7 @@ if (Platform.OS === "web") {
 const { width, height } = Dimensions.get("window");
 
 export default function HomeScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [nickname, setNickname] = useState("");
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
@@ -308,7 +310,7 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         {/* Sidebar trigger and logo */}
-        <View style={styles.topActionRow}>
+        <View style={[styles.topActionRow, { top: Platform.OS === "android" ? insets.top + 8 : 8 }]}>
           <View style={styles.leftTopArea}>
             <TouchableOpacity onPress={() => setSidebarVisible(true)} style={styles.profileIconButton}>
               <LinearGradient
@@ -324,7 +326,7 @@ export default function HomeScreen({ navigation }) {
           </View>
 
           <View style={styles.pageHeaderBadge}>
-            <Icon name="home" size={18} color="#38BDF8" />
+            <Icon name="lightbulb" size={18} color="#38BDF8" />
             <Text style={styles.pageHeaderBadgeText}>Beginner Mode</Text>
           </View>
         </View>
@@ -342,12 +344,6 @@ export default function HomeScreen({ navigation }) {
         >
           {/* Hero Card */}
           <View style={styles.heroCard}>
-            <LinearGradient
-              colors={["rgba(255,255,255,0.8)", "rgba(255,255,255,0.3)"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroOverlay}
-            />
             <LinearGradient
               colors={["rgba(14, 165, 233, 0.18)", "rgba(59, 130, 246, 0.16)"]}
               start={{ x: 0, y: 0 }}
@@ -528,9 +524,6 @@ const styles = StyleSheet.create({
     elevation: 6,
     position: "relative",
   },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
   heroGradient: {
     ...StyleSheet.absoluteFillObject,
   },
@@ -690,7 +683,6 @@ const styles = StyleSheet.create({
   },
   topActionRow: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 34 : 22,
     left: 18,
     right: 18,
     zIndex: 20,

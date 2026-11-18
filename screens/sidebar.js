@@ -6,20 +6,52 @@ import {
   Text,
   View,
   Animated,
+  Easing,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function Sidebar({ visible, onClose, navigation }) {
-  const slideAnim = useRef(new Animated.Value(-320)).current;
+  const slideAnim = useRef(new Animated.Value(-330)).current;
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(slideAnim, {
-      toValue: visible ? 0 : -320,
-      duration: 150,
-      useNativeDriver: true,
-    }).start();
-  }, [visible, slideAnim]);
+    const openTiming = 260;
+    const closeTiming = 220;
+
+    if (!visible) {
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: closeTiming,
+          easing: Easing.inOut(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: -330,
+          duration: closeTiming,
+          easing: Easing.inOut(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start();
+      return;
+    }
+
+    Animated.parallel([
+      Animated.timing(overlayOpacity, {
+        toValue: 1,
+        duration: openTiming,
+        easing: Easing.inOut(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: openTiming,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [visible, overlayOpacity, slideAnim]);
 
   const handleOptionPress = async (screen) => {
     try {
@@ -49,7 +81,8 @@ export default function Sidebar({ visible, onClose, navigation }) {
       animationType="none"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.overlay} onPress={onClose}>
+      <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
+        <Pressable style={styles.backdrop} onPress={onClose} />
         <Animated.View
           style={[styles.panel, { transform: [{ translateX: slideAnim }] }]}
         >
@@ -72,8 +105,8 @@ export default function Sidebar({ visible, onClose, navigation }) {
             style={styles.menuItem}
             onPress={() => handleOptionPress("Screen2")}
           >
-            <Ionicons name="star" size={18} color="#F59E0B" />
-            <Text style={styles.menuText}>Experience Mode</Text>
+            <Ionicons name="rocket" size={18} color="#F59E0B" />
+            <Text style={styles.menuText}>Advanced Mode</Text>
           </Pressable>
 
           <Pressable
@@ -84,7 +117,8 @@ export default function Sidebar({ visible, onClose, navigation }) {
             <Text style={[styles.menuText, styles.exitText]}>Exit</Text>
           </Pressable>
         </Animated.View>
-      </Pressable>
+      </Animated.View>
+
     </Modal>
   );
 }
@@ -92,9 +126,12 @@ export default function Sidebar({ visible, onClose, navigation }) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(15, 23, 42, 0.45)",
     justifyContent: "flex-start",
     alignItems: "flex-start",
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
   },
   panel: {
     width: "75%",

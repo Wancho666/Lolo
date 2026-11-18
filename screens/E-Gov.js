@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Animated,
   Alert,
   SafeAreaView,
   Dimensions,
@@ -25,48 +26,56 @@ const EGOV_MODULES = [
     title: "IDs at Rehistrasyon",
     icon: "card",
     description: "OSCA ID, PhilSys, at Digital Senior Citizens ID",
+    color: "#0EA5E9",
   },
   {
     id: "benefits",
     title: "Mga Benepisyo at Diskwento",
     icon: "gift",
     description: "20% diskwento, VAT exemption, at iba pang pribilehiyo",
+    color: "#F59E0B",
   },
   {
     id: "health",
     title: "Serbisyong Pangkalusugan",
     icon: "medical",
     description: "PhilHealth, Dr. PJG Hospital, at libreng medikal na serbisyo",
+    color: "#10B981",
   },
   {
     id: "pension",
     title: "Social Pension",
     icon: "wallet",
     description: "DSWD SocPen, SSS, at GSIS na pensiyon",
+    color: "#8B5CF6",
   },
   {
     id: "apps",
     title: "Gabay sa eGov Apps",
     icon: "apps",
     description: "eGovPH, SSS, PhilHealth, at Pag-IBIG apps",
+    color: "#3B82F6",
   },
   {
     id: "legal",
     title: "Legal na Proteksyon",
     icon: "shield-checkmark",
     description: "RA 9994 at pag-uulat ng elder abuse",
+    color: "#DC2626",
   },
   {
     id: "lgu",
     title: "LGU / Barangay Serbisyo",
     icon: "business",
     description: "Cabanatuan City Hall, OSCA, at barangay na serbisyo",
+    color: "#0EA5E9",
   },
   {
     id: "hotlines",
     title: "Mga Hotline at Emergency",
     icon: "call",
     description: "NCSC, DSWD Nueva Ecija, PhilHealth, SSS, at 911",
+    color: "#EF4444",
   },
 ];
 
@@ -104,22 +113,8 @@ const IDS_CONTENT = [
     simulatorType: "philsys",
     icon: "id-card-outline",
     color: "#059669",
-  },
-  {
-    title: "Digital NSCID (National Senior Citizen ID)",
-    description:
-      "Ang Digital NSCID ay available na sa eGovPH Super App. Maaari na ninyong gamitin ang inyong senior citizen ID sa inyong telepono kahit saan sa Cabanatuan City at buong Pilipinas.",
-    steps: [
-      "I-download ang eGovPH Super App sa inyong Android o iPhone",
-      "Gumawa ng account gamit ang inyong numero ng telepono",
-      "I-link ang inyong OSCA ID mula sa Cabanatuan City",
-      "I-access ang inyong Digital NSCID sa app – tinatanggap sa lahat ng establisyimento",
-    ],
-    requirement: "May OSCA ID na mula sa Cabanatuan City",
-    simulatorType: "digital_id",
-    icon: "phone-portrait-outline",
-    color: "#7C3AED",
-  },
+  }
+ 
 ];
 
 const BENEFITS_CONTENT = [
@@ -526,7 +521,35 @@ export default function EGovScreen({ navigation }) {
   const [currentModule, setCurrentModule] = useState("menu");
   const [showSimulator, setShowSimulator] = useState(false);
   const [simulatorData, setSimulatorData] = useState(null);
+  const headerFadeAnim = useRef(new Animated.Value(0)).current;
+  const headerSlideAnim = useRef(new Animated.Value(40)).current;
   const GRADIENT = ["#F0F9FF", "#E0F2FE", "#BAE6FD", "#7DD3FC", "#38BDF8", "#0EA5E9"];
+  const activeModule = EGOV_MODULES.find((module) => module.id === currentModule);
+  const headerTitle = showSimulator
+    ? "Screen Simulator"
+    : currentModule === "menu"
+      ? "E-Government Services"
+      : activeModule?.title || "E-Government Services";
+  const headerSubtitle = showSimulator
+    ? "Tingnan ang halimbawa sa screen"
+    : currentModule === "menu"
+      ? "Para sa mga Senior Citizens ng Cabanatuan City, Nueva Ecija"
+      : activeModule?.description;
+  const headerBadgeIcon = showSimulator
+    ? "phone-portrait"
+    : currentModule === "menu"
+      ? "globe"
+      : activeModule?.icon || "business";
+  const headerBadgeText = showSimulator ? "Demo" : currentModule === "menu" ? "E-Government" : "Module";
+
+  useEffect(() => {
+    headerFadeAnim.setValue(0);
+    headerSlideAnim.setValue(40);
+    Animated.parallel([
+      Animated.timing(headerFadeAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
+      Animated.timing(headerSlideAnim, { toValue: 0, duration: 700, useNativeDriver: true }),
+    ]).start();
+  }, [currentModule, showSimulator, headerFadeAnim, headerSlideAnim]);
 
   const goBack = () => {
     if (showSimulator) { setShowSimulator(false); setSimulatorData(null); }
@@ -545,13 +568,24 @@ export default function EGovScreen({ navigation }) {
     <SafeAreaView style={s.safeArea}>
       <View style={s.container}>
         <LinearGradient colors={GRADIENT} locations={[0,0.15,0.35,0.55,0.75,1]} style={s.gradientBg} start={{x:0,y:0}} end={{x:1,y:1}} />
+        <Animated.View style={[s.pageHeader, { opacity: headerFadeAnim, transform: [{ translateY: headerSlideAnim }] }]}>
+          <View style={s.headerTop}>
+            <TouchableOpacity style={s.backButton} onPress={goBack} activeOpacity={0.8}>
+              <Ionicons name="arrow-back" size={16} color="#0F172A" />
+              <Text style={s.backButtonText}>Back</Text>
+            </TouchableOpacity>
+            <View style={s.headerBadge}>
+              <Ionicons name={headerBadgeIcon} size={18} color="#38BDF8" />
+              <Text style={s.headerBadgeText}>{headerBadgeText}</Text>
+            </View>
+            <View style={{ width: 40 }} />
+          </View>
+          <Text style={s.headerTitle}>{headerTitle}</Text>
+          {headerSubtitle ? <Text style={s.headerSubtitle}>{headerSubtitle}</Text> : null}
+        </Animated.View>
         <ScrollView style={s.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={s.scrollContent}>
           {children}
         </ScrollView>
-        <TouchableOpacity style={s.backButton} onPress={goBack} activeOpacity={0.8}>
-          <Ionicons name="arrow-back" size={18} color="#0F172A" />
-          <Text style={s.backButtonText}>Back</Text>
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -983,28 +1017,15 @@ export default function EGovScreen({ navigation }) {
   // ─────────────────────────────────────────────
   if (showSimulator) {
     return (
-      <SafeAreaView style={s.safeArea}>
-        <View style={s.container}>
-          <LinearGradient colors={GRADIENT} locations={[0,0.15,0.35,0.55,0.75,1]} style={s.gradientBg} start={{x:0,y:0}} end={{x:1,y:1}}/>
-          <ScrollView style={s.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={s.scrollContent}>
-            <View style={s.lessonHeader}>
-              <Text style={s.lessonTitle}>Screen Simulator</Text>
-              <Text style={s.lessonSubtitle}>Tingnan ang halimbawa sa screen</Text>
-            </View>
-            <View style={{alignItems:"center", marginBottom:24}}>{renderSimulator()}</View>
-            <View style={s.tipBox}>
-              <Text style={s.tipBoxTitle}>💡 Tandaan:</Text>
-              <Text style={s.tipBoxText}>
-                {"• Gamitin ang mga totoong government websites at apps lamang\n• Huwag ibigay ang personal information sa hindi kilalang websites\n• Kung hindi sigurado, magtanong sa pamilya o sa OSCA Office sa Cabanatuan City Hall, M. de Leon Avenue"}
-              </Text>
-            </View>
-          </ScrollView>
-          <TouchableOpacity style={s.backButton} onPress={goBack} activeOpacity={0.8}>
-            <Ionicons name="arrow-back" size={18} color="#0F172A"/>
-            <Text style={s.backButtonText}>Back</Text>
-          </TouchableOpacity>
+      <GradientScreen>
+        <View style={{ alignItems: "center", marginBottom: 24 }}>{renderSimulator()}</View>
+        <View style={s.tipBox}>
+          <Text style={s.tipBoxTitle}>💡 Tandaan:</Text>
+          <Text style={s.tipBoxText}>
+            {"• Gamitin ang mga totoong government websites at apps lamang\n• Huwag ibigay ang personal information sa hindi kilalang websites\n• Kung hindi sigurado, magtanong sa pamilya o sa OSCA Office sa Cabanatuan City Hall, M. de Leon Avenue"}
+          </Text>
         </View>
-      </SafeAreaView>
+      </GradientScreen>
     );
   }
 
@@ -1014,32 +1035,21 @@ export default function EGovScreen({ navigation }) {
   if (currentModule === "menu") {
     return (
       <GradientScreen>
-        <View style={s.header}>
-          <View style={s.headerIconWrap}>
-            <Ionicons name="globe" size={32} color="#0F172A"/>
-          </View>
-          <Text style={s.headerTitle}>E-Government Services</Text>
-          <Text style={s.headerSubtitle}>Para sa mga Senior Citizens ng Cabanatuan City, Nueva Ecija</Text>
-          <View style={s.headerDivider}/>
-        </View>
         <View style={s.moduleGrid}>
           {EGOV_MODULES.map((mod) => (
-            <TouchableOpacity key={mod.id} style={s.moduleCard} onPress={() => goToModule(mod.id)} activeOpacity={0.92}>
-              <View style={s.moduleIconBg}>
-                <Ionicons name={mod.icon} size={30} color="#38BDF8"/>
+            <TouchableOpacity key={mod.id} style={[s.moduleCard, { borderLeftColor: mod.color }]} onPress={() => goToModule(mod.id)} activeOpacity={0.92}>
+              <View style={[s.moduleIconBg, { backgroundColor: `${mod.color}22`, borderColor: `${mod.color}44` }]}>
+                <Ionicons name={mod.icon} size={26} color={mod.color}/>
               </View>
               <View style={s.moduleContent}>
                 <Text style={s.moduleTitle}>{mod.title}</Text>
                 <Text style={s.moduleDesc}>{mod.description}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#38BDF8"/>
+              <Ionicons name="chevron-forward" size={14} color={mod.color}/>
             </TouchableOpacity>
           ))}
         </View>
-        <View style={s.footer}>
-          <Text style={s.footerText}>💡 Pindutin ang Basahin para marinig ang bawat seksyon</Text>
-          <Text style={s.footerSub}>May screen simulator para sa mga ID, diskwento, at iba pang serbisyo!</Text>
-        </View>
+        <View style={{ height: 32 }} />
       </GradientScreen>
     );
   }
@@ -1050,9 +1060,6 @@ export default function EGovScreen({ navigation }) {
   if (currentModule === "ids") {
     return (
       <GradientScreen>
-        <View style={s.lessonHeader}>
-          <Text style={s.lessonTitle}>IDs at Rehistrasyon</Text>
-        </View>
         {IDS_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
             <View style={s.infoCardHeader}>
@@ -1088,9 +1095,6 @@ export default function EGovScreen({ navigation }) {
   if (currentModule === "benefits") {
     return (
       <GradientScreen>
-        <View style={s.lessonHeader}>
-          <Text style={s.lessonTitle}>Mga Benepisyo at Diskwento</Text>
-        </View>
         {BENEFITS_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
             <View style={s.infoCardHeader}>
@@ -1121,9 +1125,6 @@ export default function EGovScreen({ navigation }) {
   if (currentModule === "health") {
     return (
       <GradientScreen>
-        <View style={s.lessonHeader}>
-          <Text style={s.lessonTitle}>Serbisyong Pangkalusugan</Text>
-        </View>
         {HEALTH_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
             <View style={s.infoCardHeader}>
@@ -1155,9 +1156,6 @@ export default function EGovScreen({ navigation }) {
   if (currentModule === "pension") {
     return (
       <GradientScreen>
-        <View style={s.lessonHeader}>
-          <Text style={s.lessonTitle}>Social Pension</Text>
-        </View>
         {PENSION_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
             <View style={s.infoCardHeader}>
@@ -1202,9 +1200,6 @@ export default function EGovScreen({ navigation }) {
   if (currentModule === "apps") {
     return (
       <GradientScreen>
-        <View style={s.lessonHeader}>
-          <Text style={s.lessonTitle}>Gabay sa eGov Apps</Text>
-        </View>
         {APPS_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
             <View style={s.infoCardHeader}>
@@ -1240,9 +1235,6 @@ export default function EGovScreen({ navigation }) {
   if (currentModule === "legal") {
     return (
       <GradientScreen>
-        <View style={s.lessonHeader}>
-          <Text style={s.lessonTitle}>Legal na Proteksyon</Text>
-        </View>
         {LEGAL_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
             <View style={s.infoCardHeader}>
@@ -1298,9 +1290,6 @@ export default function EGovScreen({ navigation }) {
   if (currentModule === "lgu") {
     return (
       <GradientScreen>
-        <View style={s.lessonHeader}>
-          <Text style={s.lessonTitle}>LGU / Barangay Serbisyo</Text>
-        </View>
         {LGU_CONTENT.map((item, i) => (
           <View key={i} style={[s.infoCard, {borderLeftColor: item.color}]}>
             <View style={s.infoCardHeader}>
@@ -1336,9 +1325,6 @@ export default function EGovScreen({ navigation }) {
   if (currentModule === "hotlines") {
     return (
       <GradientScreen>
-        <View style={s.lessonHeader}>
-          <Text style={s.lessonTitle}>Mga Hotline at Emergency</Text>
-        </View>
         <View style={[s.tipBox, {marginBottom:20}]}>
           <Text style={s.tipBoxTitle}>📞 I-save ang mga numerong ito!</Text>
           <Text style={s.tipBoxText}>Mga opisyal na numero ng government offices sa Cabanatuan City at Nueva Ecija. Pindutin ang numero para direktang tumawag.</Text>
@@ -1382,65 +1368,76 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F0F9FF" },
   gradientBg: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0 },
   scrollView: { flex: 1 },
-  scrollContent: { padding: 20, paddingTop: 80, paddingBottom: 50 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 50 },
 
   // Back Button
   backButton: {
-    position: "absolute", top: Platform.OS === "ios" ? 50 : 30, left: 20,
     flexDirection: "row", alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.9)", paddingHorizontal: 16, paddingVertical: 8,
+    backgroundColor: "rgba(255,255,255,0.95)", paddingHorizontal: 14, paddingVertical: 8,
     borderRadius: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1, shadowRadius: 4, elevation: 3,
+    shadowOpacity: 0.12, shadowRadius: 4, elevation: 4,
   },
-  backButtonText: { marginLeft: 8, fontSize: 16, fontWeight: "600", color: "#0F172A" },
+  backButtonText: { marginLeft: 6, fontSize: 15, fontWeight: "600", color: "#0F172A" },
 
-  // Header
-  header: {
-    alignItems: "center", marginBottom: 30,
-    backgroundColor: "rgba(255,255,255,0.9)", padding: 24, borderRadius: 24,
-    elevation: 8, shadowColor: "#0F172A", shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1, shadowRadius: 8,
+  pageHeader: {
+    paddingTop: Platform.OS === "ios" ? 56 : 36,
+    paddingHorizontal: 24,
+    paddingBottom: 20,
   },
-  headerIconWrap: {
-    width: 80, height: 80, borderRadius: 40, backgroundColor: "#F0F9FF",
-    justifyContent: "center", alignItems: "center", marginBottom: 15,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1,
-    shadowRadius: 8, elevation: 5,
+  headerTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
   },
-  headerTitle: { fontSize: 26, fontWeight: "bold", color: "#0F172A", textAlign: "center", marginBottom: 5 },
-  headerSubtitle: { fontSize: 15, color: "#64748B", textAlign: "center", marginBottom: 20 },
-  headerDivider: { width: 60, height: 4, backgroundColor: "#38BDF8", borderRadius: 2 },
+  headerBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(56,189,248,0.1)",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#38BDF8",
+  },
+  headerBadgeText: { color: "#38BDF8", fontSize: 12, fontWeight: "600" },
+  headerTitle: { fontSize: 28, fontWeight: "800", color: "#0F172A", lineHeight: 36, marginBottom: 6 },
+  headerSubtitle: { fontSize: 13, color: "#64748B", marginBottom: 16 },
 
   // Module Cards
-  moduleGrid: { gap: 14 },
+  moduleGrid: { gap: 0 },
   moduleCard: {
-    backgroundColor: "rgba(255,255,255,0.95)", borderRadius: 16, padding: 18,
-    flexDirection: "row", alignItems: "center",
-    shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
+    backgroundColor: "rgba(255,255,255,0.95)",
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderLeftWidth: 4,
+    marginBottom: 12,
   },
   moduleIconBg: {
-    width: 56, height: 56, borderRadius: 28, backgroundColor: "#F0F9FF",
-    justifyContent: "center", alignItems: "center", marginRight: 14,
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: "#F0F9FF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
+    borderWidth: 1,
+    borderColor: "rgba(56,189,248,0.15)",
   },
   moduleContent: { flex: 1 },
-  moduleTitle: { fontSize: 17, fontWeight: "600", color: "#0F172A", marginBottom: 3 },
-  moduleDesc: { fontSize: 13, color: "#64748B", lineHeight: 18 },
+  moduleTitle: { fontSize: 16, fontWeight: "700", color: "#0F172A", marginBottom: 4 },
+  moduleDesc: { fontSize: 12, color: "#64748B", lineHeight: 17, marginBottom: 6 },
 
-  // Footer
-  footer: {
-    backgroundColor: "rgba(255,255,255,0.9)", padding: 20, borderRadius: 16, marginTop: 24,
-    alignItems: "center", elevation: 4,
-  },
-  footerText: { fontSize: 15, color: "#0F172A", fontWeight: "600", textAlign: "center" },
-  footerSub: { fontSize: 13, color: "#475569", textAlign: "center", marginTop: 6, fontStyle: "italic" },
-
-  // Lesson Header
-  lessonHeader: {
-    alignItems: "center", marginBottom: 24, backgroundColor: "rgba(255,255,255,0.9)",
-    padding: 20, borderRadius: 20, elevation: 6,
-  },
-  lessonTitle: { fontSize: 22, fontWeight: "bold", color: "#0F172A", textAlign: "center", marginBottom: 14 },
-  lessonSubtitle: { fontSize: 15, color: "#64748B", textAlign: "center" },
 
   // Info Card
   infoCard: {

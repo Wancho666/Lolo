@@ -3,10 +3,12 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, SafeAre
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get("window");
 
 export default function PhoneKnowledgeScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const handleChoice = async (choice) => {
     try {
       await AsyncStorage.setItem("hasOnboarded", "true");
@@ -33,7 +35,7 @@ export default function PhoneKnowledgeScreen({ navigation }) {
         />
 
         {/* Header */}
-        <View style={styles.topActionRow}>
+        <View style={[styles.topActionRow, { top: Platform.OS === "android" ? insets.top + 8 : 8 }]}>
           <View style={styles.leftTopArea}>
             <Image source={require("../assets/images/nlogo.png")} style={styles.headerLogo} resizeMode="contain" />
           </View>
@@ -137,7 +139,6 @@ const styles = StyleSheet.create({
   },
   topActionRow: {
     position: "absolute",
-    top: Platform.OS === "ios" ? 34 : 22,
     left: 18,
     right: 18,
     zIndex: 20,

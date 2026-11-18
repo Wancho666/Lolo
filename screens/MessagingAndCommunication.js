@@ -48,9 +48,8 @@ const MESSAGING_OPTIONS = [
     animation: require("../assets/lotties/meil.json"),
     gradientColors: ["rgba(59, 130, 246, 0.15)", "rgba(147, 51, 234, 0.15)"],
     tutorialTitle: "Email Basics",
-    videoSource: require("../assets/vids/mail.mp4"),
+    videoSource: require("../assets/vids/ebasic.mp4"),
     placeholders: [
-      "Create and manage your email account",
       "Send your first email",
       "Add attachments to emails",
       "Keep your email account secure",
@@ -63,7 +62,7 @@ const MESSAGING_OPTIONS = [
     animation: require("../assets/lotties/phone.json"),
     gradientColors: ["rgba(16, 185, 129, 0.15)", "rgba(59, 130, 246, 0.15)"],
     tutorialTitle: "SMS & Text Messages",
-    videoSource: require("../assets/vids/0327.mp4"),
+    videoSource: require("../assets/vids/txt.mp4"),
     placeholders: [
       "Send your first text message",
       "Receive and reply to messages",
@@ -78,7 +77,7 @@ const MESSAGING_OPTIONS = [
     animation: require("../assets/lotties/internet.json"),
     gradientColors: ["rgba(236, 72, 153, 0.15)", "rgba(251, 146, 60, 0.15)"],
     tutorialTitle: "Video Calling",
-    videoSource: require("../assets/vids/0327.mp4"),
+    videoSource: require("../assets/vids/vcm.mp4"),
     placeholders: [
       "Set up your video calling app",
       "Make your first video call",

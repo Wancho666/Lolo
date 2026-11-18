@@ -19,6 +19,7 @@ import Slider from "@react-native-community/slider";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
+import { GestureHandlerRootView, PinchGestureHandler, State } from "react-native-gesture-handler";
 
 const Icon = FontAwesome5;
 import * as Speech from "expo-speech";
@@ -127,10 +128,34 @@ const StatusBar = ({ dark = false, charging = false, batteryLevel = 80 }) => (
   </View>
 );
 
+const LessonHint = ({ text }) => {
+  const hintAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(Animated.sequence([
+      Animated.timing(hintAnim, { toValue: 1, duration: 450, useNativeDriver: true }),
+      Animated.timing(hintAnim, { toValue: 0, duration: 450, useNativeDriver: true }),
+    ]));
+    animation.start();
+    return () => animation.stop();
+  }, [hintAnim]);
+
+  const handOffset = hintAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -4] });
+
+  return (
+    <View style={simStyles.lessonHint}>
+      <Animated.View style={{ transform: [{ translateY: handOffset }] }}>
+        <Icon name="hand-point-up" size={16} color="#0284C7" />
+      </Animated.View>
+      <Text style={simStyles.lessonHintText}>{text}</Text>
+    </View>
+  );
+};
+
 // ─── 1. Phone Anatomy Simulator ───────────────────────────────────────────────
 const PhoneAnatomySimulator = ({ onSuccess }) => {
   const [identified, setIdentified] = useState(new Set());
-  const [highlighted, setHighlighted] = useState(null);
+  const [highlighted, setHighlighted] = useState("notch");
 
   const parts = [
     { id: "notch", name: "Notch / Camera", desc: "This is the front camera and sensor." },
@@ -146,14 +171,16 @@ const PhoneAnatomySimulator = ({ onSuccess }) => {
     setHighlighted(part.id);
     const updated = new Set([...identified, part.id]);
     setIdentified(updated);
+    const nextPart = parts.find((item) => !updated.has(item.id));
+    setHighlighted(nextPart?.id ?? null);
     TTS.speak(part.desc);
-    setTimeout(() => setHighlighted(null), 1000);
     if (updated.size >= 5) setTimeout(onSuccess, 1200);
   };
 
   return (
     <View style={simStyles.container}>
       <Text style={simStyles.title}>I-tap ang bawat bahagi ng phone para malaman ang tungkulin nito</Text>
+      <LessonHint text="Tap the highlighted part; the highlight moves after each tap." />
 
       <View style={phoneStyles.shell}>
         {/* Left side volume */}
@@ -286,9 +313,10 @@ const PowerSimulator = ({ onSuccess }) => {
         {state === "off" ? "Pindutin at hawakan ang Power Button ng 2 segundo para i-on ang phone" :
           state === "booting" ? "Nagsisimula ang phone..." : "Naka-on na! I-tap ang Power para i-off."}
       </Text>
+      <LessonHint text={state === "off" ? "Hawakan ang power button nang 2 segundo." : state === "booting" ? "Hintaying magsimula ang phone." : "Tap the power button to turn the phone off."} />
 
       <PhoneShell
-        powerHighlight={held > 0 || state === "on"}
+        powerHighlight={held > 0 || state === "on" || state === "off"}
         onPowerPressIn={startPress}
         onPowerPressOut={endPress}
         onVolumeUp={() => {}}
@@ -381,6 +409,7 @@ const UnlockSimulator = ({ onSuccess }) => {
       <Text style={simStyles.title}>
         {locked ? (mode === "swipe" ? "I-swipe papunta sa kanan para i-unlock, O gamitin ang PIN" : "I-type ang PIN: 1-2-3-4") : "Na-unlock na ang phone!"}
       </Text>
+      <LessonHint text={locked ? mode === "swipe" ? "Swipe the highlighted handle to the right." : "Enter the PIN: 1-2-3-4." : "Phone unlocked."} />
 
       <PhoneShell onVolumeUp={() => {}} onVolumeDown={() => {}} onPowerPressIn={() => {}} onPowerPressOut={() => {}}>
         {locked ? (
@@ -393,7 +422,7 @@ const UnlockSimulator = ({ onSuccess }) => {
             </View>
 
             {mode === "swipe" ? (
-              <View style={simStyles.swipeZone} {...panResponder.panHandlers}>
+              <View style={[simStyles.swipeZone, simStyles.hintTarget]} {...panResponder.panHandlers}>
                 <Animated.View style={[simStyles.swipeHandle, { transform: [{ translateX: swipeX }] }]}>
                   <Icon name="chevron-right" size={14} color="#fff" />
                   <Text style={simStyles.swipeHandleText}>I-swipe →</Text>
@@ -437,7 +466,7 @@ const UnlockSimulator = ({ onSuccess }) => {
               {row.map((d, di) => (
                 <TouchableOpacity
                   key={di}
-                  style={[simStyles.pinKey, d === "" && { opacity: 0 }]}
+                  style={[simStyles.pinKey, d === "" && { opacity: 0 }, d === "1" && pin.length === 0 && simStyles.hintTarget]}
                   onPress={() => d === "⌫" ? clearPin() : d !== "" && handlePin(d)}
                   disabled={d === ""}
                 >
@@ -455,9 +484,11 @@ const UnlockSimulator = ({ onSuccess }) => {
 // ─── 4. Touchscreen Gestures ──────────────────────────────────────────────────
 const TouchSimulator = ({ onSuccess }) => {
   const [done, setDone] = useState({ tap: false, swipe: false, pinch: false });
-  const [active, setActive] = useState(null);
+  const [active, setActive] = useState("tap");
   const swipeX = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const pinchScale = useRef(new Animated.Value(1)).current;
+  const pinchThresholdReached = useRef(false);
 
   const complete = (gesture) => {
     const updated = { ...done, [gesture]: true };
@@ -493,23 +524,47 @@ const TouchSimulator = ({ onSuccess }) => {
     },
   })).current;
 
-  const handlePinch = () => {
-    if (done.pinch) return;
-    Vibration.vibrate(15);
-    setActive("pinch");
-    TTS.speak("Good! You pinched the screen.");
-    setTimeout(() => { setActive(null); complete("pinch"); }, 600);
-  };
+  const pinchGestureEvent = Animated.event(
+    [{ nativeEvent: { scale: pinchScale } }],
+    {
+      useNativeDriver: true,
+      listener: ({ nativeEvent }) => {
+        if (Math.abs(nativeEvent.scale - 1) >= 0.2) {
+          pinchThresholdReached.current = true;
+        }
+      },
+    },
+  );
 
-  const gestures = [
-    { key: "tap", icon: "hand-point-up", label: "Tap", sub: "Pindutin nang isang beses", action: handleTap },
-    { key: "swipe", icon: "hand-paper", label: "Swipe", sub: "I-drag papunta sa kanan", action: null },
-    { key: "pinch", icon: "compress-arrows-alt", label: "Pinch/Zoom", sub: "Hawakan ng matagal", action: handlePinch },
-  ];
+  const handlePinchStateChange = ({ nativeEvent }) => {
+    if (nativeEvent.state === State.BEGAN) {
+      pinchThresholdReached.current = false;
+    }
+
+    if (nativeEvent.state === State.ACTIVE) {
+      setActive("pinch");
+      return;
+    }
+
+    if (nativeEvent.state === State.END) {
+      if (!done.pinch && pinchThresholdReached.current) {
+        Vibration.vibrate(15);
+        TTS.speak("Good! You pinched the screen.");
+        complete("pinch");
+        setTimeout(() => setActive(null), 600);
+      } else if (!done.pinch) {
+        setActive(null);
+      }
+
+      pinchThresholdReached.current = false;
+      Animated.spring(pinchScale, { toValue: 1, useNativeDriver: true }).start();
+    }
+  };
 
   return (
     <View style={simStyles.container}>
       <Text style={simStyles.title}>Subukan ang tatlong paraan ng pag-touch sa screen</Text>
+      <LessonHint text="Try each row: tap, swipe right, then pinch or spread two fingers." />
 
       <PhoneShell onVolumeUp={() => {}} onVolumeDown={() => {}} onPowerPressIn={() => {}} onPowerPressOut={() => {}}>
         <View style={simStyles.gestureScreen}>
@@ -544,19 +599,25 @@ const TouchSimulator = ({ onSuccess }) => {
             </Animated.View>
 
             {/* Pinch */}
-            <TouchableOpacity
-              style={[simStyles.gestureTile, done.pinch && simStyles.gestureTileDone, active === "pinch" && simStyles.gestureTileActive]}
-              onLongPress={handlePinch}
-              delayLongPress={300}
-              activeOpacity={0.7}
+            <PinchGestureHandler
+              minPointers={2}
+              maxPointers={2}
+              onGestureEvent={pinchGestureEvent}
+              onHandlerStateChange={handlePinchStateChange}
             >
-              <Icon name="compress-arrows-alt" size={22} color={done.pinch ? "#10B981" : "#38BDF8"} />
-              <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={simStyles.gestureName}>Pinch/Zoom</Text>
-                <Text style={simStyles.gestureSub}>Hawakan ng matagal</Text>
-              </View>
-              {done.pinch && <Icon name="check-circle" size={18} color="#10B981" />}
-            </TouchableOpacity>
+              <Animated.View
+                style={[simStyles.gestureTile, done.pinch && simStyles.gestureTileDone, active === "pinch" && simStyles.gestureTileActive]}
+              >
+                <Animated.View style={{ transform: [{ scale: pinchScale }] }}>
+                  <Icon name="search-plus" size={22} color={done.pinch ? "#10B981" : "#38BDF8"} />
+                </Animated.View>
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={simStyles.gestureName}>Pinch/Zoom</Text>
+                  <Text style={simStyles.gestureSub}>Gamitin ang dalawang daliri: paglayuin o paglapitin</Text>
+                </View>
+                {done.pinch && <Icon name="check-circle" size={18} color="#10B981" />}
+              </Animated.View>
+            </PinchGestureHandler>
           </View>
         </View>
       </PhoneShell>
@@ -612,6 +673,7 @@ const VolumeSimulator = ({ onSuccess }) => {
   return (
     <View style={simStyles.container}>
       <Text style={simStyles.title}>I-adjust ang volume at brightness sa 75% o mas mataas gamit ang mga slider</Text>
+      <LessonHint text="Move both sliders to 75% or higher." />
 
       <PhoneShell
         onVolumeUp={() => physVol("up")}
@@ -730,6 +792,7 @@ const CallSimulator = ({ onSuccess }) => {
           state === "answered" ? "Kasalukuyang nag-uusap. I-tap ang pula para tapusin ang tawag." :
           "Natapos na ang tawag."}
       </Text>
+      <LessonHint text={state === "incoming" ? "Tap the green button to answer or the red button to decline." : state === "answered" ? "Tap the red button to end the call." : "Call ended."} />
 
       <PhoneShell onVolumeUp={() => {}} onVolumeDown={() => {}} onPowerPressIn={() => {}} onPowerPressOut={() => {}}>
         <View style={simStyles.callScreen}>
@@ -749,11 +812,11 @@ const CallSimulator = ({ onSuccess }) => {
 
             {state === "incoming" && (
               <View style={simStyles.callBtns}>
-                <TouchableOpacity style={simStyles.declineBtn} onPress={decline}>
+                <TouchableOpacity style={[simStyles.declineBtn, simStyles.hintTarget]} onPress={decline}>
                   <Icon name="phone-slash" size={22} color="#fff" />
                   <Text style={simStyles.callBtnLabel}>Tanggihan</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={simStyles.answerBtn} onPress={answer}>
+                <TouchableOpacity style={[simStyles.answerBtn, simStyles.hintTarget]} onPress={answer}>
                   <Icon name="phone" size={22} color="#fff" />
                   <Text style={simStyles.callBtnLabel}>Sagutin</Text>
                 </TouchableOpacity>
@@ -817,6 +880,7 @@ const MessageSimulator = ({ onSuccess }) => {
   return (
     <View style={simStyles.container}>
       <Text style={simStyles.title}>I-type ang kahit anong mensahe at i-tap ang "Send" para ipadala</Text>
+      <LessonHint text="Type in the message box, then tap the send arrow." />
 
       <PhoneShell onVolumeUp={() => {}} onVolumeDown={() => {}} onPowerPressIn={() => {}} onPowerPressOut={() => {}}>
         <View style={simStyles.msgScreen}>
@@ -848,7 +912,7 @@ const MessageSimulator = ({ onSuccess }) => {
           {/* Input */}
           <View style={simStyles.msgInput}>
             <TextInput
-              style={simStyles.msgTextInput}
+              style={[simStyles.msgTextInput, !input.trim() && simStyles.hintTarget]}
               value={input}
               onChangeText={setInput}
               placeholder="Mag-type ng mensahe..."
@@ -858,7 +922,7 @@ const MessageSimulator = ({ onSuccess }) => {
               returnKeyType="send"
               onSubmitEditing={send}
             />
-            <TouchableOpacity style={[simStyles.sendBtn, input.trim() && simStyles.sendBtnActive]} onPress={send} disabled={!input.trim()}>
+            <TouchableOpacity style={[simStyles.sendBtn, input.trim() && simStyles.sendBtnActive, input.trim() && simStyles.hintTarget]} onPress={send} disabled={!input.trim()}>
               <Icon name="paper-plane" size={11} color="#fff" />
             </TouchableOpacity>
           </View>
@@ -901,6 +965,7 @@ const AppSimulator = ({ onSuccess }) => {
   return (
     <View style={simStyles.container}>
       <Text style={simStyles.title}>I-tap ang app icon para buksan ito. Subukan buksan ang Camera app!</Text>
+      <LessonHint text="Tap the Camera icon in the app grid." />
 
       <PhoneShell onVolumeUp={() => {}} onVolumeDown={() => {}} onPowerPressIn={() => {}} onPowerPressOut={() => {}}>
         {!openApp ? (
@@ -910,7 +975,7 @@ const AppSimulator = ({ onSuccess }) => {
             <View style={simStyles.homeAppGrid}>
               {apps.map(app => (
                 <TouchableOpacity key={app.id} style={simStyles.homeApp} onPress={() => open(app)}>
-                  <View style={[simStyles.homeAppIcon, { backgroundColor: app.color }]}>
+                  <View style={[simStyles.homeAppIcon, { backgroundColor: app.color }, app.id === "camera" && !succeeded && simStyles.hintTarget]}>
                     <Icon name={app.icon} size={20} color="#fff" />
                   </View>
                   <Text style={simStyles.homeAppLabel}>{app.label}</Text>
@@ -1013,6 +1078,7 @@ const WiFiSimulator = ({ onSuccess }) => {
   return (
     <View style={simStyles.container}>
       <Text style={simStyles.title}>I-on ang WiFi at kumonekta sa "Home WiFi" gamit ang password na "password123"</Text>
+      <LessonHint text={step === "off" ? "Tap the WiFi switch." : step === "scanning" ? "Wait for the network list." : step === "list" ? "Choose Home WiFi." : step === "password" ? "Enter password123, then tap Kumonekta." : "WiFi connected."} />
 
       <PhoneShell onVolumeUp={() => {}} onVolumeDown={() => {}} onPowerPressIn={() => {}} onPowerPressOut={() => {}}>
         <View style={simStyles.wifiScreen}>
@@ -1020,7 +1086,7 @@ const WiFiSimulator = ({ onSuccess }) => {
           <View style={simStyles.wifiHeader}>
             <Text style={simStyles.wifiTitle}>WiFi</Text>
             <TouchableOpacity
-              style={[simStyles.wifiToggle, step !== "off" && simStyles.wifiToggleOn]}
+              style={[simStyles.wifiToggle, step !== "off" && simStyles.wifiToggleOn, step === "off" && simStyles.hintTarget]}
               onPress={toggleWifi}
             >
               <View style={[simStyles.wifiToggleThumb, step !== "off" && simStyles.wifiToggleThumbOn]} />
@@ -1046,7 +1112,7 @@ const WiFiSimulator = ({ onSuccess }) => {
             <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={simStyles.wifiAvail}>Available Networks</Text>
               {nets.map((n, i) => (
-                <TouchableOpacity key={i} style={[simStyles.netRow, selected?.name === n.name && simStyles.netRowSelected]} onPress={() => selectNet(n)}>
+                <TouchableOpacity key={i} style={[simStyles.netRow, selected?.name === n.name && simStyles.netRowSelected, step === "list" && n.name === "Home WiFi" && simStyles.hintTarget]} onPress={() => selectNet(n)}>
                   <Icon name="wifi" size={12} color={n.bars === 3 ? "#10B981" : n.bars === 2 ? "#F59E0B" : "#EF4444"} />
                   <Text style={simStyles.netName}>{n.name}</Text>
                   <View style={simStyles.netRight}>
@@ -1066,7 +1132,7 @@ const WiFiSimulator = ({ onSuccess }) => {
               <Text style={simStyles.pwTitle}>{selected?.name}</Text>
               <Text style={simStyles.pwLabel}>Password:</Text>
               <TextInput
-                style={simStyles.pwInput}
+                style={[simStyles.pwInput, !pw && simStyles.hintTarget]}
                 value={pw}
                 onChangeText={setPw}
                 placeholder="I-type ang password..."
@@ -1081,7 +1147,7 @@ const WiFiSimulator = ({ onSuccess }) => {
                 <TouchableOpacity style={simStyles.pwCancel} onPress={() => { setStep("list"); setSelected(null); setPw(""); }}>
                   <Text style={simStyles.pwCancelText}>Kanselahin</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[simStyles.pwConnect, pw.length > 0 && simStyles.pwConnectActive]} onPress={connect}>
+                <TouchableOpacity style={[simStyles.pwConnect, pw.length > 0 && simStyles.pwConnectActive, pw.length > 0 && simStyles.hintTarget]} onPress={connect}>
                   <Text style={simStyles.pwConnectText}>Kumonekta</Text>
                 </TouchableOpacity>
               </View>
@@ -1293,9 +1359,10 @@ export default function SmartPhoneBasicsScreen() {
 
       {/* Modal */}
       <Modal visible={isModalVisible} animationType="slide" transparent onRequestClose={closeModal} statusBarTranslucent>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-          <View style={modalStyles.overlay}>
-            <View style={modalStyles.sheet}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+            <View style={modalStyles.overlay}>
+              <View style={modalStyles.sheet}>
               {selectedLesson && (
                 <>
                   {/* Modal header */}
@@ -1363,9 +1430,10 @@ export default function SmartPhoneBasicsScreen() {
                   </ScrollView>
                 </>
               )}
+              </View>
             </View>
-          </View>
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </GestureHandlerRootView>
       </Modal>
     </View>
   );
@@ -1494,6 +1562,31 @@ const simStyles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 16,
     lineHeight: 22,
+  },
+  lessonHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "stretch",
+    gap: 8,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "rgba(56,189,248,0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(56,189,248,0.28)",
+    borderRadius: 12,
+  },
+  lessonHintText: {
+    flex: 1,
+    color: "#0F172A",
+    fontSize: 12,
+    fontWeight: "600",
+    lineHeight: 16,
+  },
+  hintTarget: {
+    borderWidth: 2,
+    borderColor: "#F59E0B",
   },
   // Status bar
   statusBar: {

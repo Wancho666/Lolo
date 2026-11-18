@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated,
   Alert, SafeAreaView, Dimensions, Platform
 } from "react-native";
 import * as Speech from 'expo-speech';
@@ -11,10 +11,9 @@ const { width } = Dimensions.get("window");
 
 // ─── Tutorial modules ────────────────────────────────────────────────────────
 const TUTORIAL_MODULES = [
-  { id: 'basics',   title: 'Basic Internet Safety',  icon: 'shield-checkmark', description: 'Internet safety essentials' },
-  { id: 'browsing', title: 'Safe Browsing Tips',      icon: 'globe',            description: 'How to browse safely' },
-  { id: 'scams',    title: 'Avoiding Scams',          icon: 'warning',          description: 'Identify and avoid scams' },
-  { id: 'apps',     title: 'Common Apps Tutorial',    icon: 'apps',             description: 'How to use Facebook, YouTube, and Messenger' },
+  { id: 'basics',   title: 'Basic Internet Safety', icon: 'shield-checkmark', description: 'Internet safety essentials', color: '#38BDF8' },
+  { id: 'browsing', title: 'Safe Browsing Tips', icon: 'globe', description: 'How to browse safely', color: '#10B981' },
+  { id: 'scams',    title: 'Avoiding Scams', icon: 'warning', description: 'Identify and avoid scams', color: '#DC2626' },
 ];
 
 // ─── Safe browsing tips ───────────────────────────────────────────────────────
@@ -70,6 +69,26 @@ const SCAM_EXAMPLES = [
     simulatorType: "legit_website",
   },
 ];
+
+const SIMULATOR_ICONS = {
+  url_compare: 'globe',
+  search: 'search',
+  family: 'chatbubble-ellipses',
+  ask_family: 'chatbubble-ellipses',
+  known_website: 'globe',
+  lock_icon: 'lock-closed',
+  logout: 'log-out',
+  strong_password: 'key',
+  unknown_link: 'link',
+  phone_call: 'call',
+  prize_scam: 'mail',
+  password_sharing: 'key',
+  sms_scam: 'chatbubble-ellipses',
+  email_scam: 'mail',
+  govt_scam: 'chatbubble-ellipses',
+  legit_website: 'globe',
+  popup: 'warning',
+};
 
 // ─── Basic Do's & Don'ts ──────────────────────────────────────────────────────
 const SAFETY_RULES = {
@@ -129,122 +148,14 @@ const SAFETY_RULES = {
   ],
 };
 
-// ─── Common Apps content ─────────────────────────────────────────────────────
-const COMMON_APPS = [
-  {
-    id: 'facebook',
-    name: 'Facebook',
-    icon: 'logo-facebook',
-    color: '#1877F2',
-    description: 'For communicating with friends and family.',
-    steps: [
-      {
-        title: 'News Feed',
-        detail: 'This is the first thing you will see when you open Facebook. Here you will see posts from your friends and family.',
-        highlight: 'newsfeed',
-      },
-      {
-        title: 'Liking a Post',
-        detail: "Tap the 'Like' button (thumbs up) below the post to show that you liked it.",
-        highlight: 'like',
-      },
-      {
-        title: 'Commenting',
-        detail: "Tap 'Comment' to leave a message on your friend's post.",
-        highlight: 'comment',
-      },
-      {
-        title: 'Sharing a Post',
-        detail: "Tap 'Share' to share the post with your friends.",
-        highlight: 'share',
-      },
-      {
-        title: 'Messenger Icon',
-        detail: 'Tap the chat bubble icon at the top to open Messenger and chat with your family.',
-        highlight: 'messenger',
-      },
-    ],
-    simulatorType: 'facebook',
-  },
-  {
-    id: 'youtube',
-    name: 'YouTube',
-    icon: 'logo-youtube',
-    color: '#FF0000',
-    description: 'For watching videos, news, and tutorials.',
-    steps: [
-      {
-        title: 'Home Feed',
-        detail: 'You will see videos that are recommended for you based on videos you have watched before.',
-        highlight: 'home',
-      },
-      {
-        title: 'Search for a Video',
-        detail: 'Tap the magnifying glass icon at the top and type what you want to watch, for example: "how to cook sinigang".',
-        highlight: 'search',
-      },
-      {
-        title: 'Play the Video',
-        detail: 'Tap the video to play it. Tap the screen again to show the play and pause buttons in the middle.',
-        highlight: 'play',
-      },
-      {
-        title: 'Adjust Volume',
-        detail: 'Slide the volume bar on the screen or use the side buttons of your phone to turn the volume up or down.',
-        highlight: 'volume',
-      },
-      {
-        title: 'Return to Home',
-        detail: 'Tap the Home icon at the bottom of the screen to return to the list of videos.',
-        highlight: 'navhome',
-      },
-    ],
-    simulatorType: 'youtube',
-  },
-  {
-    id: 'messenger',
-    name: 'Messenger',
-    icon: 'chatbubble-ellipses',
-    color: '#0084FF',
-    description: 'For sending messages and calling family.',
-    steps: [
-      {
-        title: 'Chat List',
-        detail: 'You will see all your conversations. Tap the name of a person to open your chat with them.',
-        highlight: 'chatlist',
-      },
-      {
-        title: 'Type a Message',
-        detail: "Tap the text box at the bottom and type your message using the keyboard. Tap the send button (arrow) to send it.",
-        highlight: 'typemsg',
-      },
-      {
-        title: 'Make a Video Call',
-        detail: 'Tap the video camera icon at the right corner at the top of the chat to make a video call and see the person you are talking to.',
-        highlight: 'videocall',
-      },
-      {
-        title: 'Make a Voice Call',
-        detail: 'Tap the phone icon to make a regular voice call if you do not want to use the camera.',
-        highlight: 'voicecall',
-      },
-      {
-        title: 'Send a Photo',
-        detail: 'Tap the camera icon or gallery icon next to the text box to choose a photo from your phone and send it.',
-        highlight: 'sendphoto',
-      },
-    ],
-    simulatorType: 'messenger',
-  },
-];
-
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function InternetBrowsingScreen({ navigation }) {
   const [currentModule, setCurrentModule]           = useState('menu');
   const [showSimulator, setShowSimulator]           = useState(false);
   const [simulatorData, setSimulatorData]           = useState(null);
   const [currentlyNarrating, setCurrentlyNarrating] = useState(null);
-  const [selectedApp, setSelectedApp]               = useState(null);
+  const headerFadeAnim = useRef(new Animated.Value(0)).current;
+  const headerSlideAnim = useRef(new Animated.Value(40)).current;
 
   // ── TTS helpers ──────────────────────────────────────────────────────────────
   const narrate = async (text, buttonId) => {
@@ -272,7 +183,6 @@ export default function InternetBrowsingScreen({ navigation }) {
   const goBack = () => {
     stopNarration();
     if (showSimulator) { setShowSimulator(false); setSimulatorData(null); return; }
-    if (currentModule === 'apps' && selectedApp) { setSelectedApp(null); return; }
     if (currentModule === 'menu') { navigation.goBack(); return; }
     setCurrentModule('menu');
   };
@@ -285,6 +195,15 @@ export default function InternetBrowsingScreen({ navigation }) {
   };
 
   useEffect(() => () => { stopNarration(); }, []);
+
+  useEffect(() => {
+    headerFadeAnim.setValue(0);
+    headerSlideAnim.setValue(40);
+    Animated.parallel([
+      Animated.timing(headerFadeAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
+      Animated.timing(headerSlideAnim, { toValue: 0, duration: 700, useNativeDriver: true }),
+    ]).start();
+  }, [currentModule, showSimulator, headerFadeAnim, headerSlideAnim]);
 
   // ── Read button ──────────────────────────────────────────────────────────────
   const ReadBtn = ({ id, text }) => (
@@ -308,7 +227,7 @@ export default function InternetBrowsingScreen({ navigation }) {
       ]}
       onPress={() => showScreenSimulator(type, data)}
     >
-      <Ionicons name="phone-portrait" size={15} color={appColor || (danger ? '#DC2626' : '#059669')} />
+      <Ionicons name={SIMULATOR_ICONS[type] || 'phone-portrait'} size={15} color={appColor || (danger ? '#DC2626' : '#059669')} />
       <Text style={[
         styles.simulatorBtnText,
         danger && styles.dangerSimulatorText,
@@ -328,13 +247,14 @@ export default function InternetBrowsingScreen({ navigation }) {
   );
 
   const PageHeader = ({ title, subtitle, badgeIcon, badgeText, progress }) => (
-    <View style={styles.pageHeader}>
+    <Animated.View style={[styles.pageHeader, { opacity: headerFadeAnim, transform: [{ translateY: headerSlideAnim }] }]}>
       <View style={styles.pageHeaderTop}>
         <BackBtn />
         <View style={styles.pageHeaderBadge}>
           <Ionicons name={badgeIcon || 'shield-checkmark'} size={18} color="#38BDF8" />
           <Text style={styles.pageHeaderBadgeText}>{badgeText || 'Internet Safety'}</Text>
         </View>
+        <View style={{ width: 40 }} />
       </View>
       <Text style={styles.pageHeaderTitle}>{title}</Text>
       {subtitle ? <Text style={styles.pageHeaderSub}>{subtitle}</Text> : null}
@@ -346,7 +266,7 @@ export default function InternetBrowsingScreen({ navigation }) {
           <Text style={styles.pageHeaderProgressLabel}>{progress.label}</Text>
         </>
       ) : null}
-    </View>
+    </Animated.View>
   );
 
   // ── Gradient wrapper ─────────────────────────────────────────────────────────
@@ -1121,15 +1041,14 @@ export default function InternetBrowsingScreen({ navigation }) {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           <GradientBg />
+          <PageHeader
+            title="Screen Demo"
+            subtitle="Tingnan ang halimbawa sa screen"
+            badgeIcon="phone-portrait"
+            badgeText="Tutorial"
+          />
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-            <View style={styles.simHeader}>
-              <View style={styles.simHeaderTop}>
-                <BackBtn />
-              </View>
-              <Text style={styles.simHeaderTitle}>Screen Demo</Text>
-              <Text style={styles.simHeaderSub}>Tingnan ang halimbawa sa screen</Text>
-            </View>
-            <View style={{ alignItems: 'center', marginBottom: 24 }}>
+            <View style={styles.simulatorStage}>
               {renderSimulatorContent()}
             </View>
             <View style={styles.tipBox}>
@@ -1155,27 +1074,26 @@ export default function InternetBrowsingScreen({ navigation }) {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           <GradientBg />
+          <PageHeader
+            title="Internet Safety Tutorial"
+            subtitle="Para sa mga Senior Citizens"
+            badgeIcon="shield-checkmark"
+            badgeText="Internet Safety"
+          />
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-            <PageHeader
-              title="Internet Safety Tutorial"
-              subtitle="Para sa mga Senior Citizens"
-              badgeIcon="shield-checkmark"
-              badgeText="Internet Safety"
-            />
             <View style={styles.moduleList}>
               {TUTORIAL_MODULES.map((m) => (
-                <TouchableOpacity key={m.id} style={styles.moduleCard} onPress={() => goToModule(m.id)} activeOpacity={0.9}>
-                  <View style={styles.moduleIconBg}><Ionicons name={m.icon} size={30} color="#38BDF8" /></View>
+                <TouchableOpacity key={m.id} style={[styles.moduleCard, { borderLeftColor: m.color }]} onPress={() => goToModule(m.id)} activeOpacity={0.9}>
+                  <View style={[styles.moduleIconBg, { backgroundColor: `${m.color}22`, borderColor: `${m.color}44` }]}>
+                    <Ionicons name={m.icon} size={30} color={m.color} />
+                  </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.moduleTitle}>{m.title}</Text>
                     <Text style={styles.moduleSub}>{m.description}</Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={18} color="#38BDF8" />
+                  <Ionicons name="chevron-forward" size={14} color={m.color} />
                 </TouchableOpacity>
               ))}
-            </View>
-            <View style={styles.menuFooter}>
-              <Text style={styles.menuFooterTxt}>I-tap ang "Basahin" para marinig ang bawat lesson</Text>
             </View>
           </ScrollView>
         </View>
@@ -1191,13 +1109,13 @@ export default function InternetBrowsingScreen({ navigation }) {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           <GradientBg />
+          <PageHeader
+            title="Basic Internet Safety"
+            subtitle="Matutuhan natin ang mga dapat at hindi dapat gawin para manatiling ligtas."
+            badgeIcon="shield-checkmark"
+            badgeText="Module"
+          />
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-            <PageHeader
-              title="Basic Internet Safety"
-              subtitle="Matutuhan natin ang mga dapat at hindi dapat gawin para manatiling ligtas."
-              badgeIcon="shield-checkmark"
-              badgeText="Module"
-            />
             <ReadBtn id="basics-main" text="Basic internet safety is knowing how to protect yourself on the internet. Let us learn what to do and what not to do to stay safe." />
 
             <Text style={styles.sectionLabel}>MGA DAPAT GAWIN</Text>
@@ -1214,7 +1132,7 @@ export default function InternetBrowsingScreen({ navigation }) {
               </View>
             ))}
 
-            <Text style={[styles.sectionLabel, { color: '#DC2626' }]}>DO NOT DO</Text>
+            <Text style={[styles.sectionLabel, { color: '#DC2626' }]}>MGA HINDI DAPAT GAWIN</Text>
             {SAFETY_RULES.donts.map((r, i) => (
               <View key={i} style={[styles.ruleCard, { borderLeftColor: '#DC2626', marginBottom: 12 }]}>
                 <TouchableOpacity style={styles.ruleInner} onPress={() => narrate(`${r.text}. ${r.detail}`, `dont-${i}`)}>
@@ -1241,13 +1159,13 @@ export default function InternetBrowsingScreen({ navigation }) {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           <GradientBg />
+          <PageHeader
+            title="Safe Browsing Tips"
+            subtitle="Matutuhan natin ang tatlong simpleng paraan para mag-browse nang ligtas sa internet."
+            badgeIcon="globe"
+            badgeText="Browsing"
+          />
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-            <PageHeader
-              title="Safe Browsing Tips"
-              subtitle="Matutuhan natin ang tatlong simpleng paraan para mag-browse nang ligtas sa internet."
-              badgeIcon="globe"
-              badgeText="Browsing"
-            />
             <ReadBtn id="browsing-main" text="Let us learn three simple ways to browse the internet safely. Always check the lock icon, use a search engine, and do not be shy to ask your family." />
             {BROWSING_TIPS.map((t, i) => (
               <View key={i} style={styles.tipCard}>
@@ -1276,13 +1194,13 @@ export default function InternetBrowsingScreen({ navigation }) {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           <GradientBg />
+          <PageHeader
+            title="Paano Makilala ang mga Scam"
+            subtitle="Maraming uri ng scam sa internet. Matutuhan natin kung paano sila makilala para hindi kayo maging biktima."
+            badgeIcon="warning"
+            badgeText="Scam"
+          />
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-            <PageHeader
-              title="Paano Makilala ang mga Scam"
-              subtitle="Maraming uri ng scam sa internet. Matutuhan natin kung paano sila makilala para hindi kayo maging biktima."
-              badgeIcon="warning"
-              badgeText="Scam"
-            />
             <ReadBtn id="scams-main" text="There are many kinds of scams on the internet. Let us learn how to identify them so you do not become a victim. Scammers pretend to be banks, governments, or offer fake prizes." />
             {SCAM_EXAMPLES.map((s, i) => (
               <View key={i} style={[styles.scamCard, s.safe ? styles.safeCard : styles.dangerCard, { marginBottom: 16 }]}> 
@@ -1303,121 +1221,6 @@ export default function InternetBrowsingScreen({ navigation }) {
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // COMMON APPS MODULE
-  // ════════════════════════════════════════════════════════════════════════════
-  if (currentModule === 'apps') {
-    if (selectedApp) {
-      const app = COMMON_APPS.find(a => a.id === selectedApp);
-      return (
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.container}>
-            <GradientBg />
-            <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-              <PageHeader
-                title={app.name}
-                subtitle={app.description}
-                badgeIcon={app.icon}
-                badgeText={app.name}
-              />
-              <ReadBtn
-                id={`app-${app.id}`}
-                text={`${app.name}. ${app.description}. ${app.steps.map(s => s.title + ': ' + s.detail).join('. ')}`}
-              />
-                {app.steps.map((s, i) => (
-                  <View key={i} style={[styles.ruleCard, { borderLeftColor: app.color }]}>
-                    <TouchableOpacity
-                      style={styles.ruleInner}
-                      onPress={() => narrate(`Step ${i + 1}: ${s.title}. ${s.detail}`, `apstep-${i}`)}
-                    >
-                      <Text style={[styles.ruleTxt, { color: app.color }]}>
-                        Step {i + 1}: {s.title}
-                      </Text>
-                      <Text style={styles.ruleDetail}>{s.detail}</Text>
-                      <Ionicons
-                        name={isNarrating(`apstep-${i}`) ? 'stop' : 'volume-medium'}
-                        size={20}
-                        color={app.color}
-                        style={styles.speakIco}
-                      />
-                    </TouchableOpacity>
-                    <View style={styles.cardFooter}>
-                      <SimBtn
-                        type={app.simulatorType}
-                        data={{ detail: s.detail, highlight: s.highlight }}
-                        appColor={app.color}
-                      />
-                    </View>
-                  </View>
-                ))}
-
-              <View style={styles.quickTryCard}>
-                <Text style={styles.quickTryTitle}>Subukan ang buong simulator</Text>
-                <Text style={styles.quickTryDesc}>Tingnan ang {app.name} sa screen demo</Text>
-                <SimBtn
-                  type={app.simulatorType}
-                  data={{ detail: `Ito ang ${app.name} app. I-tap ang bawat Step button sa itaas para makita ang bawat bahagi ng app.`, highlight: null }}
-                  appColor={app.color}
-                />
-              </View>
-            </ScrollView>
-          </View>
-        </SafeAreaView>
-      );
-    }
-
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          <GradientBg />
-          <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-            <PageHeader
-              title="Common Apps Tutorial"
-              subtitle="Matutuhan natin kung paano gamitin ang mga sikat na apps tulad ng Facebook, YouTube, at Messenger."
-              badgeIcon="apps"
-              badgeText="Apps"
-            />
-            <ReadBtn
-              id="apps-main"
-              text="Matutuhan natin kung paano gamitin ang mga sikat na apps tulad ng Facebook para makipag-ugnayan sa pamilya, YouTube para manood ng video, at Messenger para makausap ang mga mahal sa buhay."
-            />
-
-            <Text style={styles.sectionLabel}>PILIIN ANG APP</Text>
-
-            <View style={styles.moduleList}>
-              {COMMON_APPS.map((app) => (
-                <TouchableOpacity
-                  key={app.id}
-                  style={styles.moduleCard}
-                  onPress={() => setSelectedApp(app.id)}
-                  activeOpacity={0.9}
-                >
-                  <View style={styles.moduleCardLeft}>
-                    <View style={[styles.moduleIconBg, { backgroundColor: `${app.color}20` }]}> 
-                      <Ionicons name={app.icon} size={30} color={app.color} />
-                    </View>
-                    <View style={styles.moduleCardText}>
-                      <Text style={styles.moduleTitle}>{app.name}</Text>
-                      <Text style={styles.moduleSub}>{app.description}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.moduleCardRight}>
-                    <View style={styles.appStepBadge}>
-                      <Text style={[styles.appStepBadgeTxt, { color: app.color }]}>
-                        {app.steps.length} Steps
-                      </Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={18} color={app.color} />
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return null;
 }
 
@@ -1429,7 +1232,7 @@ const styles = StyleSheet.create({
   container:          { flex: 1 },
   gradientBackground: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
   scrollView:         { flex: 1 },
-  scrollContent:      { padding: 20, paddingTop: 0, paddingBottom: 60 },
+  scrollContent:      { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 60 },
 
   // ── Back button ────────────────────────────────────────────────────────────
   backButton: {
@@ -1442,29 +1245,21 @@ const styles = StyleSheet.create({
   backButtonText: { marginLeft: 6, fontSize: 15, fontWeight: '600', color: '#0F172A' },
 
   pageHeader: {
-    marginBottom: 10,
-    marginHorizontal: -20,
-    backgroundColor: 'transparent',
-    borderRadius: 0,
+    marginBottom: 18,
     paddingTop: Platform.OS === 'ios' ? 56 : 36,
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    elevation: 0,
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
+    paddingHorizontal: 24,
+    paddingBottom: 20,
   },
   pageHeaderTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
   pageHeaderBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 12,
+    gap: 6,
     backgroundColor: 'rgba(56,189,248,0.1)',
     paddingHorizontal: 14,
     paddingVertical: 6,
@@ -1474,7 +1269,7 @@ const styles = StyleSheet.create({
   },
   pageHeaderBadgeText: { color: '#38BDF8', fontSize: 12, fontWeight: '600' },
   pageHeaderTitle: { fontSize: 28, fontWeight: '800', color: '#0F172A', lineHeight: 36, marginBottom: 6 },
-  pageHeaderSub: { fontSize: 15, color: '#475569', marginBottom: 8 },
+  pageHeaderSub: { fontSize: 13, color: '#64748B', marginBottom: 8 },
   pageHeaderProgressBar: {
     height: 4,
     backgroundColor: '#E2E8F0',
@@ -1491,7 +1286,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
 
-  moduleList: { rowGap: 16, marginTop: 18 },
+  moduleList: { rowGap: 0, marginTop: 0 },
 
   // ── Menu ───────────────────────────────────────────────────────────────────
   menuHeader: {
@@ -1506,15 +1301,22 @@ const styles = StyleSheet.create({
   menuTitle:   { fontSize: 28, fontWeight: 'bold', color: '#0F172A', textAlign: 'center', marginBottom: 6 },
   menuSub:     { fontSize: 15, color: '#475569', textAlign: 'center', marginBottom: 16 },
   menuDivider: { width: 56, height: 4, backgroundColor: '#38BDF8', borderRadius: 2 },
-  menuFooter: {
-    backgroundColor: 'rgba(255,255,255,0.9)', padding: 18, borderRadius: 14, marginTop: 24, alignItems: 'center',
-  },
-  menuFooterTxt: { fontSize: 15, color: '#0F172A', fontWeight: '500', textAlign: 'center' },
-
   moduleCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 20, paddingVertical: 16, paddingHorizontal: 18,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', elevation: 3,
-    borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    marginBottom: 12,
+    borderLeftWidth: 4,
   },
   moduleCardLeft: {
     flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 14, minWidth: 0,
@@ -1526,11 +1328,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end',
   },
   moduleIconBg: {
-    width: 52, height: 52, borderRadius: 20, backgroundColor: '#EFF6FF',
-    justifyContent: 'center', alignItems: 'center', marginRight: 14, borderWidth: 1, borderColor: '#DBEAFE',
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: '#F0F9FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: 'rgba(56,189,248,0.15)',
   },
-  moduleTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
-  moduleSub:   { fontSize: 14, color: '#64748B', lineHeight: 20 },
+  moduleTitle: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
+  moduleSub:   { fontSize: 12, color: '#64748B', lineHeight: 17, marginBottom: 6 },
   appStepBadge:    { backgroundColor: '#F8FAFC', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, marginLeft: 0 },
   appStepBadgeTxt: { fontSize: 12, fontWeight: '700' },
 
@@ -1605,7 +1415,7 @@ const styles = StyleSheet.create({
   },
   cardFooter: {
     marginTop: 8,
-    alignItems: 'flex-start',
+    alignItems: 'flex-end',
   },
   listenTxt: { color: '#38BDF8', fontSize: 13, marginLeft: 5, fontWeight: '600' },
 
@@ -1814,7 +1624,15 @@ const styles = StyleSheet.create({
     shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0,
   },
   simHeaderTop: {
-    alignItems: 'flex-start', marginBottom: 12,
+    alignItems: 'flex-start',
+    marginTop: 8,
+    marginBottom: 12,
+    paddingLeft: 2,
+  },
+  simulatorStage: {
+    alignItems: 'center',
+    marginTop: 2,
+    marginBottom: 24,
   },
   simHeaderTitle: { fontSize: 22, fontWeight: 'bold', color: '#0F172A', marginBottom: 4, textAlign: 'center' },
   simHeaderSub:   { fontSize: 14, color: '#475569', textAlign: 'center', marginBottom: 16 },

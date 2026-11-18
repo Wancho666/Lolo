@@ -6,13 +6,13 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
-  Dimensions,
   Platform,
   Image,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Sidebar from "./sidebar";
 
 let LottieWrapper;
@@ -27,8 +27,6 @@ if (Platform.OS === "web") {
     <Lottie source={source} style={style} autoPlay={autoPlay} loop={loop} />
   );
 }
-
-const { width } = Dimensions.get("window");
 
 const FEATURES = [
   {
@@ -90,6 +88,7 @@ const SOCIAL_OPTIONS = [
 ];
 
 export default function Screen2({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [nickname, setNickname] = useState("");
   const [currentPage, setCurrentPage] = useState("main");
   const [selectedOption, setSelectedOption] = useState(null);
@@ -110,7 +109,7 @@ export default function Screen2({ navigation }) {
   const PageHeader = () => (
     <View style={styles.pageHeaderBadge}>
       <Ionicons name="rocket" size={18} color="#38BDF8" />
-      <Text style={styles.pageHeaderBadgeText}>Experience Mode</Text>
+      <Text style={styles.pageHeaderBadgeText}>Advanced Mode</Text>
     </View>
   );
 
@@ -255,7 +254,7 @@ export default function Screen2({ navigation }) {
         />
 
         {/* Sidebar trigger and logo */}
-        <View style={styles.topActionRow}>
+        <View style={[styles.topActionRow, { top: Platform.OS === "android" ? insets.top + 8 : 8 }]}>
           <View style={styles.leftTopArea}>
             <TouchableOpacity onPress={() => setSidebarVisible(true)} style={styles.menuButton}>
               <LinearGradient
@@ -311,7 +310,6 @@ const styles = StyleSheet.create({
   },
   topActionRow: {
     position: "absolute",
-    top: Platform.OS === "ios" ? 34 : 22,
     left: 18,
     right: 18,
     zIndex: 20,

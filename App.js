@@ -1,6 +1,8 @@
 import "react-native-gesture-handler";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 // Screens
 import SplashScreen from "./screens/SplashScreen";
@@ -21,15 +23,17 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-          animationEnabled: true,
-          contentStyle: { backgroundColor: "#F8FAFC" },
-          gestureEnabled: true,
-        }}
-      >
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+              animationEnabled: true,
+              contentStyle: { backgroundColor: "#F8FAFC" },
+              gestureEnabled: true,
+            }}
+          >
         {/* Onboarding flow */}
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="GetStarted" component={GetStartedScreen} />
@@ -52,8 +56,9 @@ export default function App() {
         />
         <Stack.Screen name="MiniGames" component={MiniGamesScreen} />
         <Stack.Screen name="E-Gov" component={EGovScreen} />
-      </Stack.Navigator>
-      
-    </NavigationContainer>
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

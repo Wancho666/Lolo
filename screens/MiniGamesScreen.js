@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,16 +16,32 @@ import { useNavigation } from '@react-navigation/native';
 
 const Icon = FontAwesome5;
 
+const shuffleItems = (items) => {
+  const shuffledItems = [...items];
+  for (let currentIndex = shuffledItems.length - 1; currentIndex > 0; currentIndex -= 1) {
+    const randomIndex = Math.floor(Math.random() * (currentIndex + 1));
+    [shuffledItems[currentIndex], shuffledItems[randomIndex]] = [shuffledItems[randomIndex], shuffledItems[currentIndex]];
+  }
+  return shuffledItems;
+};
+
+const shuffleQuestionLevels = (levels, shuffleOptions = false) =>
+  levels.map((level) => shuffleItems(level).map((question) => (
+    shuffleOptions && question.options
+      ? { ...question, options: shuffleItems(question.options) }
+      : question
+  )));
+
 const MiniGamesScreen = () => {
   const navigation = useNavigation();
   const [currentGame, setCurrentGame] = useState(null);
 
   // GAMES FOR SENIOR LEARNERS
   const games = [
-    { id: 'number-seq',   name: 'Number Sequence',   icon: 'sort-numeric-up', color: '#3B82F6', description: 'Fill in missing numbers to build math skills', levels: 5 },
-    { id: 'bugtong',      name: 'Bugtong (Riddles)', icon: 'lightbulb',       color: '#EC4899', description: 'Solve classic Filipino riddles and test your memory', levels: 4 },
-    { id: 'memory-match', name: 'Memory Match',      icon: 'images',          color: '#10B981', description: 'Match household items to strengthen memory', levels: 5 },
-    { id: 'health-facts', name: 'Health & Wellness', icon: 'heart',           color: '#F59E0B', description: 'Learn wellness tips through true or false questions', levels: 4 },
+    { id: 'number-seq',   name: 'Number Sequence',   icon: 'sort-numeric-up', color: '#3B82F6', description: 'Fill in missing numbers to build math skills', levels: 8 },
+    { id: 'bugtong',      name: 'Bugtong (Riddles)', icon: 'lightbulb',       color: '#EC4899', description: 'Solve classic Filipino riddles and test your memory', levels: 8 },
+    { id: 'memory-match', name: 'Memory Match',      icon: 'images',          color: '#10B981', description: 'Match household items to strengthen memory', levels: '8+' },
+    { id: 'health-facts', name: 'Health & Wellness', icon: 'heart',           color: '#F59E0B', description: 'Learn wellness tips through true or false questions', levels: 8 },
   ];
 
   // --- Shared full-bleed background --------------------------------------------
@@ -142,7 +158,7 @@ const MiniGamesScreen = () => {
   };
 
   // -------------------------------------------------------------------------------
-  // GAME 1 - NUMBER SEQUENCE - 5 curated levels, sequential (no random repeats)
+  // GAME 1 - NUMBER SEQUENCE - 8 progressive levels
   // -------------------------------------------------------------------------------
   const NumberSequence = () => {
     const CURRICULUM = [
@@ -181,16 +197,38 @@ const MiniGamesScreen = () => {
         { numbers: [3, 9, 27, '?', 243], answer: '81', difficulty: 'Level 5 - Expert' },
         { numbers: [1, 2, 6, 24, '?'], answer: '120', difficulty: 'Level 5 - Expert' },
       ],
+      [
+        { numbers: [4, 8, 12, '?', 20], answer: '16', difficulty: 'Level 6 - Advanced' },
+        { numbers: [30, 25, 20, '?', 10], answer: '15', difficulty: 'Level 6 - Advanced' },
+        { numbers: [3, 7, 11, '?', 19], answer: '15', difficulty: 'Level 6 - Advanced' },
+        { numbers: [2, 5, 8, '?', 14], answer: '11', difficulty: 'Level 6 - Advanced' },
+        { numbers: [3, 7, 15, 31, '?'], answer: '63', difficulty: 'Level 6 - Advanced' },
+      ],
+      [
+        { numbers: [2, 6, 12, 20, '?', 42], answer: '30', difficulty: 'Level 7 - Expert' },
+        { numbers: [100, 81, 64, '?', 36], answer: '49', difficulty: 'Level 7 - Expert' },
+        { numbers: [5, 9, 17, 33, '?'], answer: '65', difficulty: 'Level 7 - Expert' },
+        { numbers: [2, 3, 5, 7, '?'], answer: '11', difficulty: 'Level 7 - Expert' },
+        { numbers: [1, 4, 13, 40, '?'], answer: '121', difficulty: 'Level 7 - Expert' },
+      ],
+      [
+        { numbers: [1, 3, 7, 15, '?', 63], answer: '31', difficulty: 'Level 8 - Master' },
+        { numbers: [2, 12, 36, 80, '?'], answer: '150', difficulty: 'Level 8 - Master' },
+        { numbers: [1, 8, 27, 64, '?'], answer: '125', difficulty: 'Level 8 - Master' },
+        { numbers: [3, 8, 15, 24, '?'], answer: '35', difficulty: 'Level 8 - Master' },
+        { numbers: [144, 89, 55, 34, '?'], answer: '21', difficulty: 'Level 8 - Master' },
+      ],
     ];
 
     const [levelIndex, setLevelIndex] = useState(0);
+    const [curriculum, setCurriculum] = useState(() => shuffleQuestionLevels(CURRICULUM));
     const [qIndex, setQIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [inputValue, setInputValue] = useState('');
     const [feedback, setFeedback] = useState(null);
     const [showLevelUp, setShowLevelUp] = useState(false);
 
-    const current = CURRICULUM[levelIndex][qIndex];
+    const current = curriculum[levelIndex][qIndex];
 
     const handleSubmit = () => {
       if (!inputValue.trim()) return;
@@ -201,9 +239,9 @@ const MiniGamesScreen = () => {
 
     const handleNext = () => {
       setShowLevelUp(false);
-      if (qIndex + 1 < CURRICULUM[levelIndex].length) {
+      if (qIndex + 1 < curriculum[levelIndex].length) {
         setQIndex(qIndex + 1);
-      } else if (levelIndex + 1 < CURRICULUM.length) {
+      } else if (levelIndex + 1 < curriculum.length) {
         setLevelIndex(levelIndex + 1);
         setQIndex(0);
         setShowLevelUp(true);
@@ -218,6 +256,7 @@ const MiniGamesScreen = () => {
 
     const handleReset = () => {
       setLevelIndex(0);
+      setCurriculum(shuffleQuestionLevels(CURRICULUM));
       setQIndex(0);
       setScore(0);
       setInputValue('');
@@ -228,8 +267,8 @@ const MiniGamesScreen = () => {
     return (
       <GameShell
         title='Number Sequence' onReset={handleReset} score={score}
-        level={levelIndex + 1} totalLevels={CURRICULUM.length}
-        questionInLevel={qIndex + 1} totalInLevel={CURRICULUM[levelIndex].length}
+        level={levelIndex + 1} totalLevels={curriculum.length}
+        questionInLevel={qIndex + 1} totalInLevel={curriculum[levelIndex].length}
         color='#3B82F6' icon='sort-numeric-up'
       >
         <View>
@@ -284,7 +323,7 @@ const MiniGamesScreen = () => {
   };
 
   // -------------------------------------------------------------------------------
-  // GAME 2 - BUGTONG (RIDDLES) - 4 curated levels of classic Filipino riddles
+  // GAME 2 - BUGTONG (RIDDLES) - 8 levels with randomized riddles and choices
   // -------------------------------------------------------------------------------
   const Bugtong = () => {
     const CURRICULUM = [
@@ -316,16 +355,38 @@ const MiniGamesScreen = () => {
         { riddle: 'Bumabagsak mula sa langit, ngunit hindi nasasaktan.', answer: 'Ulan', options: ['Ulan', 'Bato', 'Niyebe', 'Bituin'] },
         { riddle: 'Walang paa, ngunit lumalakad papuntang dagat.', answer: 'Ilog', options: ['Ilog', 'Daan', 'Ulan', 'Hangin'] },
       ],
+      [
+        { riddle: 'May ngipin ngunit hindi kumakain; gamit sa pag-aayos ng buhok.', answer: 'Suklay', options: ['Suklay', 'Tinidor', 'Lagari', 'Susi'] },
+        { riddle: 'May leeg ngunit walang ulo, may katawan ngunit walang paa.', answer: 'Bote', options: ['Bote', 'Tao', 'Mesa', 'Sapatos'] },
+        { riddle: 'May mukha at dalawang kamay, ngunit walang braso o paa.', answer: 'Orasan', options: ['Orasan', 'Manika', 'Barya', 'Litrato'] },
+        { riddle: 'May takip at mga pahina; binabasa upang matuto.', answer: 'Libro', options: ['Libro', 'Kahon', 'Mapa', 'Payong'] },
+        { riddle: 'Dalawang gulong at pedal ang gamit sa pag-usad.', answer: 'Bisikleta', options: ['Bisikleta', 'Kotse', 'Kariton', 'Tren'] },
+      ],
+      [
+        { riddle: 'May apoy at nagbibigay-liwanag, ngunit nauubos habang ginagamit.', answer: 'Kandila', options: ['Kandila', 'Bumbilya', 'Bituin', 'Salamin'] },
+        { riddle: 'May mga susi ngunit walang kandado; maraming letra ang taglay.', answer: 'Keyboard', options: ['Keyboard', 'Piano', 'Susi', 'Telepono'] },
+        { riddle: 'Ipinangsasara sa paa bago maglakad sa labas.', answer: 'Sapatos', options: ['Sapatos', 'Guwantes', 'Sumbrero', 'Medyas'] },
+        { riddle: 'Binubuksan para makapasok ang hangin at liwanag sa silid.', answer: 'Bintana', options: ['Bintana', 'Pinto', 'Kisame', 'Sahig'] },
+        { riddle: 'May pakpak ngunit hindi ibon; nagdadala ng tao sa himpapawid.', answer: 'Eroplano', options: ['Eroplano', 'Saranggola', 'Agila', 'Bangka'] },
+      ],
+      [
+        { riddle: 'Ipinapakita ang iyong mukha ngunit hindi nagsasalita.', answer: 'Salamin', options: ['Salamin', 'Larawan', 'Bintana', 'Telebisyon'] },
+        { riddle: 'Pinaglalagyan ng malamig na pagkain sa kusina.', answer: 'Refrigerator', options: ['Refrigerator', 'Kalan', 'Lababo', 'Aparador'] },
+        { riddle: 'May dalawang gulong at makina; pampasada sa maiikling biyahe.', answer: 'Tricycle', options: ['Tricycle', 'Bisikleta', 'Jeepney', 'Eroplano'] },
+        { riddle: 'Mahaba at may tingga sa loob; gamit sa pagsusulat at pagguhit.', answer: 'Lapis', options: ['Lapis', 'Krayola', 'Panulat', 'Suklay'] },
+        { riddle: 'May screen at mga pindutan; gamit sa pagtawag at pagpapadala ng mensahe.', answer: 'Telepono', options: ['Telepono', 'Radyo', 'Orasan', 'Kamera'] },
+      ],
     ];
 
     const [levelIndex, setLevelIndex] = useState(0);
+    const [curriculum, setCurriculum] = useState(() => shuffleQuestionLevels(CURRICULUM, true));
     const [qIndex, setQIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [selected, setSelected] = useState(null);
     const [result, setResult] = useState(null);
     const [showLevelUp, setShowLevelUp] = useState(false);
 
-    const current = CURRICULUM[levelIndex][qIndex];
+    const current = curriculum[levelIndex][qIndex];
 
     const handleAnswer = (choice) => {
       if (result) return;
@@ -340,9 +401,9 @@ const MiniGamesScreen = () => {
 
     const handleNext = () => {
       setShowLevelUp(false);
-      if (qIndex + 1 < CURRICULUM[levelIndex].length) {
+      if (qIndex + 1 < curriculum[levelIndex].length) {
         setQIndex(qIndex + 1);
-      } else if (levelIndex + 1 < CURRICULUM.length) {
+      } else if (levelIndex + 1 < curriculum.length) {
         setLevelIndex(levelIndex + 1);
         setQIndex(0);
         setShowLevelUp(true);
@@ -357,6 +418,7 @@ const MiniGamesScreen = () => {
 
     const handleReset = () => {
       setLevelIndex(0);
+      setCurriculum(shuffleQuestionLevels(CURRICULUM, true));
       setQIndex(0);
       setScore(0);
       setSelected(null);
@@ -367,8 +429,8 @@ const MiniGamesScreen = () => {
     return (
       <GameShell
         title='Bugtong' onReset={handleReset} score={score}
-        level={levelIndex + 1} totalLevels={CURRICULUM.length}
-        questionInLevel={qIndex + 1} totalInLevel={CURRICULUM[levelIndex].length}
+        level={levelIndex + 1} totalLevels={curriculum.length}
+        questionInLevel={qIndex + 1} totalInLevel={curriculum[levelIndex].length}
         color='#EC4899' icon='lightbulb'
       >
         <View>
@@ -410,19 +472,16 @@ const MiniGamesScreen = () => {
   };
 
   // -------------------------------------------------------------------------------
-  // GAME 3 - MEMORY MATCH - grid grows with each level, item sets never repeat
-  // back-to-back, and the whole pool only cycles after level 5
+    // GAME 3 - MEMORY MATCH - randomized decks and 8 increasing board sizes
   // -------------------------------------------------------------------------------
   const MemoryMatch = () => {
     const ITEM_POOL = ['☕', '🥄', '🍚', '🧺', '🔑', '🚪', '🪑', '🛏️', '🧴', '🧼', '🪥', '🧻', '🍲', '🥢', '🍜', '🥣', '📺', '📻', '☎️', '💡', '👓', '⌚', '🧦', '👞'];
-    const PAIRS_BY_LEVEL = [4, 5, 6, 7, 8];
-
-    const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+      const PAIRS_BY_LEVEL = [3, 4, 5, 6, 7, 8, 9, 10];
 
     const buildDeck = useCallback((levelNum) => {
       const pairCount = PAIRS_BY_LEVEL[(levelNum - 1) % PAIRS_BY_LEVEL.length];
-      const chosen = shuffle(ITEM_POOL).slice(0, pairCount);
-      return shuffle([...chosen, ...chosen]).map((emoji, i) => ({ id: i, emoji, flipped: false, matched: false }));
+        const chosen = shuffleItems(ITEM_POOL).slice(0, pairCount);
+        return shuffleItems([...chosen, ...chosen]).map((emoji, i) => ({ id: i, emoji, flipped: false, matched: false }));
     }, []);
 
     const [level, setLevel] = useState(1);
@@ -433,8 +492,10 @@ const MiniGamesScreen = () => {
     const [disabled, setDisabled] = useState(false);
     const [won, setWon] = useState(false);
     const [showLevelUp, setShowLevelUp] = useState(false);
+    const mismatchTimeoutRef = useRef(null);
 
     const startLevel = useCallback((levelNum) => {
+      clearTimeout(mismatchTimeoutRef.current);
       setCards(buildDeck(levelNum));
       setFlipped([]);
       setMoves(0);
@@ -456,34 +517,38 @@ const MiniGamesScreen = () => {
       startLevel(next);
     };
 
-    React.useEffect(() => {
+    useEffect(() => {
       if (flipped.length === 2) {
         setDisabled(true);
         setMoves(m => m + 1);
-        const [a, b] = flipped;
-        setCards(prev => {
-          if (prev[a].emoji === prev[b].emoji) {
-            const next = prev.map((c, i) => (i === a || i === b ? { ...c, matched: true, flipped: true } : c));
-            if (next.every(c => c.matched)) {
-              setWon(true);
-              setScore(s => s + 50);
-            } else {
-              setScore(s => s + 20);
-            }
+        const [firstIndex, secondIndex] = flipped;
+        const isMatch = cards[firstIndex].emoji === cards[secondIndex].emoji;
+
+        if (isMatch) {
+          const nextCards = cards.map((card, index) => (
+            index === firstIndex || index === secondIndex
+              ? { ...card, matched: true, flipped: true }
+              : card
+          ));
+          const hasWon = nextCards.every((card) => card.matched);
+          setCards(nextCards);
+          setFlipped([]);
+          setDisabled(false);
+          setScore((currentScore) => currentScore + (hasWon ? 50 : 20));
+          if (hasWon) setWon(true);
+        } else {
+          mismatchTimeoutRef.current = setTimeout(() => {
+            setCards((currentCards) => currentCards.map((card, index) => (
+              index === firstIndex || index === secondIndex ? { ...card, flipped: false } : card
+            )));
             setFlipped([]);
             setDisabled(false);
-            return next;
-          } else {
-            setTimeout(() => {
-              setCards(prev2 => prev2.map((c, i) => (i === a || i === b ? { ...c, flipped: false } : c)));
-              setFlipped([]);
-              setDisabled(false);
-            }, 1300);
-            return prev;
-          }
-        });
+          }, 900);
+        }
       }
-    }, [flipped]);
+    }, [flipped, cards]);
+
+    useEffect(() => () => clearTimeout(mismatchTimeoutRef.current), []);
 
     const flipCard = (index) => {
       if (disabled || cards[index].flipped || cards[index].matched) return;
@@ -541,7 +606,7 @@ const MiniGamesScreen = () => {
   };
 
   // -------------------------------------------------------------------------------
-  // GAME 4 - HEALTH & WELLNESS FACTS - 4 curated levels
+  // GAME 4 - HEALTH & WELLNESS FACTS - 8 curated levels
   // -------------------------------------------------------------------------------
   const HealthFacts = () => {
     const CURRICULUM = [
@@ -569,16 +634,41 @@ const MiniGamesScreen = () => {
         { statement: 'Taking medications exactly as prescribed helps prevent complications.', answer: true, explanation: "Following your doctor's instructions keeps treatment effective and safe." },
         { statement: 'Skipping meals is a healthy way to manage weight in older adults.', answer: false, explanation: 'Skipping meals can cause low blood sugar and nutrient deficiencies.' },
       ],
+      [
+        { statement: 'Brushing your teeth twice a day supports oral health.', answer: true, explanation: 'Regular brushing helps protect teeth and gums.' },
+        { statement: 'A remedy is always safe just because it is natural.', answer: false, explanation: 'Natural products can still cause side effects or interact with medicine. Ask a health professional.' },
+        { statement: 'Vaccines can help protect older adults from serious illnesses.', answer: true, explanation: 'Ask your health professional which vaccines are recommended for you.' },
+        { statement: 'Eating a variety of nutritious foods supports overall health.', answer: true, explanation: 'A varied diet can provide nutrients your body needs.' },
+      ],
+      [
+        { statement: 'Regular eye and hearing checks can help detect changes early.', answer: true, explanation: 'Tell your health professional about changes in vision or hearing.' },
+        { statement: 'You can stop a prescribed medicine as soon as you feel better.', answer: false, explanation: 'Talk to your prescriber before stopping or changing a medicine.' },
+        { statement: 'Keeping walkways clear can lower the risk of trips and falls.', answer: true, explanation: 'Remove clutter and improve lighting around the home.' },
+        { statement: 'High blood pressure should be checked even when you feel well.', answer: true, explanation: 'High blood pressure may have no noticeable symptoms.' },
+      ],
+      [
+        { statement: 'If you miss a medicine dose, doubling the next dose is always safe.', answer: false, explanation: 'Follow the medicine instructions or ask a pharmacist or prescriber.' },
+        { statement: 'Washing hands helps reduce the spread of germs.', answer: true, explanation: 'Wash with soap and water, especially before eating and after using the restroom.' },
+        { statement: 'Supportive, well-fitting footwear can help with safer walking.', answer: true, explanation: 'Choose shoes that fit securely and have a stable sole.' },
+        { statement: 'A written list of medicines can help during medical visits.', answer: true, explanation: 'Include prescriptions, over-the-counter medicines, and supplements.' },
+      ],
+      [
+        { statement: 'Sudden chest pain or severe trouble breathing needs urgent medical attention.', answer: true, explanation: 'Call your local emergency number for severe or sudden symptoms.' },
+        { statement: 'Relaxation and slow breathing can support stress management.', answer: true, explanation: 'These techniques may help, but do not replace medical care when needed.' },
+        { statement: 'It is helpful to keep emergency contacts easy to find.', answer: true, explanation: 'Keep important phone numbers somewhere accessible.' },
+        { statement: 'Only people who feel sick need regular health check-ups.', answer: false, explanation: 'Routine check-ups can help identify concerns before symptoms appear.' },
+      ],
     ];
 
     const [levelIndex, setLevelIndex] = useState(0);
+    const [curriculum, setCurriculum] = useState(() => shuffleQuestionLevels(CURRICULUM));
     const [qIndex, setQIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [answered, setAnswered] = useState(false);
     const [chosen, setChosen] = useState(null);
     const [showLevelUp, setShowLevelUp] = useState(false);
 
-    const current = CURRICULUM[levelIndex][qIndex];
+    const current = curriculum[levelIndex][qIndex];
 
     const handleAnswer = (val) => {
       if (answered) return;
@@ -589,9 +679,9 @@ const MiniGamesScreen = () => {
 
     const nextQuestion = () => {
       setShowLevelUp(false);
-      if (qIndex + 1 < CURRICULUM[levelIndex].length) {
+      if (qIndex + 1 < curriculum[levelIndex].length) {
         setQIndex(qIndex + 1);
-      } else if (levelIndex + 1 < CURRICULUM.length) {
+      } else if (levelIndex + 1 < curriculum.length) {
         setLevelIndex(levelIndex + 1);
         setQIndex(0);
         setShowLevelUp(true);
@@ -606,6 +696,7 @@ const MiniGamesScreen = () => {
 
     const handleReset = () => {
       setLevelIndex(0);
+      setCurriculum(shuffleQuestionLevels(CURRICULUM));
       setQIndex(0);
       setScore(0);
       setAnswered(false);
@@ -618,8 +709,8 @@ const MiniGamesScreen = () => {
     return (
       <GameShell
         title='Health & Wellness' onReset={handleReset} score={score}
-        level={levelIndex + 1} totalLevels={CURRICULUM.length}
-        questionInLevel={qIndex + 1} totalInLevel={CURRICULUM[levelIndex].length}
+        level={levelIndex + 1} totalLevels={curriculum.length}
+        questionInLevel={qIndex + 1} totalInLevel={curriculum[levelIndex].length}
         color='#F59E0B' icon='heart'
       >
         <View>
@@ -708,13 +799,12 @@ const MiniGamesScreen = () => {
               {games.map((game) => (
                 <TouchableOpacity
                   key={game.id}
-                  style={styles.moduleCard}
+                  style={[styles.moduleCard, { borderLeftColor: game.color }]}
                   onPress={() => setCurrentGame(game.id)}
                   activeOpacity={0.9}
                 >
-                  <View style={[styles.moduleAccent, { backgroundColor: game.color }]} />
-                  <View style={[styles.moduleIconBg, { backgroundColor: game.color + '1F' }]}>
-                    <Icon name={game.icon} size={30} color={game.color} />
+                  <View style={[styles.moduleIconBg, { backgroundColor: game.color + '1F', borderColor: game.color + '44' }]}>
+                    <Icon name={game.icon} size={26} color={game.color} />
                   </View>
                   <View style={styles.moduleContent}>
                     <Text style={styles.moduleTitle}>{game.name}</Text>
@@ -724,9 +814,7 @@ const MiniGamesScreen = () => {
                       <Text style={[styles.levelChipText, { color: game.color }]}>{game.levels} Levels</Text>
                     </View>
                   </View>
-                  <View style={styles.arrowIconWrap}>
-                    <Icon name='chevron-right' size={16} color='#94A3B8' />
-                  </View>
+                  <Icon name='chevron-right' size={14} color={game.color} style={styles.arrowIconWrap} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -747,8 +835,8 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   scrollView: { flex: 1 },
-  scrollContent: { padding: 24, paddingBottom: 60 },
-  gameScrollContent: { padding: 20, paddingBottom: 60 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 50 },
+  gameScrollContent: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 50 },
 
   // Page Header
   pageHeader: {
@@ -806,24 +894,24 @@ const styles = StyleSheet.create({
 
   // Hero Summary Card
   heroSummaryCard: {
-    borderRadius: 20,
+    borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 20,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.4)',
     backgroundColor: '#ffffff',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowRadius: 6,
+    elevation: 3,
     position: 'relative',
   },
   heroSummaryGradient: {
     ...StyleSheet.absoluteFillObject,
   },
   heroSummaryContent: {
-    padding: 20,
+    padding: 16,
   },
   heroSummaryTitle: {
     fontSize: 18,
@@ -837,18 +925,28 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  moduleGrid: { gap: 14 },
+  moduleGrid: { gap: 0 },
   moduleCard: {
-    backgroundColor: '#fff', borderRadius: 18, paddingVertical: 16, paddingRight: 14, paddingLeft: 0,
-    flexDirection: 'row', alignItems: 'center', minHeight: 100, overflow: 'hidden',
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 88,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderLeftWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  moduleAccent: { width: 6, alignSelf: 'stretch', marginRight: 16, borderTopRightRadius: 3, borderBottomRightRadius: 3 },
-  moduleIconBg: { width: 58, height: 58, borderRadius: 29, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
-  moduleContent: { flex: 1 },
-  moduleTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', marginBottom: 3 },
-  moduleDescription: { fontSize: 13.5, color: '#64748B', lineHeight: 18, marginBottom: 8 },
+  moduleIconBg: { width: 56, height: 56, borderRadius: 14, borderWidth: 1, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+  moduleContent: { flex: 1, minWidth: 0 },
+  moduleTitle: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
+  moduleDescription: { fontSize: 12, color: '#64748B', lineHeight: 17, marginBottom: 6 },
   levelChip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10 },
   levelChipText: { marginLeft: 5, fontSize: 11, fontWeight: '700' },
   arrowIconWrap: { marginLeft: 8 },
@@ -878,10 +976,10 @@ const styles = StyleSheet.create({
   progressLabel: { marginTop: 5, fontSize: 11.5, color: '#64748B', textAlign: 'center' },
 
   lessonHeader: {
-    alignItems: 'center', marginBottom: 22, backgroundColor: '#fff',
-    padding: 24, borderRadius: 22, elevation: 6,
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08, shadowRadius: 10,
+    alignItems: 'center', marginBottom: 16, backgroundColor: 'rgba(255,255,255,0.95)',
+    padding: 16, borderRadius: 16, elevation: 3,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08, shadowRadius: 6,
   },
   lessonIconBubble: { width: 52, height: 52, borderRadius: 26, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   lessonTitle: { fontSize: 22, fontWeight: '800', color: '#0F172A', textAlign: 'center', marginBottom: 8 },
@@ -890,10 +988,10 @@ const styles = StyleSheet.create({
   levelUpBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14, marginBottom: 18 },
   levelUpText: { marginLeft: 8, fontSize: 14.5, fontWeight: '700' },
 
-  numberSequenceContainer: { backgroundColor: '#fff', borderRadius: 20, padding: 22, marginBottom: 22, elevation: 3, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.06, shadowRadius: 8 },
+  numberSequenceContainer: { backgroundColor: '#fff', borderRadius: 16, padding: 18, marginBottom: 16, elevation: 3, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6 },
   difficultyBadge: { fontSize: 12.5, fontWeight: '700', color: '#3B82F6', marginBottom: 16, textAlign: 'center', letterSpacing: 0.3 },
   sequenceRow: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', flexWrap: 'wrap', rowGap: 10 },
-  numberBox: { width: 52, height: 52, borderRadius: 14, backgroundColor: '#3B82F6', justifyContent: 'center', alignItems: 'center' },
+  numberBox: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#3B82F6', justifyContent: 'center', alignItems: 'center' },
   numberBoxMissing: { backgroundColor: '#F59E0B' },
   numberText: { fontSize: 22, fontWeight: '800', color: '#fff' },
 
@@ -901,16 +999,16 @@ const styles = StyleSheet.create({
   inputLabel: { fontSize: 14.5, fontWeight: '700', color: '#0F172A', marginBottom: 8 },
   numberInput: { borderWidth: 2, borderColor: '#DBEAFE', borderRadius: 14, padding: 16, fontSize: 20, fontWeight: '700', color: '#0F172A', backgroundColor: '#fff', textAlign: 'center' },
 
-  submitBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#3B82F6', paddingVertical: 16, borderRadius: 14, elevation: 2, shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 6 },
+  submitBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#3B82F6', paddingVertical: 14, borderRadius: 12, elevation: 2, shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 5 },
   submitBtnText: { marginLeft: 8, fontSize: 16.5, fontWeight: '700', color: '#fff' },
 
-  nextBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14, marginTop: 16, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 5 },
+  nextBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12, marginTop: 16, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
   nextBtnText: { marginLeft: 8, fontSize: 15, fontWeight: '700', color: '#fff' },
 
-  bugtongQuestionContainer: { backgroundColor: '#fff', borderLeftWidth: 5, borderLeftColor: '#EC4899', padding: 22, borderRadius: 18, marginBottom: 20, elevation: 3, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.06, shadowRadius: 8 },
+  bugtongQuestionContainer: { backgroundColor: '#fff', borderLeftWidth: 4, borderLeftColor: '#EC4899', padding: 18, borderRadius: 16, marginBottom: 16, elevation: 3, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6 },
   bugtongQuestionText: { fontSize: 19, fontWeight: '700', color: '#0F172A', textAlign: 'center', lineHeight: 27 },
   bugtongOptions: { marginBottom: 4 },
-  bugtongOption: { borderWidth: 2, borderRadius: 14, paddingVertical: 16, paddingHorizontal: 16, marginBottom: 10, justifyContent: 'center', alignItems: 'center' },
+  bugtongOption: { borderWidth: 2, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, marginBottom: 10, justifyContent: 'center', alignItems: 'center' },
   bugtongOptionText: { fontSize: 16.5, fontWeight: '700', textAlign: 'center' },
 
   statsRow: { flexDirection: 'row', justifyContent: 'center', gap: 12, marginBottom: 18 },
@@ -918,12 +1016,12 @@ const styles = StyleSheet.create({
   wonText: { fontSize: 17, fontWeight: '700', color: '#0F172A', textAlign: 'center' },
 
   cardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  flipCard: { width: '23%', aspectRatio: 1, borderRadius: 14, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center', marginBottom: 12, elevation: 2, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+  flipCard: { width: '23%', aspectRatio: 1, borderRadius: 12, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center', marginBottom: 10, elevation: 2, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4 },
   flipCardOpen: { backgroundColor: '#fff', borderWidth: 2, borderColor: '#10B981' },
   flipCardMatched: { backgroundColor: '#D1FAE5', borderWidth: 2, borderColor: '#059669' },
   flipCardEmoji: { fontSize: 30 },
 
-  trueOrFalseQuestionContainer: { backgroundColor: '#fff', borderLeftWidth: 5, borderLeftColor: '#F59E0B', borderRadius: 18, padding: 22, marginBottom: 22, elevation: 3, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.06, shadowRadius: 8 },
+  trueOrFalseQuestionContainer: { backgroundColor: '#fff', borderLeftWidth: 4, borderLeftColor: '#F59E0B', borderRadius: 16, padding: 18, marginBottom: 16, elevation: 3, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6 },
   trueOrFalseQuestionText: { fontSize: 18.5, fontWeight: '700', color: '#0F172A', lineHeight: 26, textAlign: 'center' },
   tfButtons: { flexDirection: 'row', gap: 12, marginBottom: 4 },
   tfBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 18, borderRadius: 14, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 5 },

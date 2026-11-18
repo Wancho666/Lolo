@@ -48,7 +48,7 @@ const SCAM_OPTIONS = [
     animation: require("../assets/lotties/Alert.json"),
     gradientColors: ["rgba(236, 72, 153, 0.15)", "rgba(251, 146, 60, 0.15)"],
     tutorialTitle: "Common Online Scams",
-    videoSource: require("../assets/vids/0327.mp4"),
+    videoSource: require("../assets/vids/olscams.mp4"),
     placeholders: [
       "Phishing emails and fake websites",
       "Tech support scams and pop-ups",
@@ -56,36 +56,8 @@ const SCAM_OPTIONS = [
       "Romance and catfishing scams",
     ],
   },
-  {
-    id: 2,
-    title: "Money Transfer Fraud",
-    description: "Understand how fraudsters trick you into transferring money.",
-    animation: require("../assets/lotties/meil.json"),
-    gradientColors: ["rgba(59, 130, 246, 0.15)", "rgba(147, 51, 234, 0.15)"],
-    tutorialTitle: "Money Transfer Fraud",
-    videoSource: require("../assets/vids/0327.mp4"),
-    placeholders: [
-      "Impersonation of family or friends",
-      "Fake bank and payment app alerts",
-      "Wire transfer and crypto scams",
-      "What to do if you've been scammed",
-    ],
-  },
-  {
-    id: 3,
-    title: "Personal Information Safety",
-    description: "Learn how to protect your personal and financial information.",
-    animation: require("../assets/lotties/security.json"),
-    gradientColors: ["rgba(16, 185, 129, 0.15)", "rgba(59, 130, 246, 0.15)"],
-    tutorialTitle: "Personal Information Safety",
-    videoSource: require("../assets/vids/0327.mp4"),
-    placeholders: [
-      "Never share passwords or PINs",
-      "Be careful with social media information",
-      "Protect your identity documents",
-      "Report suspicious activity immediately",
-    ],
-  },
+  
+  
 ];
 
 export default function ScamAwareness({ navigation }) {
